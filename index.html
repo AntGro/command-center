@@ -229,10 +229,12 @@ input,select,button{font-family:inherit;}
     <p class="subtitle">De l'Claw × Project HQ</p>
 
     <iframe name="claw-sink" style="display:none;"></iframe>
-    <form id="loginForm" action="about:blank" method="post" target="claw-sink" style="display:none;">
-      <p class="hint">Enter your Supabase credentials. Chrome will remember them for next time.</p>
-      <input type="text" id="sbUrlInput" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:6px;">
-      <input type="password" id="sbKeyInput" name="password" placeholder="Publishable Key" autocomplete="current-password">
+    <form id="loginForm" action="https://antgro.github.io/command-center/" method="post" target="claw-sink" style="display:none;">
+      <p class="hint">Enter your credentials. Chrome will save them for next time.</p>
+      <label for="username" style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:2px;">Username</label>
+      <input type="text" id="username" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:10px;">
+      <label for="password" style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:2px;">Password</label>
+      <input type="password" id="password" name="password" placeholder="Publishable Key" autocomplete="current-password">
       <button type="submit" class="btn-primary">Connect</button>
       <p class="error" id="loginError"></p>
     </form>
@@ -293,8 +295,9 @@ input,select,button{font-family:inherit;}
     <div class="db-stats">
       <div class="db-stat">📊 Tasks: <span id="dbTaskCount">—</span></div>
       <div class="db-stat">📁 Projects: <span id="dbProjectCount">—</span></div>
+      <div class="db-stat">💾 DB: <span id="dbSizeMb">—</span> / 500 MB</div>
     </div>
-    <div>Free tier: 500MB DB · 50K MAU · <a href="" id="supabaseDashLink" target="_blank">Supabase Dashboard ↗</a></div>
+    <div><a href="" id="supabaseDashLink" target="_blank">Supabase Dashboard ↗</a></div>
   </div>
 
   <!-- Add Project Modal -->
@@ -339,21 +342,21 @@ const MAX_META_DISPLAY = 500;
 // ===================================================================
 function initGate() {
   document.getElementById('loginForm').style.display = 'block';
-  document.getElementById('sbUrlInput').focus();
+  document.getElementById('username').focus();
   // Try auto-fill from Credential Management API
   if (window.PasswordCredential) {
     navigator.credentials.get({ password: true, mediation: 'optional' }).then(cred => {
       if (cred) {
-        document.getElementById('sbUrlInput').value = cred.id;
-        document.getElementById('sbKeyInput').value = cred.password;
+        document.getElementById('username').value = cred.id;
+        document.getElementById('password').value = cred.password;
       }
     }).catch(() => {});
   }
 }
 
 async function doLogin() {
-  const url = document.getElementById('sbUrlInput').value.trim();
-  const key = document.getElementById('sbKeyInput').value.trim();
+  const url = document.getElementById('username').value.trim();
+  const key = document.getElementById('password').value.trim();
   const err = document.getElementById('loginError');
   if (!url || !key) { err.textContent = 'Enter both URL and key'; return; }
   err.textContent = 'Connecting...';
@@ -915,10 +918,16 @@ function updateFooterStats() {
   document.getElementById('dbTaskCount').textContent = allTasks.length;
   document.getElementById('dbProjectCount').textContent = PROJECTS.length;
   // Set dashboard link using the connected URL
-  const urlInput = document.getElementById('sbUrlInput');
+  const urlInput = document.getElementById('username');
   if (urlInput && urlInput.value) {
     const projectRef = urlInput.value.replace('https://', '').replace('.supabase.co', '');
     document.getElementById('supabaseDashLink').href = `https://supabase.com/dashboard/project/${projectRef}`;
+  }
+  // Fetch DB size via RPC
+  if (sb) {
+    sb.rpc('db_size_mb').then(({ data, error }) => {
+      document.getElementById('dbSizeMb').textContent = error ? '?' : `${data} MB`;
+    });
   }
 }
 
