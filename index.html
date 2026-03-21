@@ -232,8 +232,7 @@ input,select,button{font-family:inherit;}
     <h1>Command Center</h1>
     <p class="subtitle">De l'Claw × Project HQ</p>
 
-    <iframe name="claw-sink" style="display:none;"></iframe>
-    <form id="loginForm" action="https://antgro.github.io/command-center/" method="post" target="claw-sink" style="display:none;">
+    <form id="loginForm" method="post" action="https://antgro.github.io/command-center/" style="display:none;">
       <p class="hint">Enter your credentials. Chrome will save them for next time.</p>
       <label for="username" style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:2px;">Username</label>
       <input type="text" id="username" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:10px;">
@@ -367,7 +366,9 @@ async function doLogin() {
   try {
     await connect(url, key);
     err.textContent = '';
-    // Save credentials via Credential Management API for Chrome autofill
+    // Hide the form — signals "successful login" to Chrome's password manager
+    document.getElementById('loginForm').style.display = 'none';
+    // Also explicitly store via Credential Management API
     if (window.PasswordCredential) {
       try {
         const cred = new PasswordCredential({ id: url, password: key });
@@ -382,9 +383,8 @@ async function doLogin() {
 document.addEventListener('DOMContentLoaded', () => {
   initGate();
   document.getElementById('loginForm').addEventListener('submit', e => {
-    // Don't preventDefault — let form submit to hidden iframe so Chrome saves credentials
-    // Run login logic after a tiny delay to let the form submit complete
-    setTimeout(() => doLogin(), 50);
+    e.preventDefault();
+    doLogin();
   });
 });
 
