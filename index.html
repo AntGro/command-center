@@ -57,14 +57,14 @@ input,select,button{font-family:inherit;}
 
 /* ===== APP LAYOUT ===== */
 #app{display:none;min-height:100vh;}
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .app-header h1{font-size:1.15rem;font-weight:600;display:flex;align-items:center;gap:8px;letter-spacing:-0.3px;}
 .header-actions{display:flex;gap:6px;align-items:center;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
 
 /* ===== STATS ===== */
-.stats-bar{display:flex;gap:32px;padding:16px 12px;background:var(--surface);border-bottom:1px solid var(--border);}
+.stats-bar{display:flex;gap:32px;padding:16px 8px;background:var(--surface);border-bottom:1px solid var(--border);}
 .stat{display:flex;flex-direction:column;}
 .stat-value{font-size:1.6rem;font-weight:700;letter-spacing:-0.5px;}
 .stat-value.blue{color:var(--blue);}
@@ -73,11 +73,15 @@ input,select,button{font-family:inherit;}
 .stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;}
 
 /* ===== LEGEND ===== */
-.legend{display:flex;gap:18px;padding:10px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.legend{display:flex;gap:18px;padding:10px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--muted);}
 
 /* ===== MAIN CONTENT ===== */
-.main-content{padding:12px;max-width:1440px;margin:0 auto;}
+.main-content{padding:8px;margin:0 auto;}
+.project-title-copy{cursor:pointer;position:relative;display:inline-block;}
+.project-title-copy:hover{color:var(--accent);}
+.copy-tooltip{position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:0.68rem;padding:3px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;font-weight:500;}
+.copy-tooltip.show{opacity:1;}
 
 /* ===== STATUS DOT ===== */
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;}
@@ -213,7 +217,7 @@ input,select,button{font-family:inherit;}
   .idea-form{flex-direction:column;}
   .idea-form select{min-width:auto;}
   .app-header{padding:12px 8px;}
-  .main-content{padding:8px;}
+  .main-content{padding:6px;}
   .stats-bar{padding:14px 8px;}
   .legend{padding:8px 8px;}
 }
@@ -478,6 +482,15 @@ function renderArchivedProjects() {
   `).join('');
 }
 
+function copyProjectTitle(e, name) {
+  e.stopPropagation();
+  const text = 'Command-center project ' + name;
+  navigator.clipboard.writeText(text).then(() => {
+    const tooltip = e.currentTarget.querySelector('.copy-tooltip');
+    if (tooltip) { tooltip.classList.add('show'); setTimeout(() => tooltip.classList.remove('show'), 1500); }
+  });
+}
+
 function buildProjectCards() {
   const grid = document.getElementById('projectGrid');
   const archivedIds = getArchivedProjectIds();
@@ -488,7 +501,7 @@ function buildProjectCards() {
       <div class="project-accent" style="background:${p.color}"></div>
       <div class="project-card-header">
         <div class="project-info">
-          <h3>${esc(p.name)}</h3>
+          <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
           <span class="tech">${esc(p.tech || '')}</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
