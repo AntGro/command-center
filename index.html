@@ -228,7 +228,8 @@ input,select,button{font-family:inherit;}
     <h1>Command Center</h1>
     <p class="subtitle">De l'Claw × Project HQ</p>
 
-    <form id="loginForm" action="javascript:void(0)" method="post" style="display:none;">
+    <iframe name="claw-sink" style="display:none;"></iframe>
+    <form id="loginForm" action="about:blank" method="post" target="claw-sink" style="display:none;">
       <p class="hint">Enter your Supabase credentials. Chrome will remember them for next time.</p>
       <input type="text" id="sbUrlInput" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:6px;">
       <input type="password" id="sbKeyInput" name="password" placeholder="Publishable Key" autocomplete="current-password">
@@ -374,8 +375,9 @@ async function doLogin() {
 document.addEventListener('DOMContentLoaded', () => {
   initGate();
   document.getElementById('loginForm').addEventListener('submit', e => {
-    e.preventDefault();
-    doLogin();
+    // Don't preventDefault — let form submit to hidden iframe so Chrome saves credentials
+    // Run login logic after a tiny delay to let the form submit complete
+    setTimeout(() => doLogin(), 50);
   });
 });
 
