@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🪶 Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #08090d;
+  --surface: #111318;
+  --surface2: #191c24;
+  --border: #252830;
+  --text: #e4e4ec;
+  --muted: #6c6f7e;
+  --accent: #646cff;
+  --accent-dim: rgba(100,108,255,0.15);
+  --pink: #ec4899;
+  --green: #10b981;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --purple: #a78bfa;
+}
+/* Light theme overrides */
+[data-theme="light"] {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #eeeef0;
+  --border: #d4d4d8;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #4f46e5;
+  --accent-dim: rgba(79,70,229,0.1);
+}
+[data-theme="light"] .gate-box{box-shadow:0 20px 60px rgba(0,0,0,0.08);}
+[data-theme="light"] #gate{background:radial-gradient(ellipse at 50% 40%,rgba(79,70,229,0.04),transparent 60%);}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::selection{background:var(--accent);color:#fff;}
+input,select,button{font-family:inherit;}
+
+/* ===== GATE ===== */
+#gate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(100,108,255,0.06),transparent 60%);}
+.gate-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.gate-box .logo{font-size:3rem;margin-bottom:4px;}
+.gate-box h1{font-size:1.2rem;font-weight:600;margin-bottom:4px;letter-spacing:-0.3px;}
+.gate-box .subtitle{color:var(--muted);margin-bottom:28px;font-size:0.82rem;}
+.gate-box input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.92rem;margin-bottom:10px;outline:none;transition:border-color 0.2s;}
+.gate-box input:focus{border-color:var(--accent);}
+.gate-box .btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.92rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;margin-top:4px;margin-bottom:6px;}
+.gate-box .btn-primary:hover{opacity:0.85;}
+.gate-box .btn-reset{background:transparent;border:none;width:100%;color:var(--muted);font-size:0.8rem;cursor:pointer;padding:6px;}
+.gate-box .btn-reset:hover{color:var(--red);}
+.gate-box .error{color:var(--red);font-size:0.82rem;margin-top:6px;min-height:18px;}
+.gate-box .setup-form,.gate-box .login-form{display:none;}
+.gate-box .hint{font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.4;}
+
+/* ===== APP LAYOUT ===== */
+#app{display:none;min-height:100vh;}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.app-header h1{font-size:1.15rem;font-weight:600;display:flex;align-items:center;gap:8px;letter-spacing:-0.3px;}
+.header-actions{display:flex;gap:6px;align-items:center;}
+.btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-lock:hover{border-color:var(--red);color:var(--red);}
+
+/* ===== STATS ===== */
+.stats-bar{display:flex;gap:32px;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);}
+.stat{display:flex;flex-direction:column;}
+.stat-value{font-size:1.6rem;font-weight:700;letter-spacing:-0.5px;}
+.stat-value.blue{color:var(--blue);}
+.stat-value.yellow{color:var(--yellow);}
+.stat-value.purple{color:var(--purple);}
+.stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;}
+
+/* ===== LEGEND ===== */
+.legend{display:flex;gap:18px;padding:10px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--muted);}
+
+/* ===== MAIN CONTENT ===== */
+.main-content{padding:24px;max-width:1440px;margin:0 auto;}
+
+/* ===== STATUS DOT ===== */
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.status-dot.todo{background:var(--muted);}
+.status-dot.in-progress{background:var(--blue);box-shadow:0 0 8px rgba(59,130,246,0.5);}
+.status-dot.review{background:var(--yellow);box-shadow:0 0 8px rgba(234,179,8,0.4);}
+.status-dot.approved{background:var(--green);}
+.status-dot.revision{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4);}
+
+/* ===== IDEAS SECTION ===== */
+.ideas-section{margin-bottom:28px;}
+.section-title{font-size:1rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px;}
+.idea-form{display:flex;gap:8px;margin-bottom:14px;}
+.idea-form input{flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.idea-form input:focus{border-color:var(--accent);}
+.idea-form select{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:0.82rem;outline:none;min-width:130px;}
+.idea-form select:focus{border-color:var(--accent);}
+.idea-form button{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap;font-size:0.88rem;transition:opacity 0.2s;}
+.idea-form button:hover{opacity:0.85;}
+.idea-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;transition:border-color 0.2s;}
+.idea-item:hover{border-color:var(--accent-dim);}
+.idea-text{flex:1;font-size:0.88rem;}
+.idea-project{font-size:0.72rem;padding:3px 8px;border-radius:5px;background:var(--surface2);white-space:nowrap;}
+.idea-actions{display:flex;gap:3px;}
+.idea-actions button{padding:5px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.78rem;transition:all 0.2s;white-space:nowrap;}
+.idea-actions .ship-btn:hover{border-color:var(--accent);color:var(--accent);}
+.idea-actions .plan-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+.idea-actions .del-btn:hover{border-color:var(--red);color:var(--red);}
+.empty-msg{color:var(--muted);font-size:0.82rem;font-style:italic;padding:8px 0;}
+
+/* ===== PROJECT GRID ===== */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
+.project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.project-accent{height:3px;width:100%;}
+.project-card-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.project-info h3{font-size:0.95rem;font-weight:600;margin-bottom:2px;letter-spacing:-0.2px;}
+.project-info .tech{font-size:0.72rem;color:var(--muted);}
+.project-link{color:var(--muted);text-decoration:none;font-size:0.78rem;white-space:nowrap;flex-shrink:0;}
+.project-link:hover{color:var(--accent);}
+
+/* ===== TASK LIST ===== */
+.task-list{padding:4px 16px;flex:1;min-height:50px;}
+.task-item{padding:9px 0;border-bottom:1px solid var(--border);}
+.task-item:last-child{border-bottom:none;}
+.task-row{display:flex;align-items:center;gap:9px;}
+.task-text{flex:1;font-size:0.88rem;line-height:1.35;}
+.task-actions{display:flex;gap:2px;opacity:0.4;transition:opacity 0.2s;}
+.task-item:hover .task-actions{opacity:1;}
+.task-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
+.task-actions button:hover{background:var(--surface2);}
+.task-meta{margin-top:5px;padding-left:18px;display:flex;flex-direction:column;gap:3px;}
+.task-meta-item{font-size:0.78rem;color:var(--muted);padding:5px 9px;background:var(--bg);border-radius:5px;border-left:2px solid var(--accent);line-height:1.4;}
+.task-meta-item.response{border-left-color:var(--yellow);}
+.task-meta-label{font-weight:600;margin-right:5px;}
+.task-meta-label.plan{color:var(--accent);}
+.task-meta-label.claw{color:var(--yellow);}
+
+/* ===== ADD TASK ===== */
+.add-task{display:flex;gap:6px;padding:8px 16px 14px;}
+.add-task input{flex:1;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.84rem;outline:none;transition:border-color 0.2s;}
+.add-task input:focus{border-color:var(--accent);}
+.add-task button{padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.84rem;transition:opacity 0.2s;}
+.add-task button:hover{opacity:0.85;}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:20px;right:20px;padding:11px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.84rem;z-index:999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.info{border-color:var(--blue);color:var(--blue);}
+
+/* ===== SHOW MORE ===== */
+.show-more-btn{background:none;border:none;color:var(--accent);font-size:0.72rem;cursor:pointer;padding:2px 0;font-weight:500;}
+.show-more-btn:hover{text-decoration:underline;}
+
+/* ===== CHAR COUNTER ===== */
+.char-counter{font-size:0.68rem;color:var(--muted);text-align:right;margin-top:-6px;margin-bottom:4px;padding-right:4px;}
+.char-counter.warn{color:var(--yellow);}
+.char-counter.danger{color:var(--red);}
+
+/* ===== DRAG & DROP ===== */
+.task-item[draggable="true"]{cursor:grab;}
+.task-item[draggable="true"]:active{cursor:grabbing;}
+.task-item.dragging{opacity:0.4;border:1px dashed var(--accent);}
+.task-item.drag-over{border-top:2px solid var(--accent);padding-top:7px;}
+.drag-handle{cursor:grab;color:var(--muted);font-size:0.72rem;margin-right:2px;user-select:none;}
+.drag-handle:active{cursor:grabbing;}
+
+/* ===== ARCHIVE ===== */
+.archive-toggle{display:flex;align-items:center;gap:6px;padding:6px 16px;cursor:pointer;font-size:0.78rem;color:var(--muted);user-select:none;border-top:1px solid var(--border);transition:color 0.2s;}
+.archive-toggle:hover{color:var(--text);}
+.archive-toggle .arrow{transition:transform 0.2s;display:inline-block;}
+.archive-toggle .arrow.open{transform:rotate(90deg);}
+.archived-tasks{display:none;padding:0 16px 8px;}
+.archived-tasks.visible{display:block;}
+.archived-tasks .task-item{opacity:0.6;}
+.project-card-header .archive-project-btn{background:none;border:none;cursor:pointer;font-size:0.72rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
+.project-card-header .archive-project-btn:hover{color:var(--red);background:var(--surface2);}
+.archived-projects-section{margin-top:20px;}
+.archived-project-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;opacity:0.6;}
+.archived-project-item span{flex:1;font-size:0.88rem;}
+.archived-project-item button{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.78rem;}
+.archived-project-item button:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:860px){
+  .project-grid{grid-template-columns:1fr;}
+  .stats-bar{gap:20px;flex-wrap:wrap;}
+  .idea-form{flex-direction:column;}
+  .idea-form select{min-width:auto;}
+  .app-header{padding:12px 16px;}
+  .main-content{padding:16px;}
+  .stats-bar{padding:14px 16px;}
+  .legend{padding:8px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== GATE ===== -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="logo">🪶</div>
+    <h1>Command Center</h1>
+    <p class="subtitle">De l'Claw × Project HQ</p>
+
+    <div class="setup-form" id="setupForm">
+      <p class="hint">First-time setup. Enter your Supabase credentials and set a password. Everything gets encrypted locally — nothing leaves your browser.</p>
+      <input type="url" id="sbUrl" placeholder="Supabase Project URL" autocomplete="off" style="margin-bottom:6px;">
+      <input type="text" id="sbKey" placeholder="Supabase Publishable Key" autocomplete="off" style="margin-bottom:14px;">
+      <input type="password" id="pw1" placeholder="Set password" autocomplete="new-password">
+      <input type="password" id="pw2" placeholder="Confirm password">
+      <button class="btn-primary" onclick="doSetup()">Encrypt & Enter</button>
+      <p class="error" id="setupError"></p>
+    </div>
+
+    <!-- Task 3: Proper form for Chrome autofill -->
+    <form class="login-form" id="loginForm" action="javascript:void(0)" method="post">
+      <input type="text" id="loginUser" value="command-center" name="username" autocomplete="username" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" tabindex="-1">
+      <input type="password" id="pwLogin" name="password" placeholder="Enter password" autocomplete="current-password">
+      <button type="submit" class="btn-primary">Unlock</button>
+      <p class="error" id="loginError"></p>
+      <button type="button" class="btn-reset" onclick="doReset()">Reset (clear encrypted data)</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <header class="app-header">
+    <h1>🪶 Command Center</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
+      <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
+      <button class="btn" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-lock" onclick="doLock()">🔒 Lock</button>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><span class="stat-value purple" id="statProjects">7</span><span class="stat-label">Projects</span></div>
+    <div class="stat"><span class="stat-value blue" id="statTasks">0</span><span class="stat-label">Tasks</span></div>
+    <div class="stat"><span class="stat-value yellow" id="statReview">0</span><span class="stat-label">Needs Review</span></div>
+    <div class="stat"><span class="stat-value" id="statIdeas">0</span><span class="stat-label">Ideas</span></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="status-dot todo"></span>Todo</div>
+    <div class="legend-item"><span class="status-dot in-progress"></span>In Progress</div>
+    <div class="legend-item"><span class="status-dot review"></span>Review</div>
+    <div class="legend-item"><span class="status-dot approved"></span>Approved</div>
+    <div class="legend-item"><span class="status-dot revision"></span>Revision</div>
+  </div>
+
+  <div class="main-content">
+    <!-- Ideas Section -->
+    <div class="ideas-section">
+      <div class="section-title">💡 Ideas Inbox</div>
+      <div class="idea-form">
+        <input type="text" id="ideaInput" placeholder="Throw an idea in..." maxlength="200" onkeydown="if(event.key==='Enter')addIdea()">
+        <select id="ideaProject"><option value="">No project</option></select>
+        <button onclick="addIdea()">+ Add Idea</button>
+      </div>
+      <div id="ideaList"></div>
+    </div>
+
+    <!-- Project Grid -->
+    <div class="project-grid" id="projectGrid"></div>
+
+    <!-- Archived Projects Section -->
+    <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
+      <div class="section-title">📦 Archived Projects</div>
+      <div id="archivedProjectsList"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ===================================================================
+// CONSTANTS
+// ===================================================================
+const STORAGE_KEY = 'claw_cc_vault';
+const IDEAS_KEY = 'claw_cc_ideas';
+const THEME_KEY = 'claw_cc_theme';
+const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
+const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
+const MAX_TEXT_LEN = 200;
+const MAX_META_DISPLAY = 500;
+
+// ===================================================================
+// CRYPTO — AES-GCM with PBKDF2
+// ===================================================================
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' },
+    km,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptData(password, plaintext) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+  return { salt: btoa(String.fromCharCode(...salt)), iv: btoa(String.fromCharCode(...iv)), ct: btoa(String.fromCharCode(...new Uint8Array(ct))) };
+}
+
+async function decryptData(password, vault) {
+  const salt = Uint8Array.from(atob(vault.salt), c => c.charCodeAt(0));
+  const iv = Uint8Array.from(atob(vault.iv), c => c.charCodeAt(0));
+  const ct = Uint8Array.from(atob(vault.ct), c => c.charCodeAt(0));
+  const key = await deriveKey(password, salt);
+  const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(dec);
+}
+
+// ===================================================================
+// GATE LOGIC
+// ===================================================================
+function initGate() {
+  const vault = localStorage.getItem(STORAGE_KEY);
+  if (vault) {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('pwLogin').focus();
+  } else {
+    document.getElementById('setupForm').style.display = 'block';
+    document.getElementById('sbUrl').focus();
+  }
+}
+
+async function doSetup() {
+  const sbUrl = document.getElementById('sbUrl').value.trim();
+  const sbKey = document.getElementById('sbKey').value.trim();
+  const p1 = document.getElementById('pw1').value;
+  const p2 = document.getElementById('pw2').value;
+  const err = document.getElementById('setupError');
+  if (!sbUrl || !sbKey) { err.textContent = 'Enter Supabase URL and key'; return; }
+  if (!p1) { err.textContent = 'Password cannot be empty'; return; }
+  if (p1.length < 4) { err.textContent = 'At least 4 characters'; return; }
+  if (p1 !== p2) { err.textContent = 'Passwords don\'t match'; return; }
+  err.textContent = 'Encrypting...';
+  try {
+    const payload = JSON.stringify({ url: sbUrl, key: sbKey });
+    const vault = await encryptData(p1, payload);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(vault));
+    err.textContent = '';
+    await unlock(p1);
+  } catch (e) { err.textContent = 'Encryption failed'; }
+}
+
+async function doLogin() {
+  const pw = document.getElementById('pwLogin').value;
+  const err = document.getElementById('loginError');
+  if (!pw) { err.textContent = 'Enter your password'; return; }
+  err.textContent = 'Decrypting...';
+  try { await unlock(pw); err.textContent = ''; } catch (e) { err.textContent = 'Wrong password'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initGate();
+  document.getElementById('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    doLogin();
+  });
+});
+
+function doReset() {
+  if (!confirm('This will clear your encrypted data. You\'ll need to set a new password. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function doLock() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('setupForm').style.display = 'none';
+  document.getElementById('pwLogin').value = '';
+  document.getElementById('pwLogin').focus();
+}
+
+// ===================================================================
+// UNLOCK & INIT APP
+// ===================================================================
+let sb = null;
+
+async function unlock(password) {
+  const vault = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const json = await decryptData(password, vault);
+  const creds = JSON.parse(json);
+
+  sb = window.supabase.createClient(creds.url, creds.key);
+
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  await loadProjects();
+  buildProjectCards();
+  populateIdeaProjectSelect();
+  await refreshAll();
+
+  // Realtime subscription
+  sb.channel('tasks-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); populateIdeaProjectSelect(); await refreshAll(); })
+    .subscribe();
+}
+
+// ===================================================================
+// PROJECTS (loaded from Supabase)
+// ===================================================================
+let PROJECTS = [];
+
+function getArchivedProjectIds() {
+  try { return JSON.parse(localStorage.getItem(ARCHIVED_PROJECTS_KEY) || '[]'); } catch { return []; }
+}
+function saveArchivedProjectIds(ids) { localStorage.setItem(ARCHIVED_PROJECTS_KEY, JSON.stringify(ids)); }
+
+function isShowArchived() { return localStorage.getItem(SHOW_ARCHIVED_KEY) === 'true'; }
+
+function toggleShowArchived() {
+  const current = isShowArchived();
+  localStorage.setItem(SHOW_ARCHIVED_KEY, String(!current));
+  buildProjectCards();
+  renderArchivedProjects();
+}
+
+async function loadProjects() {
+  const { data, error } = await sb.from('projects').select('*').order('sort_order', { ascending: true });
+  if (error) { showToast('Failed to load projects', 'error'); return; }
+  PROJECTS = (data || []).map(p => ({
+    ...p,
+    links: typeof p.links === 'string' ? JSON.parse(p.links) : (p.links || [])
+  }));
+}
+
+function archiveProject(id) {
+  const ids = getArchivedProjectIds();
+  if (!ids.includes(id)) { ids.push(id); saveArchivedProjectIds(ids); }
+  buildProjectCards();
+  renderArchivedProjects();
+  showToast('Project archived', 'info');
+}
+
+function unarchiveProject(id) {
+  const ids = getArchivedProjectIds().filter(i => i !== id);
+  saveArchivedProjectIds(ids);
+  buildProjectCards();
+  renderArchivedProjects();
+  showToast('Project restored', 'success');
+}
+
+function renderArchivedProjects() {
+  const section = document.getElementById('archivedProjectsSection');
+  const list = document.getElementById('archivedProjectsList');
+  const archivedIds = getArchivedProjectIds();
+  const archivedProjects = PROJECTS.filter(p => archivedIds.includes(p.id));
+
+  if (!archivedProjects.length || !isShowArchived()) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  list.innerHTML = archivedProjects.map(p => `
+    <div class="archived-project-item">
+      <span>${esc(p.name)} <span style="color:var(--muted);font-size:0.72rem;">${esc(p.tech || '')}</span></span>
+      <button onclick="unarchiveProject('${p.id}')">Restore</button>
+    </div>
+  `).join('');
+}
+
+function buildProjectCards() {
+  const grid = document.getElementById('projectGrid');
+  const archivedIds = getArchivedProjectIds();
+  const visibleProjects = PROJECTS.filter(p => !archivedIds.includes(p.id));
+
+  grid.innerHTML = visibleProjects.map(p => `
+    <div class="project-card" data-project="${p.id}">
+      <div class="project-accent" style="background:${p.color}"></div>
+      <div class="project-card-header">
+        <div class="project-info">
+          <h3>${esc(p.name)}</h3>
+          <span class="tech">${esc(p.tech || '')}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
+          <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
+        </div>
+      </div>
+      <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">Loading...</p></div>
+      <div class="archive-toggle" onclick="toggleArchivedTasks('${p.id}')" id="archive-toggle-${p.id}" style="display:none;">
+        <span class="arrow" id="archive-arrow-${p.id}">▶</span> Archived tasks (<span id="archive-count-${p.id}">0</span>)
+      </div>
+      <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
+      <div class="add-task">
+        <input type="text" placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="if(event.key==='Enter')addTask('${p.id}')" oninput="updateCharCounter(this)">
+        <button onclick="addTask('${p.id}')">+</button>
+      </div>
+      <div class="char-counter" id="counter-${p.id}"></div>
+    </div>
+  `).join('');
+
+  renderArchivedProjects();
+}
+
+function updateCharCounter(input) {
+  const projectId = input.id.replace('input-', '');
+  const counter = document.getElementById(`counter-${projectId}`);
+  if (!counter) return;
+  const len = input.value.length;
+  if (len === 0) { counter.textContent = ''; return; }
+  counter.textContent = `${len}/${MAX_TEXT_LEN}`;
+  counter.className = 'char-counter' + (len > MAX_TEXT_LEN * 0.9 ? ' danger' : len > MAX_TEXT_LEN * 0.7 ? ' warn' : '');
+}
+
+function populateIdeaProjectSelect() {
+  const sel = document.getElementById('ideaProject');
+  sel.innerHTML = '<option value="">No project</option>';
+  PROJECTS.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+}
+
+// ===================================================================
+// SUPABASE TASK CRUD
+// ===================================================================
+let allTasks = [];
+
+async function refreshAll() {
+  if (!sb) return;
+  const { data, error } = await sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+  if (error) { showToast('Failed to load tasks', 'error'); return; }
+  allTasks = data || [];
+  renderAllTasks();
+  renderIdeas();
+  updateStats();
+}
+
+function renderAllTasks() {
+  const archivedIds = getArchivedProjectIds();
+  const visibleProjects = PROJECTS.filter(p => !archivedIds.includes(p.id));
+
+  visibleProjects.forEach(p => {
+    const container = document.getElementById(`tasks-${p.id}`);
+    if (!container) return;
+    const projectTasks = allTasks.filter(t => t.project === p.id);
+    const activeTasks = projectTasks.filter(t => t.status !== 'approved');
+    const archivedTasks = projectTasks.filter(t => t.status === 'approved');
+
+    // Active tasks
+    if (!activeTasks.length) { container.innerHTML = '<p class="empty-msg">No tasks yet</p>'; }
+    else { container.innerHTML = activeTasks.map(t => renderTask(t)).join(''); initDragDrop(container, p.id); }
+
+    // Archived tasks toggle
+    const toggleEl = document.getElementById(`archive-toggle-${p.id}`);
+    const archivedContainer = document.getElementById(`archived-tasks-${p.id}`);
+    const countEl = document.getElementById(`archive-count-${p.id}`);
+    if (archivedTasks.length > 0) {
+      toggleEl.style.display = 'flex';
+      countEl.textContent = archivedTasks.length;
+      archivedContainer.innerHTML = archivedTasks.map(t => renderTask(t, true)).join('');
+    } else {
+      toggleEl.style.display = 'none';
+      archivedContainer.innerHTML = '';
+      archivedContainer.classList.remove('visible');
+    }
+  });
+}
+
+function toggleArchivedTasks(projectId) {
+  const container = document.getElementById(`archived-tasks-${projectId}`);
+  const arrow = document.getElementById(`archive-arrow-${projectId}`);
+  container.classList.toggle('visible');
+  arrow.classList.toggle('open');
+}
+
+function truncateWithShowMore(text, maxLen, id, field) {
+  if (!text || text.length <= maxLen) return esc(text || '');
+  const truncated = esc(text.slice(0, maxLen)) + '…';
+  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${esc(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
+}
+
+function expandMeta(id, field) {
+  document.getElementById(`meta-${id}-${field}-short`).style.display = 'none';
+  document.getElementById(`meta-${id}-${field}-full`).style.display = 'inline';
+}
+function collapseMeta(id, field) {
+  document.getElementById(`meta-${id}-${field}-short`).style.display = 'inline';
+  document.getElementById(`meta-${id}-${field}-full`).style.display = 'none';
+}
+
+function renderTask(t, isArchived = false) {
+  let meta = '';
+  if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">📋 Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
+  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
+
+  let actionBtns = '';
+  if (t.status === 'review') {
+    actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">✅</button>`;
+    actionBtns += `<button onclick="updateTaskStatus('${t.id}','revision')" title="Request Revision">🔄</button>`;
+  }
+  if (t.status === 'approved' && isArchived) {
+    actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
+  }
+  actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
+  actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
+
+  const draggable = !isArchived ? 'draggable="true"' : '';
+  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
+
+  return `<div class="task-item" ${draggable} data-task-id="${t.id}">
+    <div class="task-row">
+      ${dragHandle}
+      <span class="status-dot ${t.status}"></span>
+      <span class="task-text">${esc(t.text)}</span>
+      <div class="task-actions">${actionBtns}</div>
+    </div>
+    ${meta ? `<div class="task-meta">${meta}</div>` : ''}
+  </div>`;
+}
+
+// ===================================================================
+// DRAG & DROP REORDER
+// ===================================================================
+function initDragDrop(container, projectId) {
+  const items = container.querySelectorAll('.task-item[draggable="true"]');
+  items.forEach(item => {
+    item.addEventListener('dragstart', e => {
+      item.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', item.dataset.taskId);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      container.querySelectorAll('.task-item').forEach(i => i.classList.remove('drag-over'));
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const dragging = container.querySelector('.dragging');
+      if (dragging && item !== dragging) {
+        item.classList.add('drag-over');
+      }
+    });
+    item.addEventListener('dragleave', () => { item.classList.remove('drag-over'); });
+    item.addEventListener('drop', async e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const targetId = item.dataset.taskId;
+      if (draggedId === targetId) return;
+      await reorderTasks(projectId, draggedId, targetId);
+    });
+  });
+}
+
+async function reorderTasks(projectId, draggedId, targetId) {
+  const projectTasks = allTasks.filter(t => t.project === projectId && t.status !== 'approved');
+  const draggedIdx = projectTasks.findIndex(t => t.id === draggedId);
+  const targetIdx = projectTasks.findIndex(t => t.id === targetId);
+  if (draggedIdx === -1 || targetIdx === -1) return;
+
+  // Reorder in array
+  const [dragged] = projectTasks.splice(draggedIdx, 1);
+  projectTasks.splice(targetIdx, 0, dragged);
+
+  // Update sort_order for all tasks in this project
+  const updates = projectTasks.map((t, i) => ({ id: t.id, sort_order: i }));
+
+  // Batch update (individual calls since Supabase JS doesn't support batch upsert easily)
+  for (const u of updates) {
+    await sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id);
+  }
+  await refreshAll();
+  showToast('Reordered', 'success');
+}
+
+async function addTask(projectId) {
+  const input = document.getElementById(`input-${projectId}`);
+  const text = input.value.trim();
+  if (!text) return;
+  if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
+  input.value = '';
+  const counter = document.getElementById(`counter-${projectId}`);
+  if (counter) counter.textContent = '';
+  // Get max sort_order for this project
+  const projectTasks = allTasks.filter(t => t.project === projectId && t.status !== 'approved');
+  const maxOrder = projectTasks.length > 0 ? Math.max(...projectTasks.map(t => t.sort_order || 0)) + 1 : 0;
+  const { error } = await sb.from('tasks').insert({ project: projectId, text, status: 'todo', sort_order: maxOrder });
+  if (error) showToast('Failed to add task', 'error');
+  else { showToast('Task added', 'success'); await refreshAll(); }
+}
+
+async function updateTaskStatus(id, status) {
+  const { error } = await sb.from('tasks').update({ status }).eq('id', id);
+  if (error) showToast('Update failed', 'error');
+  else { showToast(`Status → ${status}`, 'success'); await refreshAll(); }
+}
+
+async function promptEditTask(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  const newText = prompt('Edit task:', task.text);
+  if (newText !== null && newText.trim()) {
+    const trimmed = newText.trim().slice(0, MAX_TEXT_LEN);
+    const { error } = await sb.from('tasks').update({ text: trimmed }).eq('id', id);
+    if (error) showToast('Update failed', 'error');
+    else { showToast('Task updated', 'success'); await refreshAll(); }
+  }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) showToast('Delete failed', 'error');
+  else { showToast('Task deleted', 'success'); await refreshAll(); }
+}
+
+// ===================================================================
+// IDEAS (localStorage + ship to Supabase)
+// ===================================================================
+function getIdeas() { try { return JSON.parse(localStorage.getItem(IDEAS_KEY) || '[]'); } catch { return []; } }
+function saveIdeas(ideas) { localStorage.setItem(IDEAS_KEY, JSON.stringify(ideas)); }
+
+function addIdea() {
+  const input = document.getElementById('ideaInput');
+  const project = document.getElementById('ideaProject').value;
+  const text = input.value.trim();
+  if (!text) return;
+  if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
+  input.value = '';
+  const ideas = getIdeas();
+  ideas.push({ id: crypto.randomUUID(), text, project: project || 'general', status: 'idea', created: Date.now() });
+  saveIdeas(ideas);
+  renderIdeas();
+  updateStats();
+  showToast('Idea added 💡', 'success');
+}
+
+function renderIdeas() {
+  const container = document.getElementById('ideaList');
+  const ideas = getIdeas();
+  if (!ideas.length) { container.innerHTML = '<p class="empty-msg">No ideas yet — throw some in!</p>'; return; }
+  container.innerHTML = ideas.map(idea => {
+    const projName = PROJECTS.find(p => p.id === idea.project)?.name || idea.project;
+    let statusTag = '';
+    if (idea.status === 'shipped') statusTag = '<span style="color:var(--accent);font-size:0.72rem;font-weight:600;margin-right:6px;">🪶 Shipped</span>';
+    if (idea.status === 'plan-requested') statusTag = '<span style="color:var(--yellow);font-size:0.72rem;font-weight:600;margin-right:6px;">📋 Plan Requested</span>';
+    return `<div class="idea-item">
+      ${statusTag}
+      <span class="idea-text">${esc(idea.text)}</span>
+      <span class="idea-project">${esc(projName)}</span>
+      <div class="idea-actions">
+        ${idea.status === 'idea' ? `
+          <button class="ship-btn" onclick="shipIdea('${idea.id}')" title="Ship to Claw">🪶 Ship</button>
+          <button class="plan-btn" onclick="planIdea('${idea.id}')" title="Request Plan">📋 Plan</button>
+        ` : ''}
+        <button class="del-btn" onclick="deleteIdea('${idea.id}')" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function shipIdea(id) {
+  const ideas = getIdeas();
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  const { error } = await sb.from('tasks').insert({ project: idea.project, text: idea.text, status: 'todo' });
+  if (error) { showToast('Failed to ship', 'error'); return; }
+  idea.status = 'shipped';
+  saveIdeas(ideas);
+  renderIdeas();
+  updateStats();
+  await refreshAll();
+  showToast('Shipped 🪶 — task created', 'success');
+}
+
+async function planIdea(id) {
+  const ideas = getIdeas();
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  const { error } = await sb.from('tasks').insert({ project: idea.project, text: '[PLAN REQUEST] ' + idea.text, status: 'todo' });
+  if (error) { showToast('Failed', 'error'); return; }
+  idea.status = 'plan-requested';
+  saveIdeas(ideas);
+  renderIdeas();
+  updateStats();
+  await refreshAll();
+  showToast('Plan requested 📋 — task created', 'success');
+}
+
+function deleteIdea(id) {
+  const ideas = getIdeas().filter(i => i.id !== id);
+  saveIdeas(ideas);
+  renderIdeas();
+  updateStats();
+  showToast('Idea removed', 'info');
+}
+
+// ===================================================================
+// STATS
+// ===================================================================
+function updateStats() {
+  const tasks = allTasks;
+  const ideas = getIdeas();
+  const archivedIds = getArchivedProjectIds();
+  document.getElementById('statProjects').textContent = PROJECTS.filter(p => !archivedIds.includes(p.id)).length;
+  document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved').length;
+  document.getElementById('statReview').textContent = tasks.filter(t => t.status === 'review').length;
+  document.getElementById('statIdeas').textContent = ideas.length;
+}
+
+// ===================================================================
+// UTILS
+// ===================================================================
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ===================================================================
+// THEME
+// ===================================================================
+function getSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || getSystemTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+// Init theme on page load
+(function() {
+  const stored = localStorage.getItem(THEME_KEY);
+  applyTheme(stored || getSystemTheme());
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    if (!localStorage.getItem(THEME_KEY)) applyTheme(getSystemTheme());
+  });
+})();
+</script>
+</body>
+</html>
