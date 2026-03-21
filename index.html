@@ -60,7 +60,7 @@ input,select,button{font-family:inherit;}
 
 /* ===== APP LAYOUT ===== */
 #app{display:none;min-height:100vh;}
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .app-header h1{font-size:1.15rem;font-weight:600;display:flex;align-items:center;gap:8px;letter-spacing:-0.3px;}
 .header-actions{display:flex;gap:6px;align-items:center;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
@@ -68,7 +68,7 @@ input,select,button{font-family:inherit;}
 .btn-lock:hover{border-color:var(--red);color:var(--red);}
 
 /* ===== STATS ===== */
-.stats-bar{display:flex;gap:32px;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);}
+.stats-bar{display:flex;gap:32px;padding:16px 12px;background:var(--surface);border-bottom:1px solid var(--border);}
 .stat{display:flex;flex-direction:column;}
 .stat-value{font-size:1.6rem;font-weight:700;letter-spacing:-0.5px;}
 .stat-value.blue{color:var(--blue);}
@@ -77,11 +77,11 @@ input,select,button{font-family:inherit;}
 .stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;}
 
 /* ===== LEGEND ===== */
-.legend{display:flex;gap:18px;padding:10px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.legend{display:flex;gap:18px;padding:10px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--muted);}
 
 /* ===== MAIN CONTENT ===== */
-.main-content{padding:24px;max-width:1440px;margin:0 auto;}
+.main-content{padding:12px;max-width:1440px;margin:0 auto;}
 
 /* ===== STATUS DOT ===== */
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;}
@@ -192,10 +192,10 @@ input,select,button{font-family:inherit;}
   .stats-bar{gap:20px;flex-wrap:wrap;}
   .idea-form{flex-direction:column;}
   .idea-form select{min-width:auto;}
-  .app-header{padding:12px 16px;}
-  .main-content{padding:16px;}
-  .stats-bar{padding:14px 16px;}
-  .legend{padding:8px 16px;}
+  .app-header{padding:12px 8px;}
+  .main-content{padding:8px;}
+  .stats-bar{padding:14px 8px;}
+  .legend{padding:8px 8px;}
 }
 </style>
 </head>
@@ -261,7 +261,7 @@ input,select,button{font-family:inherit;}
     <div class="ideas-section">
       <div class="section-title">💡 Ideas Inbox</div>
       <div class="idea-form">
-        <input type="text" id="ideaInput" placeholder="Throw an idea in..." maxlength="200" onkeydown="if(event.key==='Enter')addIdea()">
+        <input type="text" id="ideaInput" placeholder="Throw an idea in..." maxlength="5000" onkeydown="if(event.key==='Enter')addIdea()">
         <select id="ideaProject"><option value="">No project</option></select>
         <button onclick="addIdea()">+ Add Idea</button>
       </div>
@@ -290,7 +290,7 @@ const IDEAS_KEY = 'claw_cc_ideas';
 const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
 const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
-const MAX_TEXT_LEN = 200;
+const MAX_TEXT_LEN = 5000;
 const MAX_META_DISPLAY = 500;
 
 // ===================================================================
