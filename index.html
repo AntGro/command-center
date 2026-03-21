@@ -114,7 +114,13 @@ input,select,button{font-family:inherit;}
 
 /* ===== PROJECT GRID ===== */
 .project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
-.project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow 0.2s;}
+.project-card[draggable="true"]{cursor:default;}
+.project-card.dragging{opacity:0.4;border:2px dashed var(--accent);}
+.project-card.drag-over{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
+.project-drag-handle{cursor:grab;color:var(--muted);font-size:0.82rem;user-select:none;padding:2px 4px;border-radius:4px;transition:color 0.2s;}
+.project-drag-handle:active{cursor:grabbing;}
+.project-drag-handle:hover{color:var(--text);}
 .project-accent{height:3px;width:100%;}
 .project-card-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .project-info h3{font-size:0.95rem;font-weight:600;margin-bottom:2px;letter-spacing:-0.2px;}
@@ -197,7 +203,18 @@ input,select,button{font-family:inherit;}
 /* ===== ADD PROJECT MODAL ===== */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
 .modal-overlay.visible{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-height:85vh;overflow-y:auto;}
+
+/* ===== EXPANDED TASK MODAL ===== */
+.task-modal{max-width:640px;}
+.task-modal h2{font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.task-modal .task-full-text{font-size:0.95rem;line-height:1.5;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);margin-bottom:12px;}
+.task-modal .task-full-meta{margin-bottom:12px;}
+.task-modal .task-full-meta-item{font-size:0.88rem;color:var(--muted);padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--accent);line-height:1.5;margin-bottom:8px;word-break:break-word;}
+.task-modal .task-full-meta-item a{color:var(--accent);text-decoration:underline;}
+.task-modal .task-full-meta-item.response{border-left-color:var(--yellow);}
+.task-expand-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;color:var(--muted);}
+.task-expand-btn:hover{background:var(--surface2);color:var(--text);}
 .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;}
 .modal label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:4px;margin-top:10px;}
 .modal input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;}
@@ -326,6 +343,33 @@ input,select,button{font-family:inherit;}
     </div>
   </div>
 
+  <!-- Edit Project Modal -->
+  <div class="modal-overlay" id="editProjectModal">
+    <div class="modal">
+      <h2>✏️ Edit Project</h2>
+      <input type="hidden" id="editProjectId">
+      <label>Name</label>
+      <input type="text" id="editProjectName">
+      <label>Color</label>
+      <input type="color" id="editProjectColor" style="height:36px;padding:2px;">
+      <label>Tech Stack</label>
+      <input type="text" id="editProjectTech">
+      <label>GitHub URL</label>
+      <input type="url" id="editProjectGithub" placeholder="https://github.com/...">
+      <label>Live URL</label>
+      <input type="url" id="editProjectLive" placeholder="https://...">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeEditProjectModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditProject()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expanded Task Modal -->
+  <div class="modal-overlay" id="taskExpandModal">
+    <div class="modal task-modal" id="taskExpandContent"></div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -409,13 +453,14 @@ async function connect(url, key) {
 
   await loadProjects();
   buildProjectCards();
+  initProjectDragDrop();
   populateIdeaProjectSelect();
   await refreshAll();
 
   // Realtime subscription
   sb.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); populateIdeaProjectSelect(); await refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); populateIdeaProjectSelect(); await refreshAll(); })
     .subscribe();
 }
 
@@ -497,15 +542,19 @@ function buildProjectCards() {
   const visibleProjects = PROJECTS.filter(p => !archivedIds.includes(p.id));
 
   grid.innerHTML = visibleProjects.map(p => `
-    <div class="project-card" data-project="${p.id}">
+    <div class="project-card" data-project="${p.id}" draggable="true">
       <div class="project-accent" style="background:${p.color}"></div>
       <div class="project-card-header">
-        <div class="project-info">
-          <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
-          <span class="tech">${esc(p.tech || '')}</span>
+        <div style="display:flex;align-items:flex-start;gap:6px;">
+          <span class="project-drag-handle" title="Drag to reorder">⠿</span>
+          <div class="project-info">
+            <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
+            <span class="tech">${esc(p.tech || '')}</span>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
+          <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">✏️</button>
           <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
         </div>
       </div>
@@ -623,6 +672,7 @@ function renderTask(t, isArchived = false) {
   if (t.status === 'approved' && isArchived) {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
   }
+  actionBtns += `<button class="task-expand-btn" onclick="expandTask('${t.id}')" title="Expand">🔍</button>`;
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
 
@@ -892,9 +942,6 @@ function closeAddProjectModal() {
 document.addEventListener('click', e => {
   if (e.target.id === 'addProjectModal') closeAddProjectModal();
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeAddProjectModal();
-});
 
 async function saveNewProject() {
   const id = document.getElementById('newProjectId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -923,6 +970,146 @@ async function saveNewProject() {
   await refreshAll();
   showToast(`Project "${name}" created`, 'success');
 }
+
+// ===================================================================
+// PROJECT DRAG & DROP REORDER
+// ===================================================================
+function initProjectDragDrop() {
+  const grid = document.getElementById('projectGrid');
+  const cards = grid.querySelectorAll('.project-card[draggable="true"]');
+  cards.forEach(card => {
+    card.addEventListener('dragstart', e => {
+      // Only start drag if it originated from the drag handle
+      if (!e.target.classList.contains('project-drag-handle') && !e.target.closest('.project-drag-handle')) {
+        e.preventDefault(); return;
+      }
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', card.dataset.project);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      grid.querySelectorAll('.project-card').forEach(c => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const dragging = grid.querySelector('.dragging');
+      if (dragging && card !== dragging) card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', async e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const targetId = card.dataset.project;
+      if (draggedId === targetId) return;
+      await reorderProjects(draggedId, targetId);
+    });
+  });
+}
+
+async function reorderProjects(draggedId, targetId) {
+  const archivedIds = getArchivedProjectIds();
+  const visible = PROJECTS.filter(p => !archivedIds.includes(p.id));
+  const draggedIdx = visible.findIndex(p => p.id === draggedId);
+  const targetIdx = visible.findIndex(p => p.id === targetId);
+  if (draggedIdx === -1 || targetIdx === -1) return;
+  const [dragged] = visible.splice(draggedIdx, 1);
+  visible.splice(targetIdx, 0, dragged);
+  for (let i = 0; i < visible.length; i++) {
+    await sb.from('projects').update({ sort_order: i }).eq('id', visible[i].id);
+  }
+  await loadProjects();
+  buildProjectCards();
+  initProjectDragDrop();
+  await refreshAll();
+  showToast('Projects reordered', 'success');
+}
+
+// ===================================================================
+// EDIT PROJECT MODAL
+// ===================================================================
+function openEditProjectModal(id) {
+  const p = PROJECTS.find(pr => pr.id === id);
+  if (!p) return;
+  document.getElementById('editProjectId').value = p.id;
+  document.getElementById('editProjectName').value = p.name;
+  document.getElementById('editProjectColor').value = p.color;
+  document.getElementById('editProjectTech').value = p.tech || '';
+  const github = (p.links || []).find(l => l.label === 'GitHub');
+  const live = (p.links || []).find(l => l.label === 'Live' || l.label === 'Play');
+  document.getElementById('editProjectGithub').value = github ? github.url : '';
+  document.getElementById('editProjectLive').value = live ? live.url : '';
+  document.getElementById('editProjectModal').classList.add('visible');
+}
+
+function closeEditProjectModal() {
+  document.getElementById('editProjectModal').classList.remove('visible');
+}
+
+async function saveEditProject() {
+  const id = document.getElementById('editProjectId').value;
+  const name = document.getElementById('editProjectName').value.trim();
+  const color = document.getElementById('editProjectColor').value;
+  const tech = document.getElementById('editProjectTech').value.trim();
+  const github = document.getElementById('editProjectGithub').value.trim();
+  const live = document.getElementById('editProjectLive').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+  const links = [];
+  if (github) links.push({ label: 'GitHub', url: github });
+  if (live) links.push({ label: 'Live', url: live });
+  const { error } = await sb.from('projects').update({ name, color, tech, links }).eq('id', id);
+  if (error) { showToast('Update failed: ' + (error.message || ''), 'error'); return; }
+  closeEditProjectModal();
+  await loadProjects();
+  buildProjectCards();
+  initProjectDragDrop();
+  populateIdeaProjectSelect();
+  await refreshAll();
+  showToast(`Project "${name}" updated`, 'success');
+}
+
+// ===================================================================
+// EXPAND TASK VIEW
+// ===================================================================
+function expandTask(id) {
+  const t = allTasks.find(task => task.id === id);
+  if (!t) return;
+  const project = PROJECTS.find(p => p.id === t.project);
+  const content = document.getElementById('taskExpandContent');
+  let meta = '';
+  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">📋 Plan:</strong><br>${linkify(esc(t.plan_note))}</div>`;
+  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">🪶 Claw:</strong><br>${linkify(esc(t.hatch_response))}</div>`;
+
+  let actions = '';
+  if (t.status === 'review') {
+    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">✅ Approve</button><button class="btn" onclick="updateTaskStatus('${t.id}','revision');closeTaskExpandModal();">🔄 Revision</button></div>`;
+  }
+
+  content.innerHTML = `
+    <h2><span class="status-dot ${t.status}"></span> ${project ? esc(project.name) : esc(t.project)}</h2>
+    <div class="task-full-text">${esc(t.text)}</div>
+    ${meta ? `<div class="task-full-meta">${meta}</div>` : ''}
+    <div style="font-size:0.72rem;color:var(--muted);">Created: ${new Date(t.created_at).toLocaleString()} · Status: ${t.status}</div>
+    ${actions}
+    <div style="margin-top:16px;text-align:right;"><button class="btn" onclick="closeTaskExpandModal()">Close</button></div>
+  `;
+  document.getElementById('taskExpandModal').classList.add('visible');
+}
+
+function closeTaskExpandModal() {
+  document.getElementById('taskExpandModal').classList.remove('visible');
+}
+
+// Close modals on overlay click / Escape
+document.addEventListener('click', e => {
+  if (e.target.id === 'editProjectModal') closeEditProjectModal();
+  if (e.target.id === 'taskExpandModal') closeTaskExpandModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); }
+});
 
 // ===================================================================
 // FOOTER STATS
