@@ -131,6 +131,7 @@ input,select,button{font-family:inherit;}
 .task-meta{margin-top:5px;padding-left:18px;display:flex;flex-direction:column;gap:3px;}
 .task-meta-item{font-size:0.78rem;color:var(--muted);padding:5px 9px;background:var(--bg);border-radius:5px;border-left:2px solid var(--accent);line-height:1.4;}
 .task-meta-item.response{border-left-color:var(--yellow);}
+.task-meta-item a{color:var(--accent);text-decoration:underline;word-break:break-all;}
 .task-meta-label{font-weight:600;margin-right:5px;}
 .task-meta-label.plan{color:var(--accent);}
 .task-meta-label.claw{color:var(--yellow);}
@@ -577,9 +578,9 @@ function toggleArchivedTasks(projectId) {
 }
 
 function truncateWithShowMore(text, maxLen, id, field) {
-  if (!text || text.length <= maxLen) return esc(text || '');
-  const truncated = esc(text.slice(0, maxLen)) + '…';
-  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${esc(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
+  if (!text || text.length <= maxLen) return linkify(esc(text || ''));
+  const truncated = linkify(esc(text.slice(0, maxLen))) + '…';
+  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${linkify(esc(text))} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
 }
 
 function expandMeta(id, field) {
@@ -842,6 +843,7 @@ function updateStats() {
 // UTILS
 // ===================================================================
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function linkify(html) { return html.replace(/https?:\/\/[^\s<&]+/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`); }
 
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
