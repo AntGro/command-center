@@ -334,6 +334,14 @@ function initGate() {
   if (vault) {
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('pwLogin').focus();
+    // Auto-fill from Chrome saved credentials
+    if (window.PasswordCredential) {
+      navigator.credentials.get({ password: true }).then(cred => {
+        if (cred && cred.password) {
+          document.getElementById('pwLogin').value = cred.password;
+        }
+      }).catch(() => {});
+    }
   } else {
     document.getElementById('setupForm').style.display = 'block';
     document.getElementById('sbUrl').focus();
@@ -365,7 +373,17 @@ async function doLogin() {
   const err = document.getElementById('loginError');
   if (!pw) { err.textContent = 'Enter your password'; return; }
   err.textContent = 'Decrypting...';
-  try { await unlock(pw); err.textContent = ''; } catch (e) { err.textContent = 'Wrong password'; }
+  try {
+    await unlock(pw);
+    err.textContent = '';
+    // Trigger Chrome password save via Credential Management API
+    if (window.PasswordCredential) {
+      try {
+        const cred = new PasswordCredential({ id: 'command-center', password: pw });
+        await navigator.credentials.store(cred);
+      } catch(e) {}
+    }
+  } catch (e) { err.textContent = 'Wrong password'; }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
