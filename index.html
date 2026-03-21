@@ -182,6 +182,29 @@ input,select,button{font-family:inherit;}
 .archived-project-item button{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.78rem;}
 .archived-project-item button:hover{border-color:var(--accent);color:var(--accent);}
 
+/* ===== FOOTER STATS ===== */
+.footer-stats{padding:12px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.72rem;color:var(--muted);}
+.footer-stats a{color:var(--accent);text-decoration:none;}
+.footer-stats a:hover{text-decoration:underline;}
+.footer-stats .db-stats{display:flex;gap:16px;}
+.footer-stats .db-stat{display:flex;align-items:center;gap:4px;}
+
+/* ===== ADD PROJECT MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.visible{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;}
+.modal label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:4px;margin-top:10px;}
+.modal input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;}
+.modal input:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
+.modal-actions button{padding:8px 18px;border-radius:7px;font-size:0.86rem;font-weight:600;cursor:pointer;border:none;}
+.modal-actions .modal-cancel{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.modal-actions .modal-save{background:var(--accent);color:#fff;}
+
+/* ===== INLINE EDIT ===== */
+.task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:860px){
   .project-grid{grid-template-columns:1fr;}
@@ -219,6 +242,7 @@ input,select,button{font-family:inherit;}
   <header class="app-header">
     <h1>🪶 Command Center</h1>
     <div class="header-actions">
+      <button class="btn" onclick="openAddProjectModal()" title="Add project">➕</button>
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="btn" onclick="refreshAll()">↻ Refresh</button>
@@ -259,6 +283,38 @@ input,select,button{font-family:inherit;}
     <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
       <div class="section-title">📦 Archived Projects</div>
       <div id="archivedProjectsList"></div>
+    </div>
+  </div>
+
+  <!-- Footer Stats -->
+  <div class="footer-stats" id="footerStats">
+    <div class="db-stats">
+      <div class="db-stat">📊 Tasks: <span id="dbTaskCount">—</span></div>
+      <div class="db-stat">📁 Projects: <span id="dbProjectCount">—</span></div>
+    </div>
+    <div>Free tier: 500MB DB · 50K MAU · <a href="" id="supabaseDashLink" target="_blank">Supabase Dashboard ↗</a></div>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal-overlay" id="addProjectModal">
+    <div class="modal">
+      <h2>➕ Add Project</h2>
+      <label>ID (slug, no spaces)</label>
+      <input type="text" id="newProjectId" placeholder="my-project">
+      <label>Name</label>
+      <input type="text" id="newProjectName" placeholder="My Project">
+      <label>Color</label>
+      <input type="color" id="newProjectColor" value="#646cff" style="height:36px;padding:2px;">
+      <label>Tech Stack</label>
+      <input type="text" id="newProjectTech" placeholder="e.g. React · Node · Vercel">
+      <label>GitHub URL (optional)</label>
+      <input type="url" id="newProjectGithub" placeholder="https://github.com/...">
+      <label>Live URL (optional)</label>
+      <input type="url" id="newProjectLive" placeholder="https://...">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeAddProjectModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewProject()">Create</button>
+      </div>
     </div>
   </div>
 
@@ -336,6 +392,10 @@ async function connect(url, key) {
 
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+
+  // Set Supabase dashboard link
+  const projectRef = url.replace('https://', '').replace('.supabase.co', '');
+  document.getElementById('supabaseDashLink').href = `https://supabase.com/dashboard/project/${projectRef}`;
 
   await loadProjects();
   buildProjectCards();
@@ -475,6 +535,7 @@ async function refreshAll() {
   renderAllTasks();
   renderIdeas();
   updateStats();
+  updateFooterStats();
 }
 
 function renderAllTasks() {
@@ -641,13 +702,39 @@ async function updateTaskStatus(id, status) {
 async function promptEditTask(id) {
   const task = allTasks.find(t => t.id === id);
   if (!task) return;
-  const newText = prompt('Edit task:', task.text);
-  if (newText !== null && newText.trim()) {
-    const trimmed = newText.trim().slice(0, MAX_TEXT_LEN);
-    const { error } = await sb.from('tasks').update({ text: trimmed }).eq('id', id);
-    if (error) showToast('Update failed', 'error');
-    else { showToast('Task updated', 'success'); await refreshAll(); }
-  }
+  const taskEl = document.querySelector(`.task-item[data-task-id="${id}"]`);
+  if (!taskEl) return;
+  const textSpan = taskEl.querySelector('.task-text');
+  if (!textSpan || textSpan.dataset.editing) return;
+
+  const originalText = task.text;
+  textSpan.dataset.editing = 'true';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'task-edit-input';
+  input.value = originalText;
+  input.maxLength = MAX_TEXT_LEN;
+
+  const finishEdit = async (save) => {
+    if (save && input.value.trim() && input.value.trim() !== originalText) {
+      const trimmed = input.value.trim().slice(0, MAX_TEXT_LEN);
+      const { error } = await sb.from('tasks').update({ text: trimmed }).eq('id', id);
+      if (error) showToast('Update failed', 'error');
+      else showToast('Task updated', 'success');
+    }
+    delete textSpan.dataset.editing;
+    await refreshAll();
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finishEdit(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+  });
+  input.addEventListener('blur', () => finishEdit(true));
+
+  textSpan.replaceWith(input);
+  input.focus();
+  input.select();
 }
 
 async function deleteTask(id) {
@@ -761,6 +848,74 @@ function showToast(msg, type = 'info') {
   t.textContent = msg;
   t.className = `toast show ${type}`;
   setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ===================================================================
+// ADD PROJECT MODAL
+// ===================================================================
+function openAddProjectModal() {
+  document.getElementById('addProjectModal').classList.add('visible');
+  document.getElementById('newProjectId').value = '';
+  document.getElementById('newProjectName').value = '';
+  document.getElementById('newProjectColor').value = '#646cff';
+  document.getElementById('newProjectTech').value = '';
+  document.getElementById('newProjectGithub').value = '';
+  document.getElementById('newProjectLive').value = '';
+  document.getElementById('newProjectId').focus();
+}
+
+function closeAddProjectModal() {
+  document.getElementById('addProjectModal').classList.remove('visible');
+}
+
+// Close modal on overlay click
+document.addEventListener('click', e => {
+  if (e.target.id === 'addProjectModal') closeAddProjectModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAddProjectModal();
+});
+
+async function saveNewProject() {
+  const id = document.getElementById('newProjectId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const name = document.getElementById('newProjectName').value.trim();
+  const color = document.getElementById('newProjectColor').value;
+  const tech = document.getElementById('newProjectTech').value.trim();
+  const github = document.getElementById('newProjectGithub').value.trim();
+  const live = document.getElementById('newProjectLive').value.trim();
+
+  if (!id || !name) { showToast('ID and Name are required', 'error'); return; }
+  if (PROJECTS.find(p => p.id === id)) { showToast('Project ID already exists', 'error'); return; }
+
+  const links = [];
+  if (github) links.push({ label: 'GitHub', url: github });
+  if (live) links.push({ label: 'Live', url: live });
+
+  const maxOrder = PROJECTS.length > 0 ? Math.max(...PROJECTS.map(p => p.sort_order || 0)) + 1 : 0;
+
+  const { error } = await sb.from('projects').insert({ id, name, color, tech, links, sort_order: maxOrder });
+  if (error) { showToast('Failed to create project: ' + (error.message || ''), 'error'); return; }
+
+  closeAddProjectModal();
+  await loadProjects();
+  buildProjectCards();
+  populateIdeaProjectSelect();
+  await refreshAll();
+  showToast(`Project "${name}" created`, 'success');
+}
+
+// ===================================================================
+// FOOTER STATS
+// ===================================================================
+function updateFooterStats() {
+  document.getElementById('dbTaskCount').textContent = allTasks.length;
+  document.getElementById('dbProjectCount').textContent = PROJECTS.length;
+  // Set dashboard link using the connected URL
+  const urlInput = document.getElementById('sbUrlInput');
+  if (urlInput && urlInput.value) {
+    const projectRef = urlInput.value.replace('https://', '').replace('.supabase.co', '');
+    document.getElementById('supabaseDashLink').href = `https://supabase.com/dashboard/project/${projectRef}`;
+  }
 }
 
 // ===================================================================
