@@ -52,10 +52,7 @@ input,select,button{font-family:inherit;}
 .gate-box input:focus{border-color:var(--accent);}
 .gate-box .btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.92rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;margin-top:4px;margin-bottom:6px;}
 .gate-box .btn-primary:hover{opacity:0.85;}
-.gate-box .btn-reset{background:transparent;border:none;width:100%;color:var(--muted);font-size:0.8rem;cursor:pointer;padding:6px;}
-.gate-box .btn-reset:hover{color:var(--red);}
 .gate-box .error{color:var(--red);font-size:0.82rem;margin-top:6px;min-height:18px;}
-.gate-box .setup-form,.gate-box .login-form{display:none;}
 .gate-box .hint{font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.4;}
 
 /* ===== APP LAYOUT ===== */
@@ -65,7 +62,6 @@ input,select,button{font-family:inherit;}
 .header-actions{display:flex;gap:6px;align-items:center;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
-.btn-lock:hover{border-color:var(--red);color:var(--red);}
 
 /* ===== STATS ===== */
 .stats-bar{display:flex;gap:32px;padding:16px 12px;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -208,23 +204,12 @@ input,select,button{font-family:inherit;}
     <h1>Command Center</h1>
     <p class="subtitle">De l'Claw × Project HQ</p>
 
-    <div class="setup-form" id="setupForm">
-      <p class="hint">First-time setup. Enter your Supabase credentials and set a password. Everything gets encrypted locally — nothing leaves your browser.</p>
-      <input type="url" id="sbUrl" placeholder="Supabase Project URL" autocomplete="off" style="margin-bottom:6px;">
-      <input type="text" id="sbKey" placeholder="Supabase Publishable Key" autocomplete="off" style="margin-bottom:14px;">
-      <input type="password" id="pw1" placeholder="Set password" autocomplete="new-password">
-      <input type="password" id="pw2" placeholder="Confirm password">
-      <button class="btn-primary" onclick="doSetup()">Encrypt & Enter</button>
-      <p class="error" id="setupError"></p>
-    </div>
-
-    <!-- Task 3: Proper form for Chrome autofill -->
-    <form class="login-form" id="loginForm" action="javascript:void(0)" method="post">
-      <input type="text" id="loginUser" value="command-center" name="username" autocomplete="username" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" tabindex="-1">
-      <input type="password" id="pwLogin" name="password" placeholder="Enter password" autocomplete="current-password">
-      <button type="submit" class="btn-primary">Unlock</button>
+    <form id="loginForm" action="javascript:void(0)" method="post" style="display:none;">
+      <p class="hint">Enter your Supabase credentials. Chrome will remember them for next time.</p>
+      <input type="text" id="sbUrlInput" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:6px;">
+      <input type="password" id="sbKeyInput" name="password" placeholder="Publishable Key" autocomplete="current-password">
+      <button type="submit" class="btn-primary">Connect</button>
       <p class="error" id="loginError"></p>
-      <button type="button" class="btn-reset" onclick="doReset()">Reset (clear encrypted data)</button>
     </form>
   </div>
 </div>
@@ -237,7 +222,6 @@ input,select,button{font-family:inherit;}
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="btn" onclick="refreshAll()">↻ Refresh</button>
-      <button class="btn btn-lock" onclick="doLock()">🔒 Lock</button>
     </div>
   </header>
 
@@ -285,7 +269,6 @@ input,select,button{font-family:inherit;}
 // ===================================================================
 // CONSTANTS
 // ===================================================================
-const STORAGE_KEY = 'claw_cc_vault';
 const IDEAS_KEY = 'claw_cc_ideas';
 const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
@@ -294,96 +277,41 @@ const MAX_TEXT_LEN = 5000;
 const MAX_META_DISPLAY = 500;
 
 // ===================================================================
-// CRYPTO — AES-GCM with PBKDF2
-// ===================================================================
-async function deriveKey(password, salt) {
-  const enc = new TextEncoder();
-  const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' },
-    km,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-async function encryptData(password, plaintext) {
-  const enc = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(password, salt);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
-  return { salt: btoa(String.fromCharCode(...salt)), iv: btoa(String.fromCharCode(...iv)), ct: btoa(String.fromCharCode(...new Uint8Array(ct))) };
-}
-
-async function decryptData(password, vault) {
-  const salt = Uint8Array.from(atob(vault.salt), c => c.charCodeAt(0));
-  const iv = Uint8Array.from(atob(vault.iv), c => c.charCodeAt(0));
-  const ct = Uint8Array.from(atob(vault.ct), c => c.charCodeAt(0));
-  const key = await deriveKey(password, salt);
-  const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
-  return new TextDecoder().decode(dec);
-}
-
-// ===================================================================
-// GATE LOGIC
+// GATE LOGIC — simple URL + key, Chrome autofill handles persistence
 // ===================================================================
 function initGate() {
-  const vault = localStorage.getItem(STORAGE_KEY);
-  if (vault) {
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('pwLogin').focus();
-    // Auto-fill from Chrome saved credentials
-    if (window.PasswordCredential) {
-      navigator.credentials.get({ password: true }).then(cred => {
-        if (cred && cred.password) {
-          document.getElementById('pwLogin').value = cred.password;
-        }
-      }).catch(() => {});
-    }
-  } else {
-    document.getElementById('setupForm').style.display = 'block';
-    document.getElementById('sbUrl').focus();
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('sbUrlInput').focus();
+  // Try auto-fill from Credential Management API
+  if (window.PasswordCredential) {
+    navigator.credentials.get({ password: true, mediation: 'optional' }).then(cred => {
+      if (cred) {
+        document.getElementById('sbUrlInput').value = cred.id;
+        document.getElementById('sbKeyInput').value = cred.password;
+      }
+    }).catch(() => {});
   }
 }
 
-async function doSetup() {
-  const sbUrl = document.getElementById('sbUrl').value.trim();
-  const sbKey = document.getElementById('sbKey').value.trim();
-  const p1 = document.getElementById('pw1').value;
-  const p2 = document.getElementById('pw2').value;
-  const err = document.getElementById('setupError');
-  if (!sbUrl || !sbKey) { err.textContent = 'Enter Supabase URL and key'; return; }
-  if (!p1) { err.textContent = 'Password cannot be empty'; return; }
-  if (p1.length < 4) { err.textContent = 'At least 4 characters'; return; }
-  if (p1 !== p2) { err.textContent = 'Passwords don\'t match'; return; }
-  err.textContent = 'Encrypting...';
-  try {
-    const payload = JSON.stringify({ url: sbUrl, key: sbKey });
-    const vault = await encryptData(p1, payload);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vault));
-    err.textContent = '';
-    await unlock(p1);
-  } catch (e) { err.textContent = 'Encryption failed'; }
-}
-
 async function doLogin() {
-  const pw = document.getElementById('pwLogin').value;
+  const url = document.getElementById('sbUrlInput').value.trim();
+  const key = document.getElementById('sbKeyInput').value.trim();
   const err = document.getElementById('loginError');
-  if (!pw) { err.textContent = 'Enter your password'; return; }
-  err.textContent = 'Decrypting...';
+  if (!url || !key) { err.textContent = 'Enter both URL and key'; return; }
+  err.textContent = 'Connecting...';
   try {
-    await unlock(pw);
+    await connect(url, key);
     err.textContent = '';
-    // Trigger Chrome password save via Credential Management API
+    // Save credentials via Credential Management API for Chrome autofill
     if (window.PasswordCredential) {
       try {
-        const cred = new PasswordCredential({ id: 'command-center', password: pw });
+        const cred = new PasswordCredential({ id: url, password: key });
         await navigator.credentials.store(cred);
       } catch(e) {}
     }
-  } catch (e) { err.textContent = 'Wrong password'; }
+  } catch (e) {
+    err.textContent = 'Connection failed — check URL and key';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -394,32 +322,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function doReset() {
-  if (!confirm('This will clear your encrypted data. You\'ll need to set a new password. Continue?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-}
-
-function doLock() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('gate').style.display = 'flex';
-  document.getElementById('loginForm').style.display = 'block';
-  document.getElementById('setupForm').style.display = 'none';
-  document.getElementById('pwLogin').value = '';
-  document.getElementById('pwLogin').focus();
-}
-
 // ===================================================================
 // UNLOCK & INIT APP
 // ===================================================================
 let sb = null;
 
-async function unlock(password) {
-  const vault = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  const json = await decryptData(password, vault);
-  const creds = JSON.parse(json);
+async function connect(url, key) {
+  sb = window.supabase.createClient(url, key);
 
-  sb = window.supabase.createClient(creds.url, creds.key);
+  // Test connection with a simple query
+  const { error } = await sb.from('projects').select('id').limit(1);
+  if (error) throw new Error('Connection failed');
 
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = 'block';
