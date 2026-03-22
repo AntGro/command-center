@@ -199,6 +199,7 @@ input,select,button{font-family:inherit;}
 .archived-project-item span{flex:1;font-size:0.88rem;}
 .archived-project-item button{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.78rem;}
 .archived-project-item button:hover{border-color:var(--accent);color:var(--accent);}
+.archived-project-item button[style*="color:var(--red)"]:hover{border-color:var(--red);}
 
 /* ===== FOOTER STATS ===== */
 .footer-stats{padding:12px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:0.72rem;color:var(--muted);margin-top:auto;}
@@ -236,7 +237,7 @@ input,select,button{font-family:inherit;}
 
 /* ===== PROJECT EXPAND (inline) ===== */
 .project-card{transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
-.project-card.expanded{grid-column:1/-1;box-shadow:0 0 0 2px var(--accent), 0 8px 32px rgba(100,108,255,0.12);z-index:10;}
+.project-card.expanded{grid-column:1/-1;box-shadow:0 0 0 2px var(--accent), 0 8px 32px rgba(100,108,255,0.12);z-index:10;transition:all 0.3s ease;}
 .project-card.expanded .task-list{max-height:none;overflow-y:visible;}
 .project-card.expanded .task-meta-item{white-space:pre-wrap;}
 .expand-project-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
@@ -577,6 +578,25 @@ function unarchiveProject(id) {
   showToast('Project restored', 'success');
 }
 
+async function deleteProject(id, name) {
+  if (!confirm(`Delete project "${name}" and ALL its tasks? This cannot be undone.`)) return;
+  // Delete all tasks for this project first
+  await sb.from('tasks').delete().eq('project', id);
+  // Delete project prompts
+  await sb.from('prompts').delete().eq('key', id);
+  // Delete the project
+  const { error } = await sb.from('projects').delete().eq('id', id);
+  if (error) { showToast('Failed to delete project: ' + error.message, 'error'); return; }
+  // Remove from archived list
+  const ids = getArchivedProjectIds().filter(i => i !== id);
+  saveArchivedProjectIds(ids);
+  await loadProjects();
+  buildProjectCards();
+  renderArchivedProjects();
+  initProjectDragDrop();
+  showToast(`Project "${name}" deleted`, 'info');
+}
+
 function renderArchivedProjects() {
   const section = document.getElementById('archivedProjectsSection');
   const list = document.getElementById('archivedProjectsList');
@@ -592,6 +612,7 @@ function renderArchivedProjects() {
     <div class="archived-project-item">
       <span>${esc(p.name)} <span style="color:var(--muted);font-size:0.72rem;">${esc(p.tech || '')}</span></span>
       <button onclick="unarchiveProject('${p.id}')">Restore</button>
+      <button onclick="deleteProject('${p.id}','${esc(p.name)}')" style="color:var(--red);">Delete</button>
     </div>
   `).join('');
 }
@@ -1046,19 +1067,24 @@ async function saveNewProject() {
 // ===================================================================
 function initProjectDragDrop() {
   const grid = document.getElementById('projectGrid');
-  const cards = grid.querySelectorAll('.project-card[draggable="true"]');
+  const cards = grid.querySelectorAll('.project-card');
   cards.forEach(card => {
+    // Only make draggable when mousedown on drag handle
+    card.setAttribute('draggable', 'false');
+    const handle = card.querySelector('.project-drag-handle');
+    if (handle) {
+      handle.addEventListener('mousedown', () => card.setAttribute('draggable', 'true'));
+      handle.addEventListener('mouseup', () => card.setAttribute('draggable', 'false'));
+    }
     card.addEventListener('dragstart', e => {
-      // Only start drag if it originated from the drag handle
-      if (!e.target.classList.contains('project-drag-handle') && !e.target.closest('.project-drag-handle')) {
-        e.preventDefault(); return;
-      }
+      if (card.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
       card.classList.add('dragging');
       e.dataTransfer.setData('text/plain', card.dataset.project);
       e.dataTransfer.effectAllowed = 'move';
     });
     card.addEventListener('dragend', () => {
       card.classList.remove('dragging');
+      card.setAttribute('draggable', 'false');
       grid.querySelectorAll('.project-card').forEach(c => c.classList.remove('drag-over'));
     });
     card.addEventListener('dragover', e => {
@@ -1227,10 +1253,17 @@ function handleTaskInput(event, projectId) {
 
 function autoResizeTextarea(ta) {
   ta.style.height = 'auto';
-  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-  // Switch to scroll if content exceeds max height
+  const newHeight = Math.min(ta.scrollHeight, 120);
+  ta.style.height = newHeight + 'px';
   ta.style.overflowY = ta.scrollHeight > 120 ? 'auto' : 'hidden';
 }
+
+// Also auto-resize on input (for paste, etc.)
+document.addEventListener('input', e => {
+  if (e.target.tagName === 'TEXTAREA' && e.target.id.startsWith('input-')) {
+    autoResizeTextarea(e.target);
+  }
+});
 
 // ===================================================================
 // REVISION FEEDBACK MODAL
