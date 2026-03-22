@@ -1183,13 +1183,23 @@ function handleTaskInput(event, projectId) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     addTask(projectId);
+    return;
   }
-  // Auto-resize textarea
-  setTimeout(() => {
-    const ta = event.target;
-    ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-  }, 0);
+  // Shift+Enter: let the browser insert the newline, then auto-resize
+  if (event.key === 'Enter' && event.shiftKey) {
+    // Don't prevent default — let the newline be inserted
+    setTimeout(() => autoResizeTextarea(event.target), 0);
+    return;
+  }
+  // Auto-resize on any other input
+  setTimeout(() => autoResizeTextarea(event.target), 0);
+}
+
+function autoResizeTextarea(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  // Switch to scroll if content exceeds max height
+  ta.style.overflowY = ta.scrollHeight > 120 ? 'auto' : 'hidden';
 }
 
 // ===================================================================
