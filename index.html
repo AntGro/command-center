@@ -147,9 +147,9 @@ input,select,button{font-family:inherit;}
 .task-meta-label.claw{color:var(--yellow);}
 
 /* ===== ADD TASK ===== */
-.add-task{display:flex;gap:6px;padding:8px 16px 14px;}
-.add-task input{flex:1;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.84rem;outline:none;transition:border-color 0.2s;}
-.add-task input:focus{border-color:var(--accent);}
+.add-task{display:flex;gap:6px;padding:8px 16px 14px;align-items:flex-end;}
+.add-task textarea{flex:1;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.84rem;outline:none;transition:border-color 0.2s;font-family:inherit;line-height:1.4;}
+.add-task textarea:focus{border-color:var(--accent);}
 .add-task button{padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.84rem;transition:opacity 0.2s;}
 .add-task button:hover{opacity:0.85;}
 
@@ -199,6 +199,19 @@ input,select,button{font-family:inherit;}
 .footer-stats a:hover{text-decoration:underline;}
 .footer-stats .db-stats{display:flex;gap:16px;}
 .footer-stats .db-stat{display:flex;align-items:center;gap:4px;}
+
+/* ===== REVISION FEEDBACK MODAL ===== */
+.revision-modal{max-width:480px;}
+.revision-modal h2{font-size:1rem;margin-bottom:12px;}
+.revision-modal textarea{width:100%;min-height:100px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;font-family:inherit;resize:vertical;outline:none;margin-bottom:12px;}
+.revision-modal textarea:focus{border-color:var(--accent);}
+
+/* ===== PROMPT EDITOR MODAL ===== */
+.prompt-modal{max-width:560px;}
+.prompt-modal h2{font-size:1rem;margin-bottom:8px;}
+.prompt-modal .prompt-hint{font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.4;}
+.prompt-modal textarea{width:100%;min-height:180px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem;font-family:'Inter',system-ui,monospace;resize:vertical;outline:none;margin-bottom:12px;line-height:1.5;}
+.prompt-modal textarea:focus{border-color:var(--accent);}
 
 /* ===== ADD PROJECT MODAL ===== */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;}
@@ -267,6 +280,7 @@ input,select,button{font-family:inherit;}
     <h1>🪶 Command Center</h1>
     <div class="header-actions">
       <button class="btn" onclick="openAddProjectModal()" title="Add project">➕</button>
+      <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt">📝</button>
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="btn" onclick="refreshAll()">↻ Refresh</button>
@@ -339,6 +353,33 @@ input,select,button{font-family:inherit;}
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeAddProjectModal()">Cancel</button>
         <button class="modal-save" onclick="saveNewProject()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revision Feedback Modal -->
+  <div class="modal-overlay" id="revisionModal">
+    <div class="modal revision-modal">
+      <h2>🔄 Request Revision</h2>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Explain what needs to change — Claw will see this when picking up the revision.</p>
+      <textarea id="revisionFeedback" placeholder="What needs to change..."></textarea>
+      <input type="hidden" id="revisionTaskId">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeRevisionModal()">Cancel</button>
+        <button class="modal-save" onclick="submitRevision()">Submit Revision</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Editor Modal -->
+  <div class="modal-overlay" id="promptEditorModal">
+    <div class="modal prompt-modal">
+      <h2>📝 Task-Pickup Prompt</h2>
+      <p class="prompt-hint">This prompt is sent to Claw when picking up tasks. Use it for general rules, coding style, preferences, etc. Stored in your browser.</p>
+      <textarea id="promptEditorText" placeholder="e.g. Always use TypeScript. Prefer functional components. Run tests before pushing..."></textarea>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closePromptEditor()">Cancel</button>
+        <button class="modal-save" onclick="savePrompt()">Save</button>
       </div>
     </div>
   </div>
@@ -564,7 +605,7 @@ function buildProjectCards() {
       </div>
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
-        <input type="text" placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="if(event.key==='Enter')addTask('${p.id}')" oninput="updateCharCounter(this)">
+        <textarea placeholder="Add task... (Shift+Enter for new line)" maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
         <button onclick="addTask('${p.id}')">+</button>
       </div>
       <div class="char-counter" id="counter-${p.id}"></div>
@@ -667,7 +708,7 @@ function renderTask(t, isArchived = false) {
   let actionBtns = '';
   if (t.status === 'review') {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">✅</button>`;
-    actionBtns += `<button onclick="updateTaskStatus('${t.id}','revision')" title="Request Revision">🔄</button>`;
+    actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">🔄</button>`;
   }
   if (t.status === 'approved' && isArchived) {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
@@ -1084,7 +1125,7 @@ function expandTask(id) {
 
   let actions = '';
   if (t.status === 'review') {
-    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">✅ Approve</button><button class="btn" onclick="updateTaskStatus('${t.id}','revision');closeTaskExpandModal();">🔄 Revision</button></div>`;
+    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">✅ Approve</button><button class="btn" onclick="closeTaskExpandModal();openRevisionModal('${t.id}');">🔄 Revision</button></div>`;
   }
 
   content.innerHTML = `
@@ -1106,10 +1147,85 @@ function closeTaskExpandModal() {
 document.addEventListener('click', e => {
   if (e.target.id === 'editProjectModal') closeEditProjectModal();
   if (e.target.id === 'taskExpandModal') closeTaskExpandModal();
+  if (e.target.id === 'revisionModal') closeRevisionModal();
+  if (e.target.id === 'promptEditorModal') closePromptEditor();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); }
 });
+
+// ===================================================================
+// TEXTAREA AUTO-RESIZE + SHIFT+ENTER
+// ===================================================================
+function handleTaskInput(event, projectId) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    addTask(projectId);
+  }
+  // Auto-resize textarea
+  setTimeout(() => {
+    const ta = event.target;
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  }, 0);
+}
+
+// ===================================================================
+// REVISION FEEDBACK MODAL
+// ===================================================================
+function openRevisionModal(taskId) {
+  document.getElementById('revisionTaskId').value = taskId;
+  document.getElementById('revisionFeedback').value = '';
+  document.getElementById('revisionModal').classList.add('visible');
+  document.getElementById('revisionFeedback').focus();
+}
+
+function closeRevisionModal() {
+  document.getElementById('revisionModal').classList.remove('visible');
+}
+
+async function submitRevision() {
+  const taskId = document.getElementById('revisionTaskId').value;
+  const feedback = document.getElementById('revisionFeedback').value.trim();
+  if (!taskId) return;
+
+  const updates = { status: 'revision' };
+  if (feedback) {
+    // Prepend feedback to plan_note so Claw sees it when picking up
+    const task = allTasks.find(t => t.id === taskId);
+    const existing = task?.plan_note || '';
+    updates.plan_note = `[REVISION FEEDBACK]: ${feedback}\n\n${existing}`.slice(0, 5000);
+  }
+
+  const { error } = await sb.from('tasks').update(updates).eq('id', taskId);
+  if (error) { showToast('Update failed', 'error'); return; }
+  closeRevisionModal();
+  showToast('Revision requested' + (feedback ? ' with feedback' : ''), 'success');
+  await refreshAll();
+}
+
+// ===================================================================
+// TASK-PICKUP PROMPT EDITOR
+// ===================================================================
+const PROMPT_KEY = 'claw_cc_prompt';
+
+function openPromptEditor() {
+  const saved = localStorage.getItem(PROMPT_KEY) || '';
+  document.getElementById('promptEditorText').value = saved;
+  document.getElementById('promptEditorModal').classList.add('visible');
+  document.getElementById('promptEditorText').focus();
+}
+
+function closePromptEditor() {
+  document.getElementById('promptEditorModal').classList.remove('visible');
+}
+
+function savePrompt() {
+  const text = document.getElementById('promptEditorText').value;
+  localStorage.setItem(PROMPT_KEY, text);
+  closePromptEditor();
+  showToast('Prompt saved', 'success');
+}
 
 // ===================================================================
 // FOOTER STATS
