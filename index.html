@@ -374,12 +374,18 @@ input,select,button{font-family:inherit;}
   <!-- Prompt Editor Modal -->
   <div class="modal-overlay" id="promptEditorModal">
     <div class="modal prompt-modal">
-      <h2>📝 Task-Pickup Prompt</h2>
-      <p class="prompt-hint">This prompt is sent to Claw when picking up tasks. Use it for general rules, coding style, preferences, etc. Stored in your browser.</p>
-      <textarea id="promptEditorText" placeholder="e.g. Always use TypeScript. Prefer functional components. Run tests before pushing..."></textarea>
+      <h2>📝 Task-Pickup Prompts</h2>
+      <p class="prompt-hint">These prompts are sent to Claw when picking up tasks. Global applies to all projects. Per-project prompts override for specific repos. Stored in Supabase.</p>
+      <label style="font-size:0.82rem;font-weight:600;margin-bottom:4px;display:block;">🌐 Global Prompt</label>
+      <textarea id="promptGlobalText" placeholder="General rules for all tasks..."></textarea>
+      <label style="font-size:0.82rem;font-weight:600;margin-bottom:4px;display:block;">📁 Per-Project Prompt</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <select id="promptProjectSelect" style="padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;flex:1;" onchange="loadProjectPrompt()"></select>
+      </div>
+      <textarea id="promptProjectText" placeholder="Rules specific to this project..."></textarea>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closePromptEditor()">Cancel</button>
-        <button class="modal-save" onclick="savePrompt()">Save</button>
+        <button class="modal-save" onclick="savePrompts()">Save All</button>
       </div>
     </div>
   </div>
@@ -502,6 +508,7 @@ async function connect(url, key) {
   sb.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); populateIdeaProjectSelect(); await refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
     .subscribe();
 }
 
@@ -1205,26 +1212,70 @@ async function submitRevision() {
 }
 
 // ===================================================================
-// TASK-PICKUP PROMPT EDITOR
+// TASK-PICKUP PROMPT EDITOR (Supabase-backed)
 // ===================================================================
-const PROMPT_KEY = 'claw_cc_prompt';
+let promptsCache = {};
 
-function openPromptEditor() {
-  const saved = localStorage.getItem(PROMPT_KEY) || '';
-  document.getElementById('promptEditorText').value = saved;
+async function loadPrompts() {
+  if (!sb) return;
+  const { data, error } = await sb.from('prompts').select('*');
+  if (error) return;
+  promptsCache = {};
+  (data || []).forEach(p => { promptsCache[p.key] = p.text; });
+}
+
+async function openPromptEditor() {
+  await loadPrompts();
+  document.getElementById('promptGlobalText').value = promptsCache['global'] || '';
+
+  // Populate project select
+  const sel = document.getElementById('promptProjectSelect');
+  sel.innerHTML = '';
+  PROJECTS.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name;
+    sel.appendChild(o);
+  });
+  loadProjectPrompt();
+
   document.getElementById('promptEditorModal').classList.add('visible');
-  document.getElementById('promptEditorText').focus();
+  document.getElementById('promptGlobalText').focus();
+}
+
+function loadProjectPrompt() {
+  const projectId = document.getElementById('promptProjectSelect').value;
+  document.getElementById('promptProjectText').value = promptsCache[projectId] || '';
 }
 
 function closePromptEditor() {
   document.getElementById('promptEditorModal').classList.remove('visible');
 }
 
-function savePrompt() {
-  const text = document.getElementById('promptEditorText').value;
-  localStorage.setItem(PROMPT_KEY, text);
+async function savePrompts() {
+  const globalText = document.getElementById('promptGlobalText').value;
+  const projectId = document.getElementById('promptProjectSelect').value;
+  const projectText = document.getElementById('promptProjectText').value;
+
+  // Upsert global prompt
+  await sb.from('prompts').upsert({ key: 'global', text: globalText }, { onConflict: 'key' });
+
+  // Upsert per-project prompt (only if there's a selected project)
+  if (projectId) {
+    if (projectText.trim()) {
+      await sb.from('prompts').upsert({ key: projectId, text: projectText }, { onConflict: 'key' });
+    } else {
+      // Remove empty project prompts
+      await sb.from('prompts').delete().eq('key', projectId);
+    }
+  }
+
+  // Update cache
+  promptsCache['global'] = globalText;
+  if (projectId) promptsCache[projectId] = projectText;
+
   closePromptEditor();
-  showToast('Prompt saved', 'success');
+  showToast('Prompts saved to Supabase', 'success');
 }
 
 // ===================================================================
