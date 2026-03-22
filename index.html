@@ -188,6 +188,7 @@ input,select,button{font-family:inherit;}
 .archived-tasks .task-item{opacity:0.6;}
 .project-card-header .project-header-actions{display:flex;align-items:center;gap:6px;opacity:0;transition:opacity 0.2s;}
 .project-card-header:hover .project-header-actions{opacity:1;}
+.project-card.expanded .project-header-actions{opacity:1;}
 .project-card-header .archive-project-btn{background:none;border:none;cursor:pointer;font-size:0.72rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
 .project-card-header .archive-project-btn:hover{color:var(--red);background:var(--surface2);}
 .project-card-header .prompt-project-btn{background:none;border:none;cursor:pointer;font-size:0.72rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
@@ -223,7 +224,7 @@ input,select,button{font-family:inherit;}
 .modal-overlay.visible{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-height:85vh;overflow-y:auto;}
 
-/* ===== EXPANDED TASK MODAL ===== */
+/* ===== EXPANDED TASK MODAL (kept for backward compat) ===== */
 .task-modal{max-width:640px;}
 .task-modal h2{font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .task-modal .task-full-text{font-size:0.95rem;line-height:1.5;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);margin-bottom:12px;}
@@ -231,8 +232,14 @@ input,select,button{font-family:inherit;}
 .task-modal .task-full-meta-item{font-size:0.88rem;color:var(--muted);padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--accent);line-height:1.5;margin-bottom:8px;word-break:break-word;}
 .task-modal .task-full-meta-item a{color:var(--accent);text-decoration:underline;}
 .task-modal .task-full-meta-item.response{border-left-color:var(--yellow);}
-.task-expand-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;color:var(--muted);}
-.task-expand-btn:hover{background:var(--surface2);color:var(--text);}
+
+/* ===== PROJECT EXPAND (inline) ===== */
+.project-card{transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
+.project-card.expanded{grid-column:1/-1;box-shadow:0 0 0 2px var(--accent), 0 8px 32px rgba(100,108,255,0.12);z-index:10;}
+.project-card.expanded .task-list{max-height:none;overflow-y:visible;}
+.project-card.expanded .task-meta-item{white-space:pre-wrap;}
+.expand-project-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
+.expand-project-btn:hover{color:var(--accent);background:var(--surface2);}
 .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;}
 .modal label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:4px;margin-top:10px;}
 .modal input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;}
@@ -615,6 +622,7 @@ function buildProjectCards() {
         </div>
         <div class="project-header-actions">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
+          <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">🔍</button>
           <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">📝</button>
           <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">✏️</button>
           <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
@@ -734,7 +742,6 @@ function renderTask(t, isArchived = false) {
   if (t.status === 'approved' && isArchived) {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
   }
-  actionBtns += `<button class="task-expand-btn" onclick="expandTask('${t.id}')" title="Expand">🔍</button>`;
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
 
@@ -1133,7 +1140,29 @@ async function saveEditProject() {
 }
 
 // ===================================================================
-// EXPAND TASK VIEW
+// PROJECT EXPAND (INLINE)
+// ===================================================================
+function toggleExpandProject(projectId) {
+  const card = document.querySelector(`.project-card[data-project="${projectId}"]`);
+  if (!card) return;
+  const isExpanded = card.classList.contains('expanded');
+  // Collapse all other cards first
+  document.querySelectorAll('.project-card.expanded').forEach(c => {
+    c.classList.remove('expanded');
+    const btn = c.querySelector('.expand-project-btn');
+    if (btn) btn.textContent = '🔍';
+  });
+  if (!isExpanded) {
+    card.classList.add('expanded');
+    const btn = card.querySelector('.expand-project-btn');
+    if (btn) btn.textContent = '🔽';
+    // Smooth scroll to the expanded card
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+}
+
+// ===================================================================
+// EXPAND TASK VIEW (modal fallback — kept for compatibility)
 // ===================================================================
 function expandTask(id) {
   const t = allTasks.find(task => task.id === id);
