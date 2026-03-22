@@ -135,9 +135,8 @@ input,select,button{font-family:inherit;}
 .task-item:last-child{border-bottom:none;}
 .task-row{display:flex;align-items:center;gap:9px;}
 .task-text{flex:1;font-size:0.88rem;line-height:1.35;}
-.task-actions{display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity 0.2s;position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--surface);padding-left:8px;}
-.task-item{position:relative;}
-.task-item:hover .task-actions{opacity:1;pointer-events:auto;}
+.task-actions{display:none;gap:2px;}
+.task-item:hover .task-actions{display:inline-flex;}
 .task-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .task-actions button:hover{background:var(--surface2);}
 .task-meta{margin-top:5px;padding-left:18px;display:flex;flex-direction:column;gap:3px;}
