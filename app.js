@@ -191,7 +191,7 @@ function buildProjectCards() {
       <div class="project-accent" style="background:${p.color}"></div>
       <div class="project-card-header">
         <div style="display:flex;align-items:flex-start;gap:6px;">
-          <span class="project-drag-handle" title="Drag to reorder">⠿</span>
+          <span class="project-drag-handle" title="Drag to reorder" >⠿</span>
           <div class="project-info">
             <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
             <span class="tech">${esc(p.tech || '')}</span>
@@ -199,7 +199,7 @@ function buildProjectCards() {
         </div>
         <div class="project-header-actions">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
-          <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">🔍</button>
+          <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">⤢</button>
           <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">📝</button>
           <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">✏️</button>
           <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
@@ -322,10 +322,10 @@ function renderTask(t, isArchived = false) {
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
 
-  const draggable = !isArchived ? 'draggable="true"' : '';
-  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
+  // draggable set dynamically via handle mousedown/mouseup
+  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder" >⠿</span>' : '';
 
-  return `<div class="task-item" ${draggable} data-task-id="${t.id}">
+  return `<div class="task-item" data-task-id="${t.id}">
     <div class="task-row">
       ${dragHandle}
       <span class="status-dot ${t.status}"></span>
@@ -340,8 +340,15 @@ function renderTask(t, isArchived = false) {
 // DRAG & DROP REORDER
 // ===================================================================
 function initDragDrop(container, projectId) {
-  const items = container.querySelectorAll('.task-item[draggable="true"]');
+  const items = container.querySelectorAll('.task-item');
   items.forEach(item => {
+    // Handle-only dragging
+    const handle = item.querySelector('.drag-handle');
+    if (handle) {
+      handle.addEventListener('mousedown', () => { item.setAttribute('draggable', 'true'); });
+      item.addEventListener('mouseup', () => { item.removeAttribute('draggable'); });
+      item.addEventListener('mouseleave', () => { item.removeAttribute('draggable'); });
+    }
     item.addEventListener('dragstart', e => {
       item.classList.add('dragging');
       e.dataTransfer.setData('text/plain', item.dataset.taskId);
@@ -424,11 +431,13 @@ async function promptEditTask(id) {
 
   const originalText = task.text;
   textSpan.dataset.editing = 'true';
-  const input = document.createElement('input');
-  input.type = 'text';
+  const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;
   input.maxLength = MAX_TEXT_LEN;
+  input.rows = Math.max(1, originalText.split('\n').length);
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
 
   const finishEdit = async (save) => {
     if (save && input.value.trim() && input.value.trim() !== originalText) {
@@ -442,8 +451,12 @@ async function promptEditTask(id) {
   };
 
   input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); finishEdit(true); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
     if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+  });
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = input.scrollHeight + 'px';
   });
   input.addEventListener('blur', () => finishEdit(true));
 
