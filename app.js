@@ -117,19 +117,25 @@ async function loadProjects() {
   }));
 }
 
-function archiveProject(id) {
+async function archiveProject(id) {
   const ids = getArchivedProjectIds();
   if (!ids.includes(id)) { ids.push(id); saveArchivedProjectIds(ids); }
   buildProjectCards();
+  initProjectDragDrop();
+  populateIdeaProjectSelect();
   renderArchivedProjects();
+  await refreshAll();
   showToast('Project archived', 'info');
 }
 
-function unarchiveProject(id) {
+async function unarchiveProject(id) {
   const ids = getArchivedProjectIds().filter(i => i !== id);
   saveArchivedProjectIds(ids);
   buildProjectCards();
+  initProjectDragDrop();
+  populateIdeaProjectSelect();
   renderArchivedProjects();
+  await refreshAll();
   showToast('Project restored', 'success');
 }
 
