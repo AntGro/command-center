@@ -249,7 +249,7 @@ function populateIdeaProjectSelect() {
 let allTasks = [];
 
 async function refreshAll() {
-  if (!sb) return;
+  if (!sb || isDragging) return;
   const { data, error } = await sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) { showToast('Failed to load tasks', 'error'); return; }
   allTasks = data || [];
@@ -328,8 +328,7 @@ function renderTask(t, isArchived = false) {
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
 
-  // draggable set dynamically via handle mousedown/mouseup
-  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder" >⠿</span>' : '';
+  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
 
   return `<div class="task-item" data-task-id="${t.id}">
     <div class="task-row">
@@ -343,43 +342,99 @@ function renderTask(t, isArchived = false) {
 }
 
 // ===================================================================
-// DRAG & DROP REORDER
+// DRAG & DROP REORDER (pointer-event based — works on mouse + touch)
 // ===================================================================
+let isDragging = false;
+
 function initDragDrop(container, projectId) {
-  const items = container.querySelectorAll('.task-item');
-  items.forEach(item => {
-    // Handle-only dragging
+  let dragState = null;
+
+  container.querySelectorAll('.task-item').forEach(item => {
     const handle = item.querySelector('.drag-handle');
-    if (handle) {
-      handle.addEventListener('mousedown', () => { item.setAttribute('draggable', 'true'); });
-      item.addEventListener('mouseup', () => { item.removeAttribute('draggable'); });
-      item.addEventListener('mouseleave', () => { item.removeAttribute('draggable'); });
-    }
-    item.addEventListener('dragstart', e => {
+    if (!handle) return;
+    handle.style.touchAction = 'none';
+
+    handle.addEventListener('pointerdown', e => {
+      if (dragState) return;
+      e.preventDefault();
+
+      const rect = item.getBoundingClientRect();
+      isDragging = true;
+      dragState = {
+        el: item,
+        id: item.dataset.taskId,
+        offsetY: e.clientY - rect.top,
+        clone: null
+      };
+
+      // Visual clone
+      const clone = item.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);`;
+      document.body.appendChild(clone);
+      dragState.clone = clone;
+
       item.classList.add('dragging');
-      e.dataTransfer.setData('text/plain', item.dataset.taskId);
-      e.dataTransfer.effectAllowed = 'move';
+      handle.setPointerCapture(e.pointerId);
     });
-    item.addEventListener('dragend', () => {
-      item.classList.remove('dragging');
-      container.querySelectorAll('.task-item').forEach(i => i.classList.remove('drag-over'));
-    });
-    item.addEventListener('dragover', e => {
+
+    handle.addEventListener('pointermove', e => {
+      if (!dragState || dragState.el !== item) return;
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      const dragging = container.querySelector('.dragging');
-      if (dragging && item !== dragging) {
-        item.classList.add('drag-over');
+
+      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
+
+      // Auto-scroll the task list when near edges
+      const cRect = container.getBoundingClientRect();
+      const edge = 40;
+      if (e.clientY < cRect.top + edge && container.scrollTop > 0) {
+        container.scrollTop -= 5;
+      } else if (e.clientY > cRect.bottom - edge && container.scrollTop < container.scrollHeight - container.clientHeight) {
+        container.scrollTop += 5;
       }
+
+      // Highlight drop target
+      container.querySelectorAll('.task-item:not(.dragging)').forEach(el => {
+        el.classList.remove('drag-over');
+        const r = el.getBoundingClientRect();
+        if (e.clientY >= r.top && e.clientY <= r.bottom) {
+          el.classList.add('drag-over');
+        }
+      });
     });
-    item.addEventListener('dragleave', () => { item.classList.remove('drag-over'); });
-    item.addEventListener('drop', async e => {
-      e.preventDefault();
-      item.classList.remove('drag-over');
-      const draggedId = e.dataTransfer.getData('text/plain');
-      const targetId = item.dataset.taskId;
-      if (draggedId === targetId) return;
-      await reorderTasks(projectId, draggedId, targetId);
+
+    const finishDrag = async () => {
+      if (!dragState || dragState.el !== item) return;
+
+      if (dragState.clone) dragState.clone.remove();
+      item.classList.remove('dragging');
+
+      let targetId = null;
+      container.querySelectorAll('.task-item').forEach(el => {
+        if (el.classList.contains('drag-over')) {
+          targetId = el.dataset.taskId;
+          el.classList.remove('drag-over');
+        }
+      });
+
+      const draggedId = dragState.id;
+      dragState = null;
+      isDragging = false;
+
+      if (targetId && targetId !== draggedId) {
+        await reorderTasks(projectId, draggedId, targetId);
+      }
+    };
+
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    handle.addEventListener('lostpointercapture', () => {
+      if (dragState && dragState.el === item) {
+        if (dragState.clone) dragState.clone.remove();
+        item.classList.remove('dragging');
+        container.querySelectorAll('.task-item').forEach(el => el.classList.remove('drag-over'));
+        dragState = null;
+        isDragging = false;
+      }
     });
   });
 }

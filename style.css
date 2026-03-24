@@ -163,8 +163,6 @@ input,select,button{font-family:inherit;}
 .char-counter.danger{color:var(--red);}
 
 /* ===== DRAG & DROP ===== */
-.task-item[draggable="true"]{cursor:grab;}
-.task-item[draggable="true"]:active{cursor:grabbing;}
 .task-item.dragging{opacity:0.4;border:1px dashed var(--accent);}
 .task-item.drag-over{border-top:2px solid var(--accent);padding-top:7px;}
 .drag-handle{cursor:grab;color:var(--muted);font-size:0.72rem;margin-right:2px;user-select:none;}
