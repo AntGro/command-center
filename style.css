@@ -231,7 +231,7 @@ input,select,button{font-family:inherit;}
 .project-card.expanded{grid-column:1/-1;box-shadow:0 0 0 2px var(--accent), 0 8px 32px rgba(100,108,255,0.12);z-index:10;transition:all 0.3s ease;}
 .project-card.expanded .task-list{max-height:none;overflow-y:visible;}
 .project-card.expanded .task-meta-item{white-space:pre-wrap;}
-.expand-project-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
+.expand-project-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;display:inline-flex;align-items:center;justify-content:center;}
 .expand-project-btn:hover{color:var(--accent);background:var(--surface2);}
 .modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;}
 .modal label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:4px;margin-top:10px;}

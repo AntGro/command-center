@@ -199,7 +199,7 @@ function buildProjectCards() {
         </div>
         <div class="project-header-actions">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
-          <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">⤢</button>
+          <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
           <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">📝</button>
           <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">✏️</button>
           <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
@@ -737,6 +737,9 @@ async function saveEditProject() {
 // ===================================================================
 // PROJECT EXPAND (INLINE)
 // ===================================================================
+const EXPAND_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+const COLLAPSE_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+
 function toggleExpandProject(projectId) {
   const card = document.querySelector(`.project-card[data-project="${projectId}"]`);
   if (!card) return;
@@ -745,12 +748,12 @@ function toggleExpandProject(projectId) {
   document.querySelectorAll('.project-card.expanded').forEach(c => {
     c.classList.remove('expanded');
     const btn = c.querySelector('.expand-project-btn');
-    if (btn) btn.textContent = '🔍';
+    if (btn) btn.innerHTML = EXPAND_SVG;
   });
   if (!isExpanded) {
     card.classList.add('expanded');
     const btn = card.querySelector('.expand-project-btn');
-    if (btn) btn.textContent = '🔽';
+    if (btn) btn.innerHTML = COLLAPSE_SVG;
     // Smooth scroll to the expanded card
     setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
