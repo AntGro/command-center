@@ -211,7 +211,7 @@ function buildProjectCards() {
       </div>
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
-        <textarea placeholder="Add task... (Shift+Enter for new line)" maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
+        <textarea placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
         <button onclick="addTask('${p.id}')">+</button>
       </div>
       <div class="char-counter" id="counter-${p.id}"></div>
