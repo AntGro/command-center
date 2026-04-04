@@ -107,7 +107,6 @@ function toggleShowArchived() {
   const current = isShowArchived();
   localStorage.setItem(SHOW_ARCHIVED_KEY, String(!current));
   updateArchiveToggleBtn();
-  buildProjectCards();
   renderArchivedProjects();
 }
 
