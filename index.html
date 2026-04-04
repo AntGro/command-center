@@ -43,6 +43,14 @@
     </div>
   </header>
 
+  <!-- View Switcher Tabs -->
+  <div class="view-switcher">
+    <button class="view-tab active" id="tabProjects" onclick="switchView('projects')">📁 My Projects</button>
+    <button class="view-tab" id="tabTodos" onclick="switchView('todos')">✅ My TODOs</button>
+  </div>
+
+  <!-- ===== PROJECTS VIEW ===== -->
+  <div id="projectsView">
   <div class="stats-bar" id="statsBar">
     <div class="stat"><span class="stat-value purple" id="statProjects">7</span><span class="stat-label">Projects</span></div>
     <div class="stat"><span class="stat-value blue" id="statTasks">0</span><span class="stat-label">Tasks</span></div>
@@ -77,6 +85,73 @@
     <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
       <div class="section-title">📦 Archived Projects</div>
       <div id="archivedProjectsList"></div>
+    </div>
+  </div>
+  </div><!-- end projectsView -->
+
+  <!-- ===== TODOS VIEW ===== -->
+  <div id="todosView" style="display:none;">
+    <div class="stats-bar" id="todosStatsBar">
+      <div class="stat"><span class="stat-value blue" id="statTodosTotal">0</span><span class="stat-label">Total</span></div>
+      <div class="stat"><span class="stat-value yellow" id="statTodosPending">0</span><span class="stat-label">Pending</span></div>
+      <div class="stat"><span class="stat-value green" id="statTodosDone">0</span><span class="stat-label">Done</span></div>
+      <div class="stat"><span class="stat-value red" id="statTodosOverdue">0</span><span class="stat-label">Overdue</span></div>
+    </div>
+
+    <div class="todos-toolbar">
+      <div class="todo-filters">
+        <button class="filter-btn active" data-filter="pending" onclick="setTodoFilter('pending')">Pending</button>
+        <button class="filter-btn" data-filter="done" onclick="setTodoFilter('done')">Done</button>
+        <button class="filter-btn" data-filter="all" onclick="setTodoFilter('all')">All</button>
+      </div>
+      <div class="todo-sort">
+        <select id="todoSortBy" onchange="renderTodos()">
+          <option value="manual">Manual order</option>
+          <option value="due">Due date</option>
+          <option value="priority">Priority</option>
+          <option value="created">Created</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="todos-main-content">
+      <div class="todo-add-form">
+        <div class="todo-add-row">
+          <input type="text" id="todoInput" placeholder="What needs to be done?" maxlength="2000" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodo();}">
+          <select id="todoPriority">
+            <option value="normal">Normal</option>
+            <option value="low">Low</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+          <input type="datetime-local" id="todoDueDate" title="Due date (optional)">
+          <button onclick="addTodo()">+ Add</button>
+        </div>
+      </div>
+
+      <div id="todoList" class="todo-list"></div>
+    </div>
+  </div>
+
+  <!-- Snooze Modal -->
+  <div class="modal-overlay" id="snoozeModal">
+    <div class="modal snooze-modal">
+      <h2>⏰ Snooze TODO</h2>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Pick when to be reminded about this item.</p>
+      <div class="snooze-options">
+        <button onclick="snoozeFor(1,'h')">1 hour</button>
+        <button onclick="snoozeFor(3,'h')">3 hours</button>
+        <button onclick="snoozeFor(1,'d')">Tomorrow</button>
+        <button onclick="snoozeFor(3,'d')">3 days</button>
+        <button onclick="snoozeFor(7,'d')">1 week</button>
+      </div>
+      <label style="margin-top:12px;">Or pick a date & time:</label>
+      <input type="datetime-local" id="snoozeCustomDate" style="width:100%;margin-top:4px;">
+      <input type="hidden" id="snoozeTaskId">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeSnoozeModal()">Cancel</button>
+        <button class="modal-save" onclick="submitSnooze()">Snooze</button>
+      </div>
     </div>
   </div>
 

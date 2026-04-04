@@ -255,4 +255,91 @@ input,select,button{font-family:inherit;}
   .main-content{padding:6px;}
   .stats-bar{padding:14px 8px;}
   .legend{padding:8px 8px;}
+  .view-switcher{padding:8px 8px;}
+  .todo-add-row{flex-direction:column;}
+  .todo-add-row input[type="datetime-local"]{min-width:auto;}
+  .todos-toolbar{flex-direction:column;gap:8px;}
 }
+
+/* ===== VIEW SWITCHER ===== */
+.view-switcher{display:flex;gap:4px;padding:10px 8px;background:var(--surface);border-bottom:1px solid var(--border);}
+.view-tab{padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:0.88rem;font-weight:500;transition:all 0.2s;font-family:inherit;}
+.view-tab:hover{border-color:var(--accent);color:var(--text);}
+.view-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+
+/* ===== TODOS VIEW ===== */
+.todos-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 8px;border-bottom:1px solid var(--border);gap:12px;}
+.todo-filters{display:flex;gap:4px;}
+.filter-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;font-family:inherit;}
+.filter-btn:hover{border-color:var(--accent);color:var(--text);}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.todo-sort select{padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;outline:none;font-family:inherit;}
+.todo-sort select:focus{border-color:var(--accent);}
+
+.todos-main-content{padding:1rem;margin:0 auto;flex:1;max-width:720px;width:100%;}
+
+/* Todo Add Form */
+.todo-add-form{margin-bottom:20px;}
+.todo-add-row{display:flex;gap:8px;align-items:center;}
+.todo-add-row input[type="text"]{flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;outline:none;transition:border-color 0.2s;font-family:inherit;}
+.todo-add-row input[type="text"]:focus{border-color:var(--accent);}
+.todo-add-row select{padding:10px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:0.82rem;outline:none;font-family:inherit;}
+.todo-add-row input[type="datetime-local"]{padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:0.82rem;outline:none;min-width:170px;font-family:inherit;}
+.todo-add-row input[type="datetime-local"]:focus{border-color:var(--accent);}
+.todo-add-row button{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap;font-size:0.88rem;transition:opacity 0.2s;font-family:inherit;}
+.todo-add-row button:hover{opacity:0.85;}
+
+/* Todo List */
+.todo-list{display:flex;flex-direction:column;gap:4px;}
+.todo-item{padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;transition:all 0.2s;}
+.todo-item:hover{border-color:var(--accent-dim);}
+.todo-item.todo-done{opacity:0.5;}
+.todo-item.todo-done .todo-text{text-decoration:line-through;color:var(--muted);}
+.todo-item.todo-overdue{border-left:3px solid var(--red);}
+.todo-item.dragging{opacity:0.4;border:1px dashed var(--accent);}
+.todo-item.drag-over{border-top:2px solid var(--accent);}
+
+.todo-row{display:flex;align-items:center;gap:10px;}
+.todo-drag-handle{cursor:grab;color:var(--muted);font-size:0.82rem;user-select:none;padding:2px 4px;border-radius:4px;transition:opacity 0.2s;opacity:0;}
+.todo-drag-handle:active{cursor:grabbing;}
+.todo-item:hover .todo-drag-handle{opacity:1;}
+
+/* Custom Checkbox */
+.todo-checkbox-label{position:relative;display:flex;align-items:center;cursor:pointer;flex-shrink:0;}
+.todo-checkbox-label input{position:absolute;opacity:0;width:0;height:0;}
+.todo-checkmark{width:18px;height:18px;border:2px solid var(--border);border-radius:5px;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.todo-checkbox-label input:checked + .todo-checkmark{background:var(--green);border-color:var(--green);}
+.todo-checkbox-label input:checked + .todo-checkmark::after{content:'✓';color:#fff;font-size:0.7rem;font-weight:700;}
+.todo-checkbox-label:hover .todo-checkmark{border-color:var(--accent);}
+
+.todo-text{flex:1;font-size:0.88rem;line-height:1.35;cursor:default;}
+.todo-actions{display:none;gap:2px;}
+.todo-item:hover .todo-actions{display:inline-flex;}
+.todo-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
+.todo-actions button:hover{background:var(--surface2);}
+
+/* Priority Badge */
+.todo-priority-badge{font-size:0.68rem;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;flex-shrink:0;}
+.priority-low{background:rgba(107,114,128,0.15);color:#9ca3af;}
+.priority-high{background:rgba(234,179,8,0.15);color:var(--yellow);}
+.priority-urgent{background:rgba(239,68,68,0.15);color:var(--red);}
+
+/* Due Date & Snooze Meta */
+.todo-meta{display:flex;gap:12px;padding-left:56px;margin-top:4px;flex-wrap:wrap;}
+.todo-due{font-size:0.75rem;color:var(--muted);}
+.todo-due.overdue{color:var(--red);font-weight:500;}
+.todo-due.due-soon{color:var(--yellow);}
+.todo-snoozed{font-size:0.75rem;color:var(--purple);font-style:italic;}
+
+/* Green stat color */
+.stat-value.green{color:var(--green);}
+.stat-value.red{color:var(--red);}
+
+/* ===== SNOOZE MODAL ===== */
+.snooze-modal{max-width:400px;}
+.snooze-modal h2{font-size:1rem;margin-bottom:8px;}
+.snooze-options{display:flex;flex-wrap:wrap;gap:6px;}
+.snooze-options button{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;font-family:inherit;}
+.snooze-options button:hover{border-color:var(--accent);color:var(--accent);}
+.snooze-modal input[type="datetime-local"]{padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;font-family:inherit;}
+.snooze-modal input:focus{border-color:var(--accent);}

@@ -5,6 +5,7 @@ const IDEAS_KEY = 'claw_cc_ideas';
 const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
 const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
+const CURRENT_VIEW_KEY = 'claw_cc_current_view';
 const MAX_TEXT_LEN = 5000;
 const MAX_META_DISPLAY = 500;
 
@@ -88,7 +89,15 @@ async function connect(url, key) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); populateIdeaProjectSelect(); await refreshAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => refreshTodos())
     .subscribe();
+
+  // Initialize TODOs
+  await refreshTodos();
+
+  // Restore last view
+  const savedView = localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
+  switchView(savedView);
 }
 
 // ===================================================================
@@ -877,9 +886,10 @@ document.addEventListener('click', e => {
   if (e.target.id === 'revisionModal') closeRevisionModal();
   if (e.target.id === 'promptEditorModal') closePromptEditor();
   if (e.target.id === 'projectPromptModal') closeProjectPrompt();
+  if (e.target.id === 'snoozeModal') closeSnoozeModal();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); }
 });
 
 // ===================================================================
@@ -1093,3 +1103,379 @@ function toggleTheme() {
     if (!localStorage.getItem(THEME_KEY)) applyTheme(getSystemTheme());
   });
 })();
+
+// ===================================================================
+// VIEW SWITCHER (My Projects ↔ My TODOs)
+// ===================================================================
+let currentView = 'projects';
+
+function switchView(view) {
+  currentView = view;
+  localStorage.setItem(CURRENT_VIEW_KEY, view);
+  const projectsView = document.getElementById('projectsView');
+  const todosView = document.getElementById('todosView');
+  const tabProjects = document.getElementById('tabProjects');
+  const tabTodos = document.getElementById('tabTodos');
+  const addProjectBtn = document.querySelector('.header-actions .btn[onclick="openAddProjectModal()"]');
+
+  if (view === 'projects') {
+    projectsView.style.display = '';
+    todosView.style.display = 'none';
+    tabProjects.classList.add('active');
+    tabTodos.classList.remove('active');
+    if (addProjectBtn) addProjectBtn.style.display = '';
+  } else {
+    projectsView.style.display = 'none';
+    todosView.style.display = '';
+    tabProjects.classList.remove('active');
+    tabTodos.classList.add('active');
+    if (addProjectBtn) addProjectBtn.style.display = 'none';
+    renderTodos();
+  }
+}
+
+// ===================================================================
+// TODOS — DATA & CRUD
+// ===================================================================
+let allTodos = [];
+let todoFilter = 'pending';
+
+async function refreshTodos() {
+  if (!sb) return;
+  const { data, error } = await sb.from('todos').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+  if (error) {
+    // Table might not exist yet — silently ignore
+    if (error.code === '42P01' || error.message?.includes('does not exist')) return;
+    showToast('Failed to load todos', 'error');
+    return;
+  }
+  allTodos = data || [];
+  if (currentView === 'todos') {
+    renderTodos();
+    updateTodoStats();
+  }
+}
+
+function setTodoFilter(filter) {
+  todoFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderTodos();
+}
+
+function getFilteredTodos() {
+  const now = new Date();
+  let filtered = [...allTodos];
+
+  // Hide snoozed items from pending view (snooze_until in the future)
+  if (todoFilter === 'pending') {
+    filtered = filtered.filter(t => !t.done && (!t.snooze_until || new Date(t.snooze_until) <= now));
+  } else if (todoFilter === 'done') {
+    filtered = filtered.filter(t => t.done);
+  }
+  // 'all' shows everything
+
+  const sortBy = document.getElementById('todoSortBy')?.value || 'manual';
+  if (sortBy === 'due') {
+    filtered.sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(a.due_date) - new Date(b.due_date);
+    });
+  } else if (sortBy === 'priority') {
+    const prio = { urgent: 0, high: 1, normal: 2, low: 3 };
+    filtered.sort((a, b) => (prio[a.priority] || 2) - (prio[b.priority] || 2));
+  } else if (sortBy === 'created') {
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  return filtered;
+}
+
+function renderTodos() {
+  const container = document.getElementById('todoList');
+  if (!container) return;
+  const filtered = getFilteredTodos();
+  updateTodoStats();
+
+  if (!filtered.length) {
+    const emptyMsg = todoFilter === 'done' ? 'No completed TODOs yet' : todoFilter === 'pending' ? 'All caught up! 🎉' : 'No TODOs yet — add one above';
+    container.innerHTML = `<p class="empty-msg">${emptyMsg}</p>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(t => renderTodoItem(t)).join('');
+  initTodoDragDrop();
+}
+
+function renderTodoItem(t) {
+  const now = new Date();
+  const isOverdue = t.due_date && !t.done && new Date(t.due_date) < now;
+  const isSnoozed = t.snooze_until && new Date(t.snooze_until) > now;
+  const prioBadge = t.priority && t.priority !== 'normal'
+    ? `<span class="todo-priority-badge priority-${t.priority}">${t.priority}</span>` : '';
+
+  let dueDateStr = '';
+  if (t.due_date) {
+    const d = new Date(t.due_date);
+    const diffMs = d - now;
+    const diffH = Math.round(diffMs / (1000 * 60 * 60));
+    const diffD = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (isOverdue) {
+      dueDateStr = `<span class="todo-due overdue">⚠️ Overdue (${formatRelativeDate(d)})</span>`;
+    } else if (diffH < 24) {
+      dueDateStr = `<span class="todo-due due-soon">🔔 Due ${formatRelativeDate(d)}</span>`;
+    } else {
+      dueDateStr = `<span class="todo-due">📅 ${formatRelativeDate(d)}</span>`;
+    }
+  }
+
+  let snoozeInfo = '';
+  if (isSnoozed) {
+    snoozeInfo = `<span class="todo-snoozed">💤 Snoozed until ${new Date(t.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+  }
+
+  const dragHandle = !t.done ? '<span class="todo-drag-handle" title="Drag to reorder">⠿</span>' : '';
+
+  return `<div class="todo-item ${t.done ? 'todo-done' : ''} ${isOverdue ? 'todo-overdue' : ''}" data-todo-id="${t.id}">
+    <div class="todo-row">
+      ${dragHandle}
+      <label class="todo-checkbox-label">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
+        <span class="todo-checkmark"></span>
+      </label>
+      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${esc(t.text)}</span>
+      ${prioBadge}
+      <div class="todo-actions">
+        ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">💤</button>` : ''}
+        <button onclick="editTodoInline('${t.id}')" title="Edit">✏️</button>
+        <button onclick="deleteTodo('${t.id}')" title="Delete">🗑️</button>
+      </div>
+    </div>
+    ${dueDateStr || snoozeInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}</div>` : ''}
+  </div>`;
+}
+
+function formatRelativeDate(d) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
+  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (diffDays === 0) return `today at ${timeStr}`;
+  if (diffDays === 1) return `tomorrow at ${timeStr}`;
+  if (diffDays === -1) return `yesterday at ${timeStr}`;
+  if (diffDays > 1 && diffDays <= 7) return `in ${diffDays} days`;
+  if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
+}
+
+async function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const priority = document.getElementById('todoPriority').value;
+  const dueDateRaw = document.getElementById('todoDueDate').value;
+  const due_date = dueDateRaw ? new Date(dueDateRaw).toISOString() : null;
+
+  // Get max sort_order
+  const pendingTodos = allTodos.filter(t => !t.done);
+  const maxOrder = pendingTodos.length > 0 ? Math.max(...pendingTodos.map(t => t.sort_order || 0)) + 1 : 0;
+
+  const { error } = await sb.from('todos').insert({ text, priority, due_date, sort_order: maxOrder });
+  if (error) { showToast('Failed to add todo: ' + error.message, 'error'); return; }
+  input.value = '';
+  document.getElementById('todoDueDate').value = '';
+  document.getElementById('todoPriority').value = 'normal';
+  showToast('TODO added', 'success');
+  await refreshTodos();
+}
+
+async function toggleTodo(id, done) {
+  const { error } = await sb.from('todos').update({ done }).eq('id', id);
+  if (error) { showToast('Update failed', 'error'); return; }
+  showToast(done ? 'Done! ✅' : 'Reopened', 'success');
+  await refreshTodos();
+}
+
+async function deleteTodo(id) {
+  if (!confirm('Delete this TODO?')) return;
+  const { error } = await sb.from('todos').delete().eq('id', id);
+  if (error) { showToast('Delete failed', 'error'); return; }
+  showToast('TODO deleted', 'info');
+  await refreshTodos();
+}
+
+async function editTodoInline(id) {
+  const todo = allTodos.find(t => t.id === id);
+  if (!todo) return;
+  const itemEl = document.querySelector(`.todo-item[data-todo-id="${id}"]`);
+  if (!itemEl) return;
+  const textEl = itemEl.querySelector('.todo-text');
+  if (!textEl || textEl.dataset.editing) return;
+
+  textEl.dataset.editing = 'true';
+  const input = document.createElement('textarea');
+  input.className = 'task-edit-input';
+  input.value = todo.text;
+  input.maxLength = 2000;
+  input.rows = Math.max(1, todo.text.split('\n').length);
+
+  const finish = async (save) => {
+    if (save && input.value.trim() && input.value.trim() !== todo.text) {
+      const { error } = await sb.from('todos').update({ text: input.value.trim() }).eq('id', id);
+      if (error) showToast('Update failed', 'error');
+      else showToast('TODO updated', 'success');
+    }
+    delete textEl.dataset.editing;
+    await refreshTodos();
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+  textEl.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
+function updateTodoStats() {
+  const now = new Date();
+  const total = allTodos.length;
+  const done = allTodos.filter(t => t.done).length;
+  const pending = allTodos.filter(t => !t.done).length;
+  const overdue = allTodos.filter(t => !t.done && t.due_date && new Date(t.due_date) < now).length;
+
+  const el = id => document.getElementById(id);
+  if (el('statTodosTotal')) el('statTodosTotal').textContent = total;
+  if (el('statTodosPending')) el('statTodosPending').textContent = pending;
+  if (el('statTodosDone')) el('statTodosDone').textContent = done;
+  if (el('statTodosOverdue')) el('statTodosOverdue').textContent = overdue;
+}
+
+// ===================================================================
+// SNOOZE MODAL
+// ===================================================================
+function openSnoozeModal(todoId) {
+  document.getElementById('snoozeTaskId').value = todoId;
+  document.getElementById('snoozeCustomDate').value = '';
+  document.getElementById('snoozeModal').classList.add('visible');
+}
+
+function closeSnoozeModal() {
+  document.getElementById('snoozeModal').classList.remove('visible');
+}
+
+function snoozeFor(amount, unit) {
+  const now = new Date();
+  let target;
+  if (unit === 'h') {
+    target = new Date(now.getTime() + amount * 60 * 60 * 1000);
+  } else if (unit === 'd') {
+    target = new Date(now.getTime() + amount * 24 * 60 * 60 * 1000);
+    // For "tomorrow", set to 9 AM
+    if (amount === 1) { target.setHours(9, 0, 0, 0); }
+  }
+  doSnooze(target);
+}
+
+async function submitSnooze() {
+  const customDate = document.getElementById('snoozeCustomDate').value;
+  if (!customDate) { showToast('Pick a date or use a quick option', 'error'); return; }
+  doSnooze(new Date(customDate));
+}
+
+async function doSnooze(snoozeUntil) {
+  const taskId = document.getElementById('snoozeTaskId').value;
+  if (!taskId) return;
+  const { error } = await sb.from('todos').update({ snooze_until: snoozeUntil.toISOString() }).eq('id', taskId);
+  if (error) { showToast('Snooze failed', 'error'); return; }
+  closeSnoozeModal();
+  showToast(`Snoozed until ${snoozeUntil.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 'success');
+  await refreshTodos();
+}
+
+// ===================================================================
+// TODO DRAG & DROP REORDER
+// ===================================================================
+function initTodoDragDrop() {
+  const container = document.getElementById('todoList');
+  if (!container) return;
+  let dragState = null;
+
+  container.querySelectorAll('.todo-item').forEach(item => {
+    const handle = item.querySelector('.todo-drag-handle');
+    if (!handle) return;
+    handle.style.touchAction = 'none';
+
+    handle.addEventListener('pointerdown', e => {
+      if (dragState) return;
+      e.preventDefault();
+      const rect = item.getBoundingClientRect();
+      isDragging = true;
+      dragState = { el: item, id: item.dataset.todoId, offsetY: e.clientY - rect.top, clone: null };
+      const clone = item.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);`;
+      document.body.appendChild(clone);
+      dragState.clone = clone;
+      item.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+    });
+
+    handle.addEventListener('pointermove', e => {
+      if (!dragState || dragState.el !== item) return;
+      e.preventDefault();
+      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
+      container.querySelectorAll('.todo-item:not(.dragging)').forEach(el => {
+        el.classList.remove('drag-over');
+        const r = el.getBoundingClientRect();
+        if (e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
+      });
+    });
+
+    const finishDrag = async () => {
+      if (!dragState || dragState.el !== item) return;
+      if (dragState.clone) dragState.clone.remove();
+      item.classList.remove('dragging');
+      let targetId = null;
+      container.querySelectorAll('.todo-item').forEach(el => {
+        if (el.classList.contains('drag-over')) { targetId = el.dataset.todoId; el.classList.remove('drag-over'); }
+      });
+      const draggedId = dragState.id;
+      dragState = null;
+      isDragging = false;
+      if (targetId && targetId !== draggedId) await reorderTodos(draggedId, targetId);
+    };
+
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    handle.addEventListener('lostpointercapture', () => {
+      if (dragState && dragState.el === item) {
+        if (dragState.clone) dragState.clone.remove();
+        item.classList.remove('dragging');
+        container.querySelectorAll('.todo-item').forEach(el => el.classList.remove('drag-over'));
+        dragState = null;
+        isDragging = false;
+      }
+    });
+  });
+}
+
+async function reorderTodos(draggedId, targetId) {
+  const filtered = getFilteredTodos();
+  const draggedIdx = filtered.findIndex(t => t.id === draggedId);
+  const targetIdx = filtered.findIndex(t => t.id === targetId);
+  if (draggedIdx === -1 || targetIdx === -1) return;
+  const [dragged] = filtered.splice(draggedIdx, 1);
+  filtered.splice(targetIdx, 0, dragged);
+  for (let i = 0; i < filtered.length; i++) {
+    await sb.from('todos').update({ sort_order: i }).eq('id', filtered[i].id);
+  }
+  await refreshTodos();
+  showToast('Reordered', 'success');
+}
