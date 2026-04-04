@@ -1,7 +1,8 @@
 // ===================================================================
 // CONSTANTS
 // ===================================================================
-const IDEAS_KEY = 'claw_cc_ideas';
+const IDEAS_KEY = 'claw_cc_ideas'; // legacy localStorage key (migration only)
+const IDEA_STATUSES = ['idea', 'idea-shipped', 'idea-plan-requested'];
 const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
 const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
@@ -136,6 +137,9 @@ async function connect(url, key) {
   updateArchiveToggleBtn();
   renderArchivedProjects();
   await refreshAll();
+
+  // Migrate legacy localStorage ideas to Supabase (one-time)
+  await migrateLocalIdeas();
 
   // Realtime subscription
   sb.channel('tasks-realtime')
@@ -327,12 +331,15 @@ function populateIdeaProjectSelect() {
 // SUPABASE TASK CRUD
 // ===================================================================
 let allTasks = [];
+let allIdeas = [];
 
 async function refreshAll() {
   if (!sb || isDragging) return;
   const { data, error } = await sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) { showToast('Failed to load tasks', 'error'); return; }
-  allTasks = data || [];
+  const all = data || [];
+  allIdeas = all.filter(t => IDEA_STATUSES.includes(t.status));
+  allTasks = all.filter(t => !IDEA_STATUSES.includes(t.status));
   renderAllTasks();
   renderIdeas();
   updateStats();
@@ -614,35 +621,53 @@ async function deleteTask(id) {
 }
 
 // ===================================================================
-// IDEAS (localStorage + ship to Supabase)
+// IDEAS (Supabase-backed, stored in tasks table with idea-* statuses)
 // ===================================================================
-function getIdeas() { try { return JSON.parse(localStorage.getItem(IDEAS_KEY) || '[]'); } catch { return []; } }
-function saveIdeas(ideas) { localStorage.setItem(IDEAS_KEY, JSON.stringify(ideas)); }
 
-function addIdea() {
+// Migrate any legacy localStorage ideas to Supabase (runs once)
+async function migrateLocalIdeas() {
+  try {
+    const raw = localStorage.getItem(IDEAS_KEY);
+    if (!raw) return;
+    const localIdeas = JSON.parse(raw);
+    if (!Array.isArray(localIdeas) || !localIdeas.length) { localStorage.removeItem(IDEAS_KEY); return; }
+    for (const idea of localIdeas) {
+      const supaStatus = idea.status === 'shipped' ? 'idea-shipped'
+                       : idea.status === 'plan-requested' ? 'idea-plan-requested'
+                       : 'idea';
+      await sb.from('tasks').insert({
+        project: idea.project || 'general',
+        text: idea.text,
+        status: supaStatus
+      });
+    }
+    localStorage.removeItem(IDEAS_KEY);
+    showToast(`Migrated ${localIdeas.length} idea(s) to Supabase`, 'success');
+    await refreshAll();
+  } catch (e) { /* silent — migration is best-effort */ }
+}
+
+async function addIdea() {
   const input = document.getElementById('ideaInput');
   const project = document.getElementById('ideaProject').value;
   const text = input.value.trim();
   if (!text) return;
   if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
   input.value = '';
-  const ideas = getIdeas();
-  ideas.push({ id: crypto.randomUUID(), text, project: project || 'general', status: 'idea', created: Date.now() });
-  saveIdeas(ideas);
-  renderIdeas();
-  updateStats();
+  const { error } = await sb.from('tasks').insert({ text, project: project || 'general', status: 'idea' });
+  if (error) { showToast('Failed to save idea', 'error'); return; }
+  await refreshAll();
   showToast('Idea added 💡', 'success');
 }
 
 function renderIdeas() {
   const container = document.getElementById('ideaList');
-  const ideas = getIdeas();
-  if (!ideas.length) { container.innerHTML = '<p class="empty-msg">No ideas yet — throw some in!</p>'; return; }
-  container.innerHTML = ideas.map(idea => {
+  if (!allIdeas.length) { container.innerHTML = '<p class="empty-msg">No ideas yet — throw some in!</p>'; return; }
+  container.innerHTML = allIdeas.map(idea => {
     const projName = PROJECTS.find(p => p.id === idea.project)?.name || idea.project;
     let statusTag = '';
-    if (idea.status === 'shipped') statusTag = '<span style="color:var(--accent);font-size:0.72rem;font-weight:600;margin-right:6px;">🪶 Shipped</span>';
-    if (idea.status === 'plan-requested') statusTag = '<span style="color:var(--yellow);font-size:0.72rem;font-weight:600;margin-right:6px;">📋 Plan Requested</span>';
+    if (idea.status === 'idea-shipped') statusTag = '<span style="color:var(--accent);font-size:0.72rem;font-weight:600;margin-right:6px;">🪶 Shipped</span>';
+    if (idea.status === 'idea-plan-requested') statusTag = '<span style="color:var(--yellow);font-size:0.72rem;font-weight:600;margin-right:6px;">📋 Plan Requested</span>';
     return `<div class="idea-item">
       ${statusTag}
       <span class="idea-text">${esc(idea.text)}</span>
@@ -659,38 +684,35 @@ function renderIdeas() {
 }
 
 async function shipIdea(id) {
-  const ideas = getIdeas();
-  const idea = ideas.find(i => i.id === id);
+  const idea = allIdeas.find(i => i.id === id);
   if (!idea) return;
-  const { error } = await sb.from('tasks').insert({ project: idea.project, text: idea.text, status: 'todo' });
-  if (error) { showToast('Failed to ship', 'error'); return; }
-  idea.status = 'shipped';
-  saveIdeas(ideas);
-  renderIdeas();
-  updateStats();
+  // Create the task
+  const { error: insertErr } = await sb.from('tasks').insert({ project: idea.project, text: idea.text, status: 'todo' });
+  if (insertErr) { showToast('Failed to ship', 'error'); return; }
+  // Mark idea as shipped
+  const { error: updateErr } = await sb.from('tasks').update({ status: 'idea-shipped' }).eq('id', id);
+  if (updateErr) { showToast('Shipped but failed to update idea status', 'error'); }
   await refreshAll();
   showToast('Shipped 🪶 — task created', 'success');
 }
 
 async function planIdea(id) {
-  const ideas = getIdeas();
-  const idea = ideas.find(i => i.id === id);
+  const idea = allIdeas.find(i => i.id === id);
   if (!idea) return;
-  const { error } = await sb.from('tasks').insert({ project: idea.project, text: '[PLAN REQUEST] ' + idea.text, status: 'todo' });
-  if (error) { showToast('Failed', 'error'); return; }
-  idea.status = 'plan-requested';
-  saveIdeas(ideas);
-  renderIdeas();
-  updateStats();
+  // Create the plan-request task
+  const { error: insertErr } = await sb.from('tasks').insert({ project: idea.project, text: '[PLAN REQUEST] ' + idea.text, status: 'todo' });
+  if (insertErr) { showToast('Failed', 'error'); return; }
+  // Mark idea as plan-requested
+  const { error: updateErr } = await sb.from('tasks').update({ status: 'idea-plan-requested' }).eq('id', id);
+  if (updateErr) { showToast('Plan created but failed to update idea status', 'error'); }
   await refreshAll();
   showToast('Plan requested 📋 — task created', 'success');
 }
 
-function deleteIdea(id) {
-  const ideas = getIdeas().filter(i => i.id !== id);
-  saveIdeas(ideas);
-  renderIdeas();
-  updateStats();
+async function deleteIdea(id) {
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) { showToast('Failed to delete idea', 'error'); return; }
+  await refreshAll();
   showToast('Idea removed', 'info');
 }
 
@@ -699,12 +721,11 @@ function deleteIdea(id) {
 // ===================================================================
 function updateStats() {
   const tasks = allTasks;
-  const ideas = getIdeas();
   const archivedIds = getArchivedProjectIds();
   document.getElementById('statProjects').textContent = PROJECTS.filter(p => !archivedIds.includes(p.id)).length;
   document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved').length;
   document.getElementById('statReview').textContent = tasks.filter(t => t.status === 'review').length;
-  document.getElementById('statIdeas').textContent = ideas.length;
+  document.getElementById('statIdeas').textContent = allIdeas.length;
 }
 
 // ===================================================================
