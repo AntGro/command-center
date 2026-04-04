@@ -24,6 +24,10 @@
       <input type="text" id="username" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:10px;">
       <label for="password" style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:2px;">Password</label>
       <input type="password" id="password" name="password" placeholder="Publishable Key" autocomplete="current-password">
+      <label class="stay-connected-label">
+        <input type="checkbox" id="stayConnected" checked>
+        <span>Stay connected on this device</span>
+      </label>
       <button type="submit" class="btn-primary">Connect</button>
       <p class="error" id="loginError"></p>
     </form>
@@ -40,6 +44,7 @@
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="btn" onclick="refreshAll()" title="Refresh">🔄</button>
+      <button class="btn btn-disconnect" onclick="disconnect()" title="Disconnect &amp; log out">🔌</button>
     </div>
   </header>
 

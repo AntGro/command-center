@@ -6,6 +6,7 @@ const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
 const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
 const CURRENT_VIEW_KEY = 'claw_cc_current_view';
+const STAY_CONNECTED_KEY = 'claw_cc_stay_connected';
 const MAX_TEXT_LEN = 5000;
 const MAX_META_DISPLAY = 500;
 
@@ -13,6 +14,17 @@ const MAX_META_DISPLAY = 500;
 // GATE LOGIC — simple URL + key, Chrome autofill handles persistence
 // ===================================================================
 function initGate() {
+  // Check if "Stay connected" credentials exist in localStorage
+  const saved = getStayConnectedCreds();
+  if (saved) {
+    // Show a brief connecting message, then auto-connect
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('loginError').textContent = 'Reconnecting…';
+    document.getElementById('username').value = saved.url;
+    document.getElementById('password').value = saved.key;
+    autoConnect(saved.url, saved.key);
+    return;
+  }
   document.getElementById('loginForm').style.display = 'block';
   document.getElementById('username').focus();
   // Try auto-fill from Credential Management API
@@ -26,15 +38,56 @@ function initGate() {
   }
 }
 
+async function autoConnect(url, key) {
+  try {
+    await connect(url, key);
+  } catch (e) {
+    // Stored credentials are stale — clear them and show the form
+    clearStayConnectedCreds();
+    document.getElementById('loginError').textContent = 'Saved session expired — please log in again';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('username').focus();
+  }
+}
+
+function getStayConnectedCreds() {
+  try {
+    const raw = localStorage.getItem(STAY_CONNECTED_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.url && parsed.key) return parsed;
+    return null;
+  } catch { return null; }
+}
+
+function saveStayConnectedCreds(url, key) {
+  localStorage.setItem(STAY_CONNECTED_KEY, JSON.stringify({ url, key }));
+}
+
+function clearStayConnectedCreds() {
+  localStorage.removeItem(STAY_CONNECTED_KEY);
+}
+
+function disconnect() {
+  clearStayConnectedCreds();
+  location.reload();
+}
+
 async function doLogin() {
   const url = document.getElementById('username').value.trim();
   const key = document.getElementById('password').value.trim();
+  const stayConnected = document.getElementById('stayConnected').checked;
   const err = document.getElementById('loginError');
   if (!url || !key) { err.textContent = 'Enter both URL and key'; return; }
   err.textContent = 'Connecting...';
   try {
     await connect(url, key);
     err.textContent = '';
+    // Save credentials if "Stay connected" is checked
+    if (stayConnected) {
+      saveStayConnectedCreds(url, key);
+    }
     // Hide the form — signals "successful login" to Chrome's password manager
     document.getElementById('loginForm').style.display = 'none';
     // Also explicitly store via Credential Management API

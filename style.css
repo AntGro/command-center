@@ -46,6 +46,12 @@ input,select,button{font-family:inherit;}
 .gate-box .error{color:var(--red);font-size:0.82rem;margin-top:6px;min-height:18px;}
 .gate-box .hint{font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.4;}
 
+/* Stay Connected Checkbox */
+.stay-connected-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;color:var(--muted);margin:10px 0 4px;justify-content:center;user-select:none;}
+.stay-connected-label input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;margin:0;}
+.stay-connected-label span{transition:color 0.2s;}
+.stay-connected-label:hover span{color:var(--text);}
+
 /* ===== APP LAYOUT ===== */
 #app{display:none;min-height:100vh;}
 #app.active{display:flex;flex-direction:column;}
@@ -54,6 +60,8 @@ input,select,button{font-family:inherit;}
 .header-actions{display:flex;gap:6px;align-items:center;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-disconnect{opacity:0.5;transition:opacity 0.2s,border-color 0.2s,color 0.2s;}
+.btn-disconnect:hover{opacity:1;border-color:var(--red);color:var(--red);}
 .btn-active{border-color:var(--accent);background:var(--accent);color:#fff;}
 .btn-active:hover{opacity:0.85;background:var(--accent);color:#fff;}
 
