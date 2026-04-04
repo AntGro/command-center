@@ -29,7 +29,7 @@
 [data-theme="light"] #gate{background:radial-gradient(ellipse at 50% 40%,rgba(79,70,229,0.04),transparent 60%);}
 
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;}
 ::selection{background:var(--accent);color:#fff;}
 input,select,button{font-family:inherit;}
 
@@ -254,6 +254,8 @@ input,select,button{font-family:inherit;}
 .task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;}
 
 /* ===== RESPONSIVE ===== */
+
+/* Tablet / small desktop */
 @media(max-width:860px){
   .project-grid{grid-template-columns:1fr;}
   .stats-bar{gap:20px;flex-wrap:wrap;}
@@ -267,6 +269,120 @@ input,select,button{font-family:inherit;}
   .todo-add-row{flex-direction:column;}
   .todo-add-row input[type="datetime-local"]{min-width:auto;}
   .todos-toolbar{flex-direction:column;gap:8px;}
+}
+
+/* Phone */
+@media(max-width:480px){
+  /* Gate */
+  .gate-box{padding:32px 20px;border-radius:14px;}
+  .gate-box .logo{font-size:2.4rem;}
+  .gate-box h1{font-size:1.05rem;}
+
+  /* Header — wrap buttons */
+  .app-header{padding:10px 8px;flex-wrap:wrap;gap:8px;}
+  .app-header h1{font-size:1rem;gap:5px;}
+  .header-actions{gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+  .header-actions .btn{padding:6px 10px;font-size:0.78rem;min-height:36px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;}
+
+  /* View switcher — fill width */
+  .view-switcher{gap:4px;padding:6px 8px;}
+  .view-tab{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;}
+
+  /* Stats bar — compact grid */
+  .stats-bar{gap:6px;padding:10px 8px;justify-content:space-between;}
+  .stat-value{font-size:1.3rem;}
+  .stat-label{font-size:0.62rem;}
+
+  /* Legend — smaller */
+  .legend{gap:10px;padding:6px 8px;}
+  .legend-item{font-size:0.68rem;}
+
+  /* Main content */
+  .main-content{padding:6px 4px;}
+
+  /* Ideas section */
+  .idea-form{gap:6px;}
+  .idea-item{padding:8px 10px;gap:8px;flex-wrap:wrap;}
+  .idea-text{font-size:0.82rem;min-width:0;}
+  .idea-actions{flex-wrap:nowrap;gap:2px;}
+  .idea-actions button{padding:4px 7px;font-size:0.72rem;}
+
+  /* Project cards */
+  .project-grid{gap:10px;}
+  .project-card-header{padding:10px 12px 8px;}
+  .project-info h3{font-size:0.88rem;}
+  .project-link{font-size:0.72rem;}
+
+  /* Always show project header actions on touch (no hover) */
+  .project-card-header .project-header-actions{opacity:1;}
+
+  /* Task list */
+  .task-list{padding:4px 12px;}
+  .task-row{gap:6px;}
+  .task-text{font-size:0.82rem;}
+  .task-meta{padding-left:14px;}
+  .task-meta-item{font-size:0.72rem;padding:4px 8px;}
+
+  /* Always show task actions on touch */
+  .task-actions{display:inline-flex !important;}
+  .task-actions button{font-size:0.78rem;padding:4px 6px;}
+
+  /* Always show drag handles on touch */
+  .drag-handle{opacity:1 !important;}
+  .project-drag-handle{opacity:1 !important;}
+  .todo-drag-handle{opacity:1 !important;}
+
+  /* Add task area */
+  .add-task{padding:6px 12px 10px;gap:4px;}
+  .add-task textarea{font-size:0.82rem;padding:7px 10px;}
+  .add-task button{padding:7px 12px;font-size:0.82rem;}
+
+  /* Todos view */
+  .todos-main-content{padding:8px 4px;}
+  .todo-add-form{margin-bottom:14px;}
+  .todo-add-row{gap:6px;}
+  .todo-add-row input[type="text"]{font-size:0.84rem;padding:9px 10px;}
+  .todo-add-row select{font-size:0.78rem;padding:9px 8px;}
+  .todo-add-row button{padding:9px 14px;font-size:0.84rem;}
+
+  /* Todo filters — scroll if needed */
+  .todo-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .filter-btn{padding:6px 10px;font-size:0.78rem;white-space:nowrap;}
+
+  /* Todo items */
+  .todo-item{padding:8px 10px;}
+  .todo-row{gap:6px;}
+  .todo-text{font-size:0.84rem;}
+
+  /* Always show todo actions on touch */
+  .todo-actions{display:inline-flex !important;}
+  .todo-actions button{font-size:0.78rem;padding:3px 5px;}
+
+  /* Todo meta */
+  .todo-meta{padding-left:36px;gap:6px;}
+
+  /* Modals — near full-width on phones */
+  .modal{width:95%;padding:20px 16px;border-radius:12px;max-height:90vh;}
+  .modal h2{font-size:0.95rem;}
+  .modal input{font-size:0.84rem;padding:8px 10px;}
+  .modal label{font-size:0.74rem;}
+  .modal-actions button{padding:8px 14px;font-size:0.84rem;}
+  .task-modal{max-width:95%;}
+  .prompt-modal{max-width:95%;}
+  .revision-modal{max-width:95%;}
+  .snooze-modal{max-width:95%;}
+  .snooze-options{gap:4px;}
+  .snooze-options button{padding:6px 10px;font-size:0.78rem;}
+
+  /* Footer */
+  .footer-stats{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 8px;font-size:0.68rem;}
+  .footer-stats .db-stats{gap:10px;flex-wrap:wrap;}
+
+  /* Toast */
+  .toast{left:12px;right:12px;bottom:12px;text-align:center;font-size:0.82rem;}
+
+  /* Expanded project - don't force full grid width on phones (it's already 1fr) */
+  .project-card.expanded{grid-column:auto;box-shadow:0 0 0 2px var(--accent);}
 }
 
 /* ===== VIEW SWITCHER ===== */
