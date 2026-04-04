@@ -337,29 +337,64 @@ input,select,button{font-family:inherit;}
   .add-task textarea{font-size:0.82rem;padding:7px 10px;}
   .add-task button{padding:7px 12px;font-size:0.82rem;}
 
-  /* Todos view */
-  .todos-main-content{padding:8px 4px;}
+  /* ===== TODOS VIEW — FULL MOBILE OVERHAUL ===== */
+
+  /* Todos toolbar: stack filters + sort vertically, full width */
+  .todos-toolbar{padding:8px 8px;gap:6px;flex-direction:column;align-items:stretch;}
+  .todo-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .filter-btn{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;white-space:nowrap;min-height:36px;}
+  .todo-sort{width:100%;}
+  .todo-sort select{width:100%;padding:8px 10px;font-size:0.82rem;}
+
+  /* Todos main content */
+  .todos-main-content{padding:8px 6px;}
+
+  /* Todo add form: use CSS grid for clean stacked layout */
   .todo-add-form{margin-bottom:14px;}
-  .todo-add-row{gap:6px;}
-  .todo-add-row input[type="text"]{font-size:0.84rem;padding:9px 10px;}
-  .todo-add-row select{font-size:0.78rem;padding:9px 8px;}
-  .todo-add-row button{padding:9px 14px;font-size:0.84rem;}
+  .todo-add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
+  .todo-add-row input[type="text"]{grid-column:1/-1;font-size:0.88rem;padding:12px 12px;border-radius:10px;}
+  .todo-add-row select{font-size:0.84rem;padding:10px 10px;width:100%;border-radius:8px;}
+  .todo-add-row input[type="datetime-local"]{font-size:0.84rem;padding:10px 10px;width:100%;min-width:auto;border-radius:8px;}
+  .todo-add-row button{grid-column:1/-1;padding:12px 18px;font-size:0.88rem;border-radius:10px;width:100%;}
 
-  /* Todo filters — scroll if needed */
-  .todo-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .filter-btn{padding:6px 10px;font-size:0.78rem;white-space:nowrap;}
+  /* Todo list: tighter spacing */
+  .todo-list{gap:6px;}
 
-  /* Todo items */
-  .todo-item{padding:8px 10px;}
-  .todo-row{gap:6px;}
-  .todo-text{font-size:0.84rem;}
+  /* Todo items: bigger tap targets, better spacing */
+  .todo-item{padding:10px 10px;border-radius:10px;}
+  .todo-item.todo-overdue{border-left-width:3px;}
+  .todo-row{gap:8px;flex-wrap:wrap;}
+  .todo-text{font-size:0.86rem;min-width:0;word-break:break-word;flex:1 1 0;}
+
+  /* Checkbox: bigger for touch */
+  .todo-checkmark{width:22px;height:22px;border-radius:6px;}
+  .todo-checkbox-label input:checked + .todo-checkmark::after{font-size:0.78rem;}
+
+  /* Priority badge: slightly larger for readability */
+  .todo-priority-badge{font-size:0.7rem;padding:3px 8px;}
 
   /* Always show todo actions on touch */
-  .todo-actions{display:inline-flex !important;}
-  .todo-actions button{font-size:0.78rem;padding:3px 5px;}
+  .todo-actions{display:inline-flex !important;gap:2px;}
+  .todo-actions button{font-size:0.82rem;padding:6px 8px;min-height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;}
 
-  /* Todo meta */
-  .todo-meta{padding-left:36px;gap:6px;}
+  /* Always show drag handles on touch */
+  .todo-drag-handle{opacity:1 !important;font-size:0.9rem;padding:4px;}
+
+  /* Todo meta: reduce left padding, make it fit phone width */
+  .todo-meta{padding-left:38px;gap:6px;margin-top:6px;}
+  .todo-due{font-size:0.78rem;}
+  .todo-snoozed{font-size:0.78rem;}
+
+  /* Todo stats bar (at top of todos view) */
+  #todosStatsBar{gap:6px;padding:10px 8px;justify-content:space-between;}
+  #todosStatsBar .stat-value{font-size:1.3rem;}
+  #todosStatsBar .stat-label{font-size:0.62rem;}
+
+  /* Todo inline edit input */
+  .todo-item .task-edit-input{font-size:0.86rem;padding:8px 10px;border-radius:8px;width:100%;}
+
+  /* Empty message */
+  .todo-list .empty-msg{padding:20px 8px;text-align:center;font-size:0.88rem;}
 
   /* Modals — near full-width on phones */
   .modal{width:95%;padding:20px 16px;border-radius:12px;max-height:90vh;}
