@@ -54,6 +54,8 @@ input,select,button{font-family:inherit;}
 .header-actions{display:flex;gap:6px;align-items:center;}
 .btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;}
 .btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-active{border-color:var(--accent);background:var(--accent);color:#fff;}
+.btn-active:hover{opacity:0.85;background:var(--accent);color:#fff;}
 
 /* ===== STATS ===== */
 .stats-bar{display:flex;gap:32px;padding:16px 8px;background:var(--surface);border-bottom:1px solid var(--border);}

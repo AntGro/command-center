@@ -79,6 +79,8 @@ async function connect(url, key) {
   buildProjectCards();
   initProjectDragDrop();
   populateIdeaProjectSelect();
+  updateArchiveToggleBtn();
+  renderArchivedProjects();
   await refreshAll();
 
   // Realtime subscription
@@ -104,8 +106,18 @@ function isShowArchived() { return localStorage.getItem(SHOW_ARCHIVED_KEY) === '
 function toggleShowArchived() {
   const current = isShowArchived();
   localStorage.setItem(SHOW_ARCHIVED_KEY, String(!current));
+  updateArchiveToggleBtn();
   buildProjectCards();
   renderArchivedProjects();
+}
+
+function updateArchiveToggleBtn() {
+  const btn = document.getElementById('archiveToggleBtn');
+  if (!btn) return;
+  const active = isShowArchived();
+  btn.textContent = active ? '📂' : '📦';
+  btn.title = active ? 'Hide archived' : 'Show archived';
+  btn.classList.toggle('btn-active', active);
 }
 
 async function loadProjects() {
@@ -164,11 +176,18 @@ function renderArchivedProjects() {
   const archivedIds = getArchivedProjectIds();
   const archivedProjects = PROJECTS.filter(p => archivedIds.includes(p.id));
 
-  if (!archivedProjects.length || !isShowArchived()) {
+  if (!isShowArchived()) {
     section.style.display = 'none';
     return;
   }
+
   section.style.display = 'block';
+
+  if (!archivedProjects.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:8px 0;">No archived projects</p>';
+    return;
+  }
+
   list.innerHTML = archivedProjects.map(p => `
     <div class="archived-project-item">
       <span>${esc(p.name)} <span style="color:var(--muted);font-size:0.72rem;">${esc(p.tech || '')}</span></span>
