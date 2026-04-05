@@ -988,8 +988,9 @@ function closeDeleteConfirm() {
 
 async function executeDeleteConfirm() {
   if (_deleteConfirmCallback) {
+    const cb = _deleteConfirmCallback;
     closeDeleteConfirm();
-    await _deleteConfirmCallback();
+    await cb();
   }
 }
 
