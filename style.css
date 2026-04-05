@@ -266,8 +266,11 @@ input,select,button{font-family:inherit;}
   .stats-bar{padding:14px 8px;}
   .legend{padding:8px 8px;}
   .view-switcher{padding:8px 8px;}
-  .todo-add-row{flex-direction:column;}
-  .todo-add-row input[type="datetime-local"]{min-width:auto;}
+  .todo-add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
+  .todo-add-row input[type="text"]{grid-column:1/-1;}
+  .todo-add-row input[type="datetime-local"]{min-width:auto;width:100%;}
+  .todo-add-row select{width:100%;}
+  .todo-add-row button{grid-column:1/-1;}
   .todos-toolbar{flex-direction:column;gap:8px;}
 }
 
