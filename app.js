@@ -217,22 +217,23 @@ async function unarchiveProject(id) {
 }
 
 async function deleteProject(id, name) {
-  if (!confirm(`Delete project "${name}" and ALL its tasks? This cannot be undone.`)) return;
-  // Delete all tasks for this project first
-  await sb.from('tasks').delete().eq('project', id);
-  // Delete project prompts
-  await sb.from('prompts').delete().eq('key', id);
-  // Delete the project
-  const { error } = await sb.from('projects').delete().eq('id', id);
-  if (error) { showToast('Failed to delete project: ' + error.message, 'error'); return; }
-  // Remove from archived list
-  const ids = getArchivedProjectIds().filter(i => i !== id);
-  saveArchivedProjectIds(ids);
-  await loadProjects();
-  buildProjectCards();
-  renderArchivedProjects();
-  initProjectDragDrop();
-  showToast(`Project "${name}" deleted`, 'info');
+  showDeleteConfirm(
+    '🗑️ Delete Project',
+    `Delete "${name}" and ALL its tasks? This cannot be undone.`,
+    async () => {
+      await sb.from('tasks').delete().eq('project', id);
+      await sb.from('prompts').delete().eq('key', id);
+      const { error } = await sb.from('projects').delete().eq('id', id);
+      if (error) { showToast('Failed to delete project: ' + error.message, 'error'); return; }
+      const ids = getArchivedProjectIds().filter(i => i !== id);
+      saveArchivedProjectIds(ids);
+      await loadProjects();
+      buildProjectCards();
+      renderArchivedProjects();
+      initProjectDragDrop();
+      showToast(`Project "${name}" deleted`, 'info');
+    }
+  );
 }
 
 function renderArchivedProjects() {
@@ -614,10 +615,15 @@ async function promptEditTask(id) {
 }
 
 async function deleteTask(id) {
-  if (!confirm('Delete this task?')) return;
-  const { error } = await sb.from('tasks').delete().eq('id', id);
-  if (error) showToast('Delete failed', 'error');
-  else { showToast('Task deleted', 'success'); await refreshAll(); }
+  showDeleteConfirm(
+    '🗑️ Delete Task',
+    'Delete this task? This cannot be undone.',
+    async () => {
+      const { error } = await sb.from('tasks').delete().eq('id', id);
+      if (error) showToast('Delete failed', 'error');
+      else { showToast('Task deleted', 'success'); await refreshAll(); }
+    }
+  );
 }
 
 // ===================================================================
@@ -953,6 +959,30 @@ function closeTaskExpandModal() {
   document.getElementById('taskExpandModal').classList.remove('visible');
 }
 
+// ===================================================================
+// DELETE CONFIRMATION MODAL
+// ===================================================================
+let _deleteConfirmCallback = null;
+
+function showDeleteConfirm(title, message, onConfirm) {
+  document.getElementById('deleteConfirmTitle').textContent = title;
+  document.getElementById('deleteConfirmMessage').textContent = message;
+  _deleteConfirmCallback = onConfirm;
+  document.getElementById('deleteConfirmModal').classList.add('visible');
+}
+
+function closeDeleteConfirm() {
+  document.getElementById('deleteConfirmModal').classList.remove('visible');
+  _deleteConfirmCallback = null;
+}
+
+async function executeDeleteConfirm() {
+  if (_deleteConfirmCallback) {
+    closeDeleteConfirm();
+    await _deleteConfirmCallback();
+  }
+}
+
 // Close modals on overlay click / Escape
 document.addEventListener('click', e => {
   if (e.target.id === 'editProjectModal') closeEditProjectModal();
@@ -961,9 +991,10 @@ document.addEventListener('click', e => {
   if (e.target.id === 'promptEditorModal') closePromptEditor();
   if (e.target.id === 'projectPromptModal') closeProjectPrompt();
   if (e.target.id === 'snoozeModal') closeSnoozeModal();
+  if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); }
 });
 
 // ===================================================================
@@ -1376,11 +1407,16 @@ async function toggleTodo(id, done) {
 }
 
 async function deleteTodo(id) {
-  if (!confirm('Delete this TODO?')) return;
-  const { error } = await sb.from('todos').delete().eq('id', id);
-  if (error) { showToast('Delete failed', 'error'); return; }
-  showToast('TODO deleted', 'info');
-  await refreshTodos();
+  showDeleteConfirm(
+    '🗑️ Delete TODO',
+    'Delete this TODO? This cannot be undone.',
+    async () => {
+      const { error } = await sb.from('todos').delete().eq('id', id);
+      if (error) { showToast('Delete failed', 'error'); return; }
+      showToast('TODO deleted', 'info');
+      await refreshTodos();
+    }
+  );
 }
 
 async function editTodoInline(id) {
