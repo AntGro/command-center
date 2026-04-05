@@ -992,9 +992,10 @@ document.addEventListener('click', e => {
   if (e.target.id === 'projectPromptModal') closeProjectPrompt();
   if (e.target.id === 'snoozeModal') closeSnoozeModal();
   if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
+  if (e.target.id === 'bucketManagerModal') closeBucketManager();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeBucketManager(); }
 });
 
 // ===================================================================
@@ -1255,7 +1256,10 @@ async function refreshTodos() {
     return;
   }
   allTodos = data || [];
+  syncBucketsFromTodos();
   if (currentView === 'todos') {
+    renderBucketBar();
+    populateBucketSelect();
     renderTodos();
     updateTodoStats();
   }
@@ -1272,6 +1276,13 @@ function setTodoFilter(filter) {
 function getFilteredTodos() {
   const now = new Date();
   let filtered = [...allTodos];
+
+  // Filter by bucket
+  if (activeBucket === '__general__') {
+    filtered = filtered.filter(t => !t.category);
+  } else if (activeBucket) {
+    filtered = filtered.filter(t => t.category === activeBucket);
+  }
 
   // Hide snoozed items from pending view (snooze_until in the future)
   if (todoFilter === 'pending') {
@@ -1385,16 +1396,18 @@ async function addTodo() {
   const priority = document.getElementById('todoPriority').value;
   const dueDateRaw = document.getElementById('todoDueDate').value;
   const due_date = dueDateRaw ? new Date(dueDateRaw).toISOString() : null;
+  const category = document.getElementById('todoBucket')?.value || '';
 
   // Get max sort_order
   const pendingTodos = allTodos.filter(t => !t.done);
   const maxOrder = pendingTodos.length > 0 ? Math.max(...pendingTodos.map(t => t.sort_order || 0)) + 1 : 0;
 
-  const { error } = await sb.from('todos').insert({ text, priority, due_date, sort_order: maxOrder });
+  const { error } = await sb.from('todos').insert({ text, priority, due_date, category, sort_order: maxOrder });
   if (error) { showToast('Failed to add todo: ' + error.message, 'error'); return; }
   input.value = '';
   document.getElementById('todoDueDate').value = '';
   document.getElementById('todoPriority').value = 'normal';
+  if (document.getElementById('todoBucket')) document.getElementById('todoBucket').value = '';
   showToast('TODO added', 'success');
   await refreshTodos();
 }
@@ -1507,6 +1520,143 @@ async function doSnooze(snoozeUntil) {
   if (error) { showToast('Snooze failed', 'error'); return; }
   closeSnoozeModal();
   showToast(`Snoozed until ${snoozeUntil.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 'success');
+  await refreshTodos();
+}
+
+// ===================================================================
+// BUCKETS (categories for TODOs)
+// ===================================================================
+const BUCKETS_KEY = 'todo_buckets';
+let activeBucket = ''; // '' = All, 'general' = General (no category), or bucket name
+
+function getBuckets() {
+  try {
+    const raw = localStorage.getItem(BUCKETS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveBuckets(buckets) {
+  localStorage.setItem(BUCKETS_KEY, JSON.stringify(buckets));
+}
+
+function syncBucketsFromTodos() {
+  // Auto-discover any categories in existing todos that aren't in bucket list
+  const knownBuckets = getBuckets();
+  const knownSet = new Set(knownBuckets.map(b => b.toLowerCase()));
+  const discovered = new Set();
+  allTodos.forEach(t => {
+    if (t.category && !knownSet.has(t.category.toLowerCase())) {
+      discovered.add(t.category);
+    }
+  });
+  if (discovered.size > 0) {
+    const updated = [...knownBuckets, ...Array.from(discovered)];
+    saveBuckets(updated);
+  }
+}
+
+function renderBucketBar() {
+  const tabs = document.getElementById('bucketTabs');
+  if (!tabs) return;
+  const buckets = getBuckets();
+  const counts = {};
+  const pendingTodos = allTodos.filter(t => !t.done);
+  pendingTodos.forEach(t => {
+    const cat = t.category || '';
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+
+  let html = `<button class="bucket-tab ${activeBucket === '' ? 'active' : ''}" onclick="setActiveBucket('')">All<span class="bucket-count">${pendingTodos.length}</span></button>`;
+  html += `<button class="bucket-tab ${activeBucket === '__general__' ? 'active' : ''}" onclick="setActiveBucket('__general__')">General<span class="bucket-count">${counts[''] || 0}</span></button>`;
+  buckets.forEach(name => {
+    const c = counts[name] || 0;
+    html += `<button class="bucket-tab ${activeBucket === name ? 'active' : ''}" onclick="setActiveBucket('${esc(name)}')">${esc(name)}<span class="bucket-count">${c}</span></button>`;
+  });
+  tabs.innerHTML = html;
+}
+
+function setActiveBucket(bucket) {
+  activeBucket = bucket;
+  renderBucketBar();
+  renderTodos();
+}
+
+function populateBucketSelect() {
+  const sel = document.getElementById('todoBucket');
+  if (!sel) return;
+  const buckets = getBuckets();
+  sel.innerHTML = '<option value="">General</option>' + buckets.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+}
+
+function openBucketManager() {
+  renderBucketList();
+  document.getElementById('bucketManagerModal').classList.add('visible');
+}
+
+function closeBucketManager() {
+  document.getElementById('bucketManagerModal').classList.remove('visible');
+}
+
+function renderBucketList() {
+  const container = document.getElementById('bucketList');
+  if (!container) return;
+  const buckets = getBuckets();
+  let html = '<div class="bucket-list-item"><span class="bucket-name default">General (default — cannot be removed)</span></div>';
+  buckets.forEach((name, i) => {
+    html += `<div class="bucket-list-item">
+      <span class="bucket-name">${esc(name)}</span>
+      <button onclick="removeBucket(${i})" title="Remove bucket">🗑️</button>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function addBucket() {
+  const input = document.getElementById('newBucketName');
+  const name = input.value.trim();
+  if (!name) return;
+  const buckets = getBuckets();
+  if (buckets.some(b => b.toLowerCase() === name.toLowerCase())) {
+    showToast('Bucket already exists', 'error');
+    return;
+  }
+  buckets.push(name);
+  saveBuckets(buckets);
+  input.value = '';
+  renderBucketList();
+  renderBucketBar();
+  populateBucketSelect();
+  showToast(`Bucket "${name}" created`, 'success');
+}
+
+async function removeBucket(index) {
+  const buckets = getBuckets();
+  const name = buckets[index];
+  showDeleteConfirm(
+    '🗑️ Remove Bucket',
+    `Remove "${name}"? TODOs in this bucket will move to General.`,
+    async () => {
+      // Move all todos in this bucket back to general
+      const todosInBucket = allTodos.filter(t => t.category === name);
+      for (const t of todosInBucket) {
+        await sb.from('todos').update({ category: '' }).eq('id', t.id);
+      }
+      buckets.splice(index, 1);
+      saveBuckets(buckets);
+      if (activeBucket === name) activeBucket = '';
+      renderBucketList();
+      renderBucketBar();
+      populateBucketSelect();
+      await refreshTodos();
+      showToast(`Bucket "${name}" removed`, 'info');
+    }
+  );
+}
+
+async function changeTodoBucket(id, newBucket) {
+  const { error } = await sb.from('todos').update({ category: newBucket }).eq('id', id);
+  if (error) { showToast('Failed to update bucket', 'error'); return; }
   await refreshTodos();
 }
 
