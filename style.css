@@ -273,11 +273,11 @@ input,select,button{font-family:inherit;}
   .stats-bar{gap:20px;flex-wrap:wrap;}
   .idea-form{flex-direction:column;}
   .idea-form select{min-width:auto;}
-  .app-header{padding:12px 8px;}
+  .app-header{padding:12px 8px;flex-wrap:wrap;gap:8px;}
+  .view-switcher{order:3;flex:1 1 100%;justify-content:center;padding:4px 0 0;}
   .main-content{padding:6px;}
   .stats-bar{padding:14px 8px;}
   .legend{padding:8px 8px;}
-  .view-switcher{padding:8px 8px;}
   .todo-add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch;}
   .todo-add-row input[type="text"]{grid-column:1/-1;}
   .todo-add-row input[type="datetime-local"]{min-width:auto;width:100%;}
@@ -300,8 +300,8 @@ input,select,button{font-family:inherit;}
   .header-actions{gap:4px;flex-wrap:wrap;justify-content:flex-end;}
   .header-actions .btn{padding:6px 10px;font-size:0.78rem;min-height:36px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;}
 
-  /* View switcher — fill width */
-  .view-switcher{gap:4px;padding:6px 8px;}
+  /* View switcher — fill width below title/actions */
+  .view-switcher{order:3;flex:1 1 100%;justify-content:center;gap:4px;padding:4px 0 0;}
   .view-tab{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;}
 
   /* Stats bar — compact grid */
@@ -442,9 +442,9 @@ input,select,button{font-family:inherit;}
   .project-card.expanded{grid-column:auto;box-shadow:0 0 0 2px var(--accent);}
 }
 
-/* ===== VIEW SWITCHER ===== */
-.view-switcher{display:flex;gap:4px;padding:10px 8px;background:var(--surface);border-bottom:1px solid var(--border);}
-.view-tab{padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:0.88rem;font-weight:500;transition:all 0.2s;font-family:inherit;}
+/* ===== VIEW SWITCHER (inside header) ===== */
+.view-switcher{display:flex;gap:4px;align-items:center;}
+.view-tab{padding:6px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s;font-family:inherit;}
 .view-tab:hover{border-color:var(--accent);color:var(--text);}
 .view-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
 

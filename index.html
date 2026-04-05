@@ -38,6 +38,10 @@
 <div id="app">
   <header class="app-header">
     <h1>🪶 Command Center</h1>
+    <div class="view-switcher">
+      <button class="view-tab active" id="tabProjects" onclick="switchView('projects')">📁 My Projects</button>
+      <button class="view-tab" id="tabTodos" onclick="switchView('todos')">✅ My TODOs</button>
+    </div>
     <div class="header-actions">
       <button class="btn" onclick="openAddProjectModal()" title="Add project">➕</button>
       <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt">📝</button>
@@ -47,12 +51,6 @@
       <button class="btn btn-disconnect" onclick="disconnect()" title="Disconnect &amp; log out">🔌</button>
     </div>
   </header>
-
-  <!-- View Switcher Tabs -->
-  <div class="view-switcher">
-    <button class="view-tab active" id="tabProjects" onclick="switchView('projects')">📁 My Projects</button>
-    <button class="view-tab" id="tabTodos" onclick="switchView('todos')">✅ My TODOs</button>
-  </div>
 
   <!-- ===== PROJECTS VIEW ===== -->
   <div id="projectsView">
