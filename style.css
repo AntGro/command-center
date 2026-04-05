@@ -249,11 +249,18 @@ input,select,button{font-family:inherit;}
 .modal-actions button{padding:8px 18px;border-radius:7px;font-size:0.86rem;font-weight:600;cursor:pointer;border:none;}
 .modal-actions .modal-cancel{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
 .modal-actions .modal-save{background:var(--accent);color:#fff;}
-.delete-confirm-modal{max-width:380px;text-align:center;}
+.delete-confirm-modal{max-width:380px;text-align:center;border-top:3px solid var(--red);animation:modalSlideIn 0.2s ease-out;}
+.delete-confirm-icon{font-size:2.4rem;margin-bottom:8px;display:block;animation:warningPulse 1.5s ease-in-out infinite;}
+.delete-confirm-modal h2{color:var(--red);font-size:1rem;margin-bottom:6px;}
 .delete-confirm-msg{font-size:0.88rem;color:var(--muted);margin:8px 0 4px;line-height:1.5;}
-.delete-confirm-modal .modal-actions{justify-content:center;}
-.delete-confirm-btn{background:var(--red) !important;color:#fff !important;}
-.delete-confirm-btn:hover{opacity:0.85;}
+.delete-confirm-detail{font-size:0.78rem;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:10px 0 4px;line-height:1.4;word-break:break-word;}
+.delete-confirm-modal .modal-actions{justify-content:center;gap:12px;}
+.delete-confirm-btn{background:var(--red) !important;color:#fff !important;transition:all 0.2s;}
+.delete-confirm-btn:hover{opacity:0.85;transform:scale(1.02);}
+.delete-confirm-modal .modal-cancel{transition:all 0.2s;}
+.delete-confirm-modal .modal-cancel:hover{border-color:var(--text);color:var(--text);}
+@keyframes modalSlideIn{from{opacity:0;transform:translateY(-8px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes warningPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
 
 /* ===== INLINE EDIT ===== */
 .task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;}

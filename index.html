@@ -288,8 +288,10 @@
   <!-- Delete Confirmation Modal -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal delete-confirm-modal">
-      <h2 id="deleteConfirmTitle">⚠️ Confirm Delete</h2>
+      <span class="delete-confirm-icon" id="deleteConfirmIcon">⚠️</span>
+      <h2 id="deleteConfirmTitle">Confirm Delete</h2>
       <p id="deleteConfirmMessage" class="delete-confirm-msg"></p>
+      <div id="deleteConfirmDetail" class="delete-confirm-detail" style="display:none;"></div>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeDeleteConfirm()">Cancel</button>
         <button class="modal-save delete-confirm-btn" id="deleteConfirmBtn" onclick="executeDeleteConfirm()">Delete</button>

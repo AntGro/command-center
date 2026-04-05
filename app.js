@@ -217,9 +217,11 @@ async function unarchiveProject(id) {
 }
 
 async function deleteProject(id, name) {
+  const taskCount = allTasks.filter(t => t.project === id).length;
+  const detail = taskCount > 0 ? `This will also delete ${taskCount} task${taskCount > 1 ? 's' : ''} in this project.` : null;
   showDeleteConfirm(
-    '🗑️ Delete Project',
-    `Delete "${name}" and ALL its tasks? This cannot be undone.`,
+    'Delete Project',
+    `Delete "${name}"? This cannot be undone.`,
     async () => {
       await sb.from('tasks').delete().eq('project', id);
       await sb.from('prompts').delete().eq('key', id);
@@ -232,7 +234,8 @@ async function deleteProject(id, name) {
       renderArchivedProjects();
       initProjectDragDrop();
       showToast(`Project "${name}" deleted`, 'info');
-    }
+    },
+    detail
   );
 }
 
@@ -616,7 +619,7 @@ async function promptEditTask(id) {
 
 async function deleteTask(id) {
   showDeleteConfirm(
-    '🗑️ Delete Task',
+    'Delete Task',
     'Delete this task? This cannot be undone.',
     async () => {
       const { error } = await sb.from('tasks').delete().eq('id', id);
@@ -964,9 +967,16 @@ function closeTaskExpandModal() {
 // ===================================================================
 let _deleteConfirmCallback = null;
 
-function showDeleteConfirm(title, message, onConfirm) {
+function showDeleteConfirm(title, message, onConfirm, detail) {
   document.getElementById('deleteConfirmTitle').textContent = title;
   document.getElementById('deleteConfirmMessage').textContent = message;
+  const detailEl = document.getElementById('deleteConfirmDetail');
+  if (detail) {
+    detailEl.textContent = detail;
+    detailEl.style.display = 'block';
+  } else {
+    detailEl.style.display = 'none';
+  }
   _deleteConfirmCallback = onConfirm;
   document.getElementById('deleteConfirmModal').classList.add('visible');
 }
@@ -1421,7 +1431,7 @@ async function toggleTodo(id, done) {
 
 async function deleteTodo(id) {
   showDeleteConfirm(
-    '🗑️ Delete TODO',
+    'Delete TODO',
     'Delete this TODO? This cannot be undone.',
     async () => {
       const { error } = await sb.from('todos').delete().eq('id', id);
@@ -1634,7 +1644,7 @@ async function removeBucket(index) {
   const buckets = getBuckets();
   const name = buckets[index];
   showDeleteConfirm(
-    '🗑️ Remove Bucket',
+    'Remove Bucket',
     `Remove "${name}"? TODOs in this bucket will move to General.`,
     async () => {
       // Move all todos in this bucket back to general
