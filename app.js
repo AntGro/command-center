@@ -410,9 +410,10 @@ function renderTask(t, isArchived = false) {
   if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">📋 Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
   if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
 
+  let promoteBtn = '';
   let actionBtns = '';
   if (isDraft) {
-    actionBtns += `<button class="promote-btn" onclick="updateTaskStatus('${t.id}','todo')" title="Promote to task">▶ Todo</button>`;
+    promoteBtn = `<button class="promote-btn" onclick="updateTaskStatus('${t.id}','todo')" title="Promote to task">▶ Todo</button>`;
   }
   if (t.status === 'review') {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">✅</button>`;
@@ -432,6 +433,7 @@ function renderTask(t, isArchived = false) {
       ${dragHandle}
       <span class="status-dot ${t.status}"></span>
       <span class="task-text">${esc(t.text)}</span>
+      ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
     </div>
     ${meta ? `<div class="task-meta">${meta}</div>` : ''}

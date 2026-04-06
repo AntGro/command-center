@@ -29,9 +29,9 @@
 [data-theme="light"] #gate{background:radial-gradient(ellipse at 50% 40%,rgba(79,70,229,0.04),transparent 60%);}
 
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+body{font-family:'EB Garamond','Georgia',serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;}
 ::selection{background:var(--accent);color:#fff;}
-input,select,button{font-family:inherit;}
+input,select,button{font-family:'Roboto',system-ui,sans-serif;}
 
 /* ===== GATE ===== */
 #gate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(100,108,255,0.06),transparent 60%);}
@@ -162,8 +162,8 @@ input,select,button{font-family:inherit;}
 .add-task .draft-toggle:hover{color:var(--text);}
 .add-task .draft-toggle input[type="checkbox"]{accent-color:var(--muted);width:13px;height:13px;cursor:pointer;}
 .add-task .draft-toggle.active{color:var(--text);}
-.promote-btn{font-size:0.68rem;padding:2px 7px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;opacity:0.85;transition:opacity 0.2s;margin-left:4px;}
-.promote-btn:hover{opacity:1;}
+.promote-btn{font-size:0.78rem;padding:4px 10px;background:var(--accent) !important;color:#fff !important;border:none;border-radius:4px;cursor:pointer;font-weight:600;opacity:1;transition:all 0.2s;margin-left:6px;box-shadow:0 1px 3px rgba(0,0,0,0.15);letter-spacing:0.02em;flex-shrink:0;}
+.promote-btn:hover{opacity:0.9;transform:scale(1.05);box-shadow:0 2px 6px rgba(0,0,0,0.2);}
 
 /* ===== TOAST ===== */
 .toast{position:fixed;bottom:20px;right:20px;padding:11px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.84rem;z-index:999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;}
@@ -226,7 +226,7 @@ input,select,button{font-family:inherit;}
 .prompt-modal{max-width:560px;}
 .prompt-modal h2{font-size:1rem;margin-bottom:8px;}
 .prompt-modal .prompt-hint{font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.4;}
-.prompt-modal textarea{width:100%;min-height:180px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem;font-family:'Inter',system-ui,monospace;resize:vertical;outline:none;margin-bottom:12px;line-height:1.5;}
+.prompt-modal textarea{width:100%;min-height:180px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem;font-family:'Roboto',system-ui,sans-serif;resize:vertical;outline:none;margin-bottom:12px;line-height:1.5;}
 .prompt-modal textarea:focus{border-color:var(--accent);}
 
 /* ===== ADD PROJECT MODAL ===== */
