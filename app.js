@@ -306,6 +306,7 @@ function buildProjectCards() {
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
         <textarea placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
+        <label class="draft-toggle" title="Save as draft (personal note, not picked up by Claw)"><input type="checkbox" id="draft-${p.id}" onchange="this.parentElement.classList.toggle('active',this.checked)">Draft</label>
         <button onclick="addTask('${p.id}')">+</button>
       </div>
       <div class="char-counter" id="counter-${p.id}"></div>
@@ -404,11 +405,15 @@ function collapseMeta(id, field) {
 }
 
 function renderTask(t, isArchived = false) {
+  const isDraft = t.status === 'draft';
   let meta = '';
   if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">📋 Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
   if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
 
   let actionBtns = '';
+  if (isDraft) {
+    actionBtns += `<button class="promote-btn" onclick="updateTaskStatus('${t.id}','todo')" title="Promote to task">▶ Todo</button>`;
+  }
   if (t.status === 'review') {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">✅</button>`;
     actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">🔄</button>`;
@@ -420,8 +425,9 @@ function renderTask(t, isArchived = false) {
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
 
   const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
+  const draftClass = isDraft ? ' task-draft' : '';
 
-  return `<div class="task-item" data-task-id="${t.id}">
+  return `<div class="task-item${draftClass}" data-task-id="${t.id}">
     <div class="task-row">
       ${dragHandle}
       <span class="status-dot ${t.status}"></span>
@@ -556,15 +562,18 @@ async function addTask(projectId) {
   const text = input.value.trim();
   if (!text) return;
   if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
+  const draftCheckbox = document.getElementById(`draft-${projectId}`);
+  const isDraft = draftCheckbox && draftCheckbox.checked;
   input.value = '';
   const counter = document.getElementById(`counter-${projectId}`);
   if (counter) counter.textContent = '';
   // Get max sort_order for this project
   const projectTasks = allTasks.filter(t => t.project === projectId && t.status !== 'approved');
   const maxOrder = projectTasks.length > 0 ? Math.max(...projectTasks.map(t => t.sort_order || 0)) + 1 : 0;
-  const { error } = await sb.from('tasks').insert({ project: projectId, text, status: 'todo', sort_order: maxOrder });
+  const status = isDraft ? 'draft' : 'todo';
+  const { error } = await sb.from('tasks').insert({ project: projectId, text, status, sort_order: maxOrder });
   if (error) showToast('Failed to add task', 'error');
-  else { showToast('Task added', 'success'); await refreshAll(); }
+  else { showToast(isDraft ? 'Draft saved' : 'Task added', 'success'); await refreshAll(); }
 }
 
 async function updateTaskStatus(id, status) {
@@ -732,9 +741,12 @@ function updateStats() {
   const tasks = allTasks;
   const archivedIds = getArchivedProjectIds();
   document.getElementById('statProjects').textContent = PROJECTS.filter(p => !archivedIds.includes(p.id)).length;
-  document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved').length;
+  document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved' && t.status !== 'draft').length;
   document.getElementById('statReview').textContent = tasks.filter(t => t.status === 'review').length;
   document.getElementById('statIdeas').textContent = allIdeas.length;
+  const draftCount = tasks.filter(t => t.status === 'draft').length;
+  const draftEl = document.getElementById('statDrafts');
+  if (draftEl) draftEl.textContent = draftCount;
 }
 
 // ===================================================================

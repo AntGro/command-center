@@ -92,6 +92,7 @@ input,select,button{font-family:inherit;}
 .status-dot.review{background:var(--yellow);box-shadow:0 0 8px rgba(234,179,8,0.4);}
 .status-dot.approved{background:var(--green);}
 .status-dot.revision{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4);}
+.status-dot.draft{background:transparent;border:2px dashed var(--muted);width:7px;height:7px;}
 
 /* ===== IDEAS SECTION ===== */
 .ideas-section{margin-bottom:28px;}
@@ -135,6 +136,8 @@ input,select,button{font-family:inherit;}
 .task-list{padding:4px 16px;flex:1;min-height:50px;max-height:var(--task-list-max-height, 400px);overflow-y:auto;transition:max-height 0.3s ease;}
 .task-item{padding:9px 0;border-bottom:1px solid var(--border);}
 .task-item:last-child{border-bottom:none;}
+.task-item.task-draft{opacity:0.55;border-bottom:1px dashed var(--border);}
+.task-item.task-draft .task-text{font-style:italic;}
 .task-row{display:flex;align-items:center;gap:9px;}
 .task-text{flex:1;font-size:0.88rem;line-height:1.35;}
 .task-actions{display:none;gap:2px;}
@@ -155,6 +158,12 @@ input,select,button{font-family:inherit;}
 .add-task textarea:focus{border-color:var(--accent);}
 .add-task button{padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.84rem;transition:opacity 0.2s;}
 .add-task button:hover{opacity:0.85;}
+.add-task .draft-toggle{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.72rem;color:var(--muted);white-space:nowrap;padding:0 4px;user-select:none;transition:color 0.2s;}
+.add-task .draft-toggle:hover{color:var(--text);}
+.add-task .draft-toggle input[type="checkbox"]{accent-color:var(--muted);width:13px;height:13px;cursor:pointer;}
+.add-task .draft-toggle.active{color:var(--text);}
+.promote-btn{font-size:0.68rem;padding:2px 7px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;opacity:0.85;transition:opacity 0.2s;margin-left:4px;}
+.promote-btn:hover{opacity:1;}
 
 /* ===== TOAST ===== */
 .toast{position:fixed;bottom:20px;right:20px;padding:11px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.84rem;z-index:999;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;}
