@@ -626,9 +626,24 @@ async function promptEditTask(id) {
   input.className = 'task-edit-input';
   input.value = originalText;
   input.maxLength = MAX_TEXT_LEN;
-  input.rows = Math.max(1, originalText.split('\n').length);
+  input.rows = Math.max(2, originalText.split('\n').length);
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
+  input.style.minHeight = '2.4em';
+
+  // Temporarily expand parent task-list so textarea isn't clipped
+  const taskList = taskEl.closest('.task-list');
+  let savedMaxHeight = '';
+  if (taskList) {
+    savedMaxHeight = taskList.style.maxHeight;
+    taskList.style.maxHeight = 'none';
+    taskList.style.overflowY = 'visible';
+  }
+
+  function autoSize() {
+    input.style.height = 'auto';
+    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
+  }
 
   const finishEdit = async (save) => {
     if (save && input.value.trim() && input.value.trim() !== originalText) {
@@ -636,6 +651,11 @@ async function promptEditTask(id) {
       const { error } = await sb.from('tasks').update({ text: trimmed }).eq('id', id);
       if (error) showToast('Update failed', 'error');
       else showToast('Task updated', 'success');
+    }
+    // Restore parent task-list constraints
+    if (taskList) {
+      taskList.style.maxHeight = savedMaxHeight;
+      taskList.style.overflowY = '';
     }
     delete textSpan.dataset.editing;
     await refreshAll();
@@ -645,17 +665,12 @@ async function promptEditTask(id) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
     if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
   });
-  input.addEventListener('input', () => {
-    input.style.height = 'auto';
-    input.style.height = input.scrollHeight + 'px';
-  });
+  input.addEventListener('input', autoSize);
   input.addEventListener('blur', () => finishEdit(true));
 
   textSpan.replaceWith(input);
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-  input.focus();
-  input.select();
+  // Use rAF to ensure layout is computed before reading scrollHeight
+  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }
 
 async function deleteTask(id) {
@@ -1670,7 +1685,15 @@ async function editTodoInline(id) {
   input.className = 'task-edit-input';
   input.value = todo.text;
   input.maxLength = 2000;
-  input.rows = Math.max(1, todo.text.split('\n').length);
+  input.rows = Math.max(2, todo.text.split('\n').length);
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+  input.style.minHeight = '2.4em';
+
+  function autoSize() {
+    input.style.height = 'auto';
+    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
+  }
 
   const finish = async (save) => {
     if (save && input.value.trim() && input.value.trim() !== todo.text) {
@@ -1687,12 +1710,10 @@ async function editTodoInline(id) {
     if (e.key === 'Escape') { e.preventDefault(); finish(false); }
   });
   input.addEventListener('blur', () => finish(true));
-  input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
+  input.addEventListener('input', autoSize);
   textEl.replaceWith(input);
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-  input.focus();
-  input.select();
+  // Use rAF to ensure layout is computed before reading scrollHeight
+  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }
 
 function updateTodoStats() {
