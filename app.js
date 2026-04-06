@@ -302,6 +302,7 @@ function buildProjectCards() {
       <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">Loading...</p></div>
       <div class="archive-toggle" onclick="toggleArchivedTasks('${p.id}')" id="archive-toggle-${p.id}" style="display:none;">
         <span class="arrow" id="archive-arrow-${p.id}">▶</span> Archived tasks (<span id="archive-count-${p.id}">0</span>)
+        <button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllArchivedTasks('${p.id}')" title="Delete all archived tasks">🗑️ Delete all</button>
       </div>
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
@@ -388,6 +389,24 @@ function toggleArchivedTasks(projectId) {
   const arrow = document.getElementById(`archive-arrow-${projectId}`);
   container.classList.toggle('visible');
   arrow.classList.toggle('open');
+}
+
+async function deleteAllArchivedTasks(projectId) {
+  const archivedTasks = allTasks.filter(t => t.project === projectId && t.status === 'approved');
+  if (!archivedTasks.length) return;
+  const project = PROJECTS.find(p => p.id === projectId);
+  const name = project ? project.name : projectId;
+  showDeleteConfirm(
+    'Delete All Archived Tasks',
+    `Delete all ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''} in "${name}"? This cannot be undone.`,
+    async () => {
+      for (const t of archivedTasks) {
+        await sb.from('tasks').delete().eq('id', t.id);
+      }
+      showToast(`Deleted ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''}`, 'info');
+      await refreshAll();
+    }
+  );
 }
 
 function truncateWithShowMore(text, maxLen, id, field) {
