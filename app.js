@@ -2156,3 +2156,11 @@ async function reorderCategories(draggedName, targetName) {
   renderTodos();
   showToast('Categories reordered', 'success');
 }
+
+// ===================================================================
+// SUBTLE MOUSE-FOLLOW AMBIENT GLOW
+// ===================================================================
+document.addEventListener('mousemove', e => {
+  document.body.style.setProperty('--mouse-x', e.clientX + 'px');
+  document.body.style.setProperty('--mouse-y', e.clientY + 'px');
+});
