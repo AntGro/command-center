@@ -1618,7 +1618,7 @@ function renderTodoItem(t) {
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
         <span class="todo-checkmark"></span>
       </label>
-      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${esc(t.text)}</span>
+      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${renderMd(t.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
         ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">💤</button>` : ''}
