@@ -451,15 +451,17 @@ function initTaskHoverDelay(container) {
   container.querySelectorAll('.task-item').forEach(item => {
     let hoverTimer = null;
     const actions = item.querySelector('.task-actions');
-    if (!actions) return;
+    const taskRow = item.querySelector('.task-row');
+    if (!actions || !taskRow) return;
 
-    item.addEventListener('mouseenter', () => {
+    // Only trigger on task-row hover (task text), not on plan/Claw response meta
+    taskRow.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
         actions.classList.add('visible');
       }, 2000);
     });
 
-    item.addEventListener('mouseleave', () => {
+    taskRow.addEventListener('mouseleave', () => {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
       actions.classList.remove('visible');
     });
