@@ -650,6 +650,8 @@ async function promptEditTask(id) {
   input.addEventListener('blur', () => finishEdit(true));
 
   textSpan.replaceWith(input);
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
   input.focus();
   input.select();
 }
@@ -1681,7 +1683,10 @@ async function editTodoInline(id) {
     if (e.key === 'Escape') { e.preventDefault(); finish(false); }
   });
   input.addEventListener('blur', () => finish(true));
+  input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
   textEl.replaceWith(input);
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
   input.focus();
   input.select();
 }
