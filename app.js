@@ -481,8 +481,10 @@ function initTaskHoverDelay(container) {
 
   container.querySelectorAll('.task-item').forEach(item => {
     let hoverTimer = null;
+    let clickTimer = null;
     const actions = item.querySelector('.task-actions');
     const taskRow = item.querySelector('.task-row');
+    const taskText = item.querySelector('.task-text');
     if (!actions || !taskRow) return;
 
     // Only trigger on task-row hover (task text), not on plan/Claw response meta
@@ -494,8 +496,26 @@ function initTaskHoverDelay(container) {
 
     taskRow.addEventListener('mouseleave', () => {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       actions.classList.remove('visible');
     });
+
+    // Single click on task text shows actions immediately (with short delay to avoid
+    // triggering on double-click which should still open the inline editor)
+    if (taskText) {
+      taskText.addEventListener('click', () => {
+        if (taskText.dataset.editing) return;
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          actions.classList.add('visible');
+          // Clear the hover timer since actions are already visible
+          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+        }, 250);
+      });
+      taskText.addEventListener('dblclick', () => {
+        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      });
+    }
   });
 }
 
