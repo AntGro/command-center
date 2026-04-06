@@ -390,9 +390,9 @@ function toggleArchivedTasks(projectId) {
 }
 
 function truncateWithShowMore(text, maxLen, id, field) {
-  if (!text || text.length <= maxLen) return linkify(esc(text || ''));
-  const truncated = linkify(esc(text.slice(0, maxLen))) + '…';
-  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${linkify(esc(text))} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
+  if (!text || text.length <= maxLen) return renderMd(text || '');
+  const truncated = renderMd(text.slice(0, maxLen)) + '…';
+  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderMd(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
 }
 
 function expandMeta(id, field) {
@@ -432,7 +432,7 @@ function renderTask(t, isArchived = false) {
     <div class="task-row">
       ${dragHandle}
       <span class="status-dot ${t.status}"></span>
-      <span class="task-text">${esc(t.text)}</span>
+      <span class="task-text">${renderMd(t.text)}</span>
       ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
     </div>
@@ -757,6 +757,27 @@ function updateStats() {
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function linkify(html) { return html.replace(/https?:\/\/[^\s<&]+/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`); }
 
+/** Lightweight markdown renderer: escapes HTML first, then applies markdown formatting */
+function renderMd(text) {
+  if (!text) return '';
+  let html = esc(text);
+  // Code blocks (``` ... ```) — must come before inline code
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => `<pre class="md-code-block"><code>${code.trim()}</code></pre>`);
+  // Inline code
+  html = html.replace(/`([^`\n]+)`/g, '<code class="md-inline-code">$1</code>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic (single * not preceded/followed by space only)
+  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Bare URLs (not already in an <a> tag)
+  html = html.replace(/(?<!href="|">)(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -953,8 +974,8 @@ function expandTask(id) {
   const project = PROJECTS.find(p => p.id === t.project);
   const content = document.getElementById('taskExpandContent');
   let meta = '';
-  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">📋 Plan:</strong><br>${linkify(esc(t.plan_note))}</div>`;
-  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">🪶 Claw:</strong><br>${linkify(esc(t.hatch_response))}</div>`;
+  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">📋 Plan:</strong><br>${renderMd(t.plan_note)}</div>`;
+  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">🪶 Claw:</strong><br>${renderMd(t.hatch_response)}</div>`;
 
   let actions = '';
   if (t.status === 'review') {
