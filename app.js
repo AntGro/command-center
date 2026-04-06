@@ -327,6 +327,18 @@ function updateCharCounter(input) {
   counter.className = 'char-counter' + (len > MAX_TEXT_LEN * 0.9 ? ' danger' : len > MAX_TEXT_LEN * 0.7 ? ' warn' : '');
 }
 
+const TODO_MAX_LEN = 2000;
+function updateTodoCharCounter(input) {
+  const catId = input.closest('.todo-category-card')?.id;
+  if (!catId) return;
+  const counter = document.getElementById(`todo-counter-${catId}`);
+  if (!counter) return;
+  const len = input.value.length;
+  if (len === 0) { counter.textContent = ''; return; }
+  counter.textContent = `${len}/${TODO_MAX_LEN}`;
+  counter.className = 'char-counter' + (len > TODO_MAX_LEN * 0.9 ? ' danger' : len > TODO_MAX_LEN * 0.7 ? ' warn' : '');
+}
+
 function populateIdeaProjectSelect() {
   const sel = document.getElementById('ideaProject');
   sel.innerHTML = '<option value="">No project</option>';
@@ -481,6 +493,29 @@ function initTaskHoverDelay(container) {
     });
 
     taskRow.addEventListener('mouseleave', () => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      actions.classList.remove('visible');
+    });
+  });
+}
+
+function initTodoHoverDelay(container) {
+  const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
+  if (isTouchDevice) return;
+
+  container.querySelectorAll('.todo-item').forEach(item => {
+    let hoverTimer = null;
+    const actions = item.querySelector('.todo-actions');
+    const todoRow = item.querySelector('.todo-row');
+    if (!actions || !todoRow) return;
+
+    todoRow.addEventListener('mouseenter', () => {
+      hoverTimer = setTimeout(() => {
+        actions.classList.add('visible');
+      }, 2000);
+    });
+
+    todoRow.addEventListener('mouseleave', () => {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
       actions.classList.remove('visible');
     });
@@ -1506,6 +1541,12 @@ function renderTodos() {
   categoryList.forEach(cat => {
     const catId = categoryToDomId(cat);
     initTodoDragDropForCard(catId);
+    // Init hover delay for TODO action buttons (same as project tasks)
+    const catCard = document.getElementById(catId);
+    if (catCard) {
+      const list = catCard.querySelector('.todo-cat-list');
+      if (list) initTodoHoverDelay(list);
+    }
   });
 
   // Init drag-and-drop for category cards themselves
@@ -1559,17 +1600,33 @@ function renderCategoryCard(category) {
   const isGeneral = !category;
   const allInCat = allTodos.filter(t => (t.category || '') === category);
   const pending = allInCat.filter(t => !t.done).length;
-  const done = allInCat.filter(t => t.done).length;
-  const filtered = getFilteredTodosForCategory(category);
+  const doneCount = allInCat.filter(t => t.done).length;
 
-  const statsText = `${pending} pending` + (done > 0 ? ` · ${done} done` : '');
+  // Split: active items (not done) and done items
+  const activeTodos = getFilteredTodosForCategory(category).filter(t => !t.done);
+  const doneTodos = allInCat.filter(t => t.done);
+
+  // If user is explicitly filtering to 'done', show all done; if 'pending', show only active
+  let displayActive, displayDone;
+  if (todoFilter === 'done') {
+    displayActive = [];
+    displayDone = doneTodos;
+  } else if (todoFilter === 'pending') {
+    displayActive = activeTodos;
+    displayDone = [];
+  } else {
+    displayActive = activeTodos;
+    displayDone = doneTodos;
+  }
+
+  const statsText = `${pending} pending` + (doneCount > 0 ? ` · ${doneCount} done` : '');
 
   const deleteBtn = !isGeneral
     ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="Delete category">🗑️</button>`
     : '';
 
-  const emptyMsg = filtered.length === 0
-    ? `<p class="empty-msg">${todoFilter === 'done' ? 'No completed items' : todoFilter === 'pending' ? 'All caught up! 🎉' : 'No items yet'}</p>`
+  const activeEmptyMsg = displayActive.length === 0
+    ? `<p class="empty-msg">${todoFilter === 'pending' ? 'All caught up! 🎉' : 'No items yet'}</p>`
     : '';
 
   const escapedCat = esc(category).replace(/'/g, "\\'");
@@ -1577,6 +1634,25 @@ function renderCategoryCard(category) {
   const catColor = getCategoryColor(category);
 
   const catDragHandle = !isGeneral ? `<span class="todo-cat-drag-handle" title="Drag to reorder">⠿</span>` : '';
+
+  // Done toggle (collapsible, like archived tasks in projects)
+  let doneToggle = '';
+  if (doneCount > 0 && todoFilter !== 'done') {
+    const deleteAllBtn = `<button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllDoneTodos('${escapedCat}')" title="Delete all done">🗑️ Delete all</button>`;
+    doneToggle = `
+      <div class="archive-toggle" onclick="toggleDoneTodos('${catId}')" id="done-toggle-${catId}">
+        <span class="arrow" id="done-arrow-${catId}">▶</span> Done (${doneCount})
+        ${deleteAllBtn}
+      </div>
+      <div class="archived-tasks" id="done-list-${catId}">
+        ${doneTodos.map(t => renderTodoItem(t)).join('')}
+      </div>`;
+  }
+
+  // For the 'done' filter view, show done items in the main list
+  const mainListContent = todoFilter === 'done'
+    ? (displayDone.length === 0 ? '<p class="empty-msg">No completed items</p>' : displayDone.map(t => renderTodoItem(t)).join(''))
+    : (activeEmptyMsg || displayActive.map(t => renderTodoItem(t)).join(''));
 
   return `<div class="todo-category-card" id="${catId}" data-category="${esc(category)}">
     <div class="todo-cat-accent" style="background:${catColor}"></div>
@@ -1593,12 +1669,14 @@ function renderCategoryCard(category) {
       </div>
     </div>
     <div class="todo-cat-add">
-      <input type="text" placeholder="Add a TODO..." maxlength="2000" class="todo-cat-input" data-category="${esc(category)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodoToCategory(this);}">
+      <input type="text" placeholder="Add a TODO..." maxlength="2000" class="todo-cat-input" data-category="${esc(category)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodoToCategory(this);}" oninput="updateTodoCharCounter(this)">
       <button onclick="addTodoToCategory(this.previousElementSibling)">+</button>
     </div>
+    <div class="char-counter" id="todo-counter-${catId}"></div>
     <div class="todo-cat-list" data-category="${esc(category)}">
-      ${emptyMsg || filtered.map(t => renderTodoItem(t)).join('')}
+      ${mainListContent}
     </div>
+    ${doneToggle}
   </div>`;
 }
 
@@ -1637,7 +1715,7 @@ function renderTodoItem(t) {
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
         <span class="todo-checkmark"></span>
       </label>
-      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${renderMd(t.text)}</span>
+      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${t.text.length > 150 ? truncateWithShowMore(t.text, 150, t.id, 'todo') : renderMd(t.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
         ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">💤</button>` : ''}
@@ -1694,6 +1772,30 @@ async function deleteTodo(id) {
       const { error } = await sb.from('todos').delete().eq('id', id);
       if (error) { showToast('Delete failed', 'error'); return; }
       showToast('TODO deleted', 'info');
+      await refreshTodos();
+    }
+  );
+}
+
+function toggleDoneTodos(catId) {
+  const container = document.getElementById(`done-list-${catId}`);
+  const arrow = document.getElementById(`done-arrow-${catId}`);
+  if (container) container.classList.toggle('visible');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+async function deleteAllDoneTodos(category) {
+  const doneTodos = allTodos.filter(t => (t.category || '') === category && t.done);
+  if (!doneTodos.length) return;
+  const catName = category || 'General';
+  showDeleteConfirm(
+    'Delete All Done TODOs',
+    `Delete all ${doneTodos.length} completed TODO${doneTodos.length > 1 ? 's' : ''} in "${catName}"? This cannot be undone.`,
+    async () => {
+      for (const t of doneTodos) {
+        await sb.from('todos').delete().eq('id', t.id);
+      }
+      showToast(`Deleted ${doneTodos.length} done TODO${doneTodos.length > 1 ? 's' : ''}`, 'info');
       await refreshTodos();
     }
   );

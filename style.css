@@ -509,7 +509,7 @@ input,select,button{font-family:inherit;}
 
 .todo-text{flex:1;font-size:0.86rem;line-height:1.35;cursor:default;}
 .todo-actions{display:none;gap:2px;}
-.todo-item:hover .todo-actions{display:inline-flex;}
+.todo-actions.visible{display:inline-flex;}
 .todo-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .todo-actions button:hover{background:var(--surface2);}
 
