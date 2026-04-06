@@ -358,6 +358,7 @@ input,select,button{font-family:inherit;}
   .drag-handle{opacity:1 !important;}
   .project-drag-handle{opacity:1 !important;}
   .todo-drag-handle{opacity:1 !important;}
+  .todo-cat-drag-handle{opacity:1 !important;}
 
   /* Add task area */
   .add-task{padding:6px 12px 10px;gap:4px;}
@@ -393,6 +394,7 @@ input,select,button{font-family:inherit;}
   .todo-actions{display:inline-flex !important;gap:2px;}
   .todo-actions button{font-size:0.82rem;padding:6px 8px;min-height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;}
   .todo-drag-handle{opacity:1 !important;font-size:0.9rem;padding:4px;}
+  .todo-cat-drag-handle{opacity:1 !important;font-size:0.9rem;padding:4px;}
   .todo-meta{padding-left:38px;gap:6px;margin-top:6px;}
   .todo-due{font-size:0.78rem;}
   .todo-snoozed{font-size:0.78rem;}
@@ -452,9 +454,16 @@ input,select,button{font-family:inherit;}
 .todo-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;padding:14px 8px;}
 .todo-category-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow 0.2s;}
 .todo-category-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.todo-category-card.dragging{opacity:0.4;border:2px dashed var(--accent);}
+.todo-category-card.drag-over{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
 .todo-cat-accent{height:3px;width:100%;}
 .todo-cat-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-.todo-cat-header-left{display:flex;flex-direction:column;gap:2px;}
+.todo-cat-header-left{display:flex;align-items:flex-start;gap:6px;}
+.todo-cat-info{display:flex;flex-direction:column;gap:2px;}
+.todo-cat-drag-handle{cursor:grab;color:var(--muted);font-size:0.82rem;user-select:none;padding:2px 4px;border-radius:4px;transition:color 0.2s, opacity 0.2s;opacity:0;}
+.todo-cat-drag-handle:active{cursor:grabbing;}
+.todo-cat-drag-handle:hover{color:var(--text);}
+.todo-cat-header:hover .todo-cat-drag-handle{opacity:1;}
 .todo-cat-name{font-size:0.95rem;font-weight:600;color:var(--text);margin:0;}
 .todo-cat-stats{font-size:0.72rem;color:var(--muted);}
 .todo-cat-header-actions{display:flex;align-items:center;gap:4px;opacity:0;transition:opacity 0.2s;}

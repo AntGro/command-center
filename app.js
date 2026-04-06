@@ -1483,11 +1483,14 @@ function renderTodos() {
   grid.innerHTML = html;
   updateTodoStats();
 
-  // Init drag-and-drop for each card
+  // Init drag-and-drop for each card (individual TODO items)
   categoryList.forEach(cat => {
     const catId = categoryToDomId(cat);
     initTodoDragDropForCard(catId);
   });
+
+  // Init drag-and-drop for category cards themselves
+  initCategoryDragDrop();
 }
 
 function renderCategoryToolbarButtons(categoryList) {
@@ -1554,12 +1557,17 @@ function renderCategoryCard(category) {
 
   const catColor = getCategoryColor(category);
 
-  return `<div class="todo-category-card" id="${catId}">
+  const catDragHandle = !isGeneral ? `<span class="todo-cat-drag-handle" title="Drag to reorder">⠿</span>` : '';
+
+  return `<div class="todo-category-card" id="${catId}" data-category="${esc(category)}">
     <div class="todo-cat-accent" style="background:${catColor}"></div>
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
-        <h3 class="todo-cat-name">${esc(catName)}</h3>
-        <span class="todo-cat-stats">${statsText}</span>
+        ${catDragHandle}
+        <div class="todo-cat-info">
+          <h3 class="todo-cat-name">${esc(catName)}</h3>
+          <span class="todo-cat-stats">${statsText}</span>
+        </div>
       </div>
       <div class="todo-cat-header-actions">
         ${deleteBtn}
@@ -1909,4 +1917,93 @@ async function reorderTodosInCategory(draggedId, targetId, category) {
   }
   await refreshTodos();
   showToast('Reordered', 'success');
+}
+
+// ===================================================================
+// CATEGORY CARD DRAG & DROP REORDER
+// ===================================================================
+function initCategoryDragDrop() {
+  const grid = document.getElementById('todoCategoryGrid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.todo-category-card');
+  let dragState = null;
+
+  cards.forEach(card => {
+    const handle = card.querySelector('.todo-cat-drag-handle');
+    if (!handle) return; // General category has no handle
+    handle.style.touchAction = 'none';
+
+    handle.addEventListener('pointerdown', e => {
+      if (dragState) return;
+      e.preventDefault();
+      const rect = card.getBoundingClientRect();
+      isDragging = true;
+      dragState = { el: card, category: card.dataset.category, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null };
+      const clone = card.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;border:2px solid var(--accent);`;
+      document.body.appendChild(clone);
+      dragState.clone = clone;
+      card.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+    });
+
+    handle.addEventListener('pointermove', e => {
+      if (!dragState || dragState.el !== card) return;
+      e.preventDefault();
+      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
+      dragState.clone.style.left = (e.clientX - dragState.offsetX) + 'px';
+      // Highlight drop target
+      grid.querySelectorAll('.todo-category-card:not(.dragging)').forEach(el => {
+        el.classList.remove('drag-over');
+        const r = el.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+          el.classList.add('drag-over');
+        }
+      });
+    });
+
+    const finishDrag = async () => {
+      if (!dragState || dragState.el !== card) return;
+      if (dragState.clone) dragState.clone.remove();
+      card.classList.remove('dragging');
+      let targetCategory = null;
+      grid.querySelectorAll('.todo-category-card').forEach(el => {
+        if (el.classList.contains('drag-over')) {
+          targetCategory = el.dataset.category || '';
+          el.classList.remove('drag-over');
+        }
+      });
+      const draggedCategory = dragState.category;
+      dragState = null;
+      isDragging = false;
+      // Only reorder non-General categories (General is always first)
+      if (targetCategory !== null && targetCategory !== draggedCategory && draggedCategory !== '' && targetCategory !== '') {
+        await reorderCategories(draggedCategory, targetCategory);
+      }
+    };
+
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    handle.addEventListener('lostpointercapture', () => {
+      if (dragState && dragState.el === card) {
+        if (dragState.clone) dragState.clone.remove();
+        card.classList.remove('dragging');
+        grid.querySelectorAll('.todo-category-card').forEach(el => el.classList.remove('drag-over'));
+        dragState = null;
+        isDragging = false;
+      }
+    });
+  });
+}
+
+async function reorderCategories(draggedName, targetName) {
+  const categories = getCategories();
+  const draggedIdx = categories.findIndex(c => c === draggedName);
+  const targetIdx = categories.findIndex(c => c === targetName);
+  if (draggedIdx === -1 || targetIdx === -1) return;
+  const [dragged] = categories.splice(draggedIdx, 1);
+  categories.splice(targetIdx, 0, dragged);
+  saveCategories(categories);
+  renderTodos();
+  showToast('Categories reordered', 'success');
 }
