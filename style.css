@@ -139,7 +139,8 @@ input,select,button{font-family:inherit;}
 .task-item.task-draft{opacity:0.55;border-bottom:1px dashed var(--border);}
 .task-item.task-draft .task-text{font-style:italic;}
 .task-row{display:flex;align-items:center;gap:9px;}
-.task-text{flex:1;font-size:0.88rem;line-height:1.35;}
+.task-text{flex:1;font-size:0.88rem;line-height:1.35;cursor:default;}
+.task-text[ondblclick]{cursor:text;}
 .task-actions{display:none;gap:2px;}
 .task-actions.visible{display:inline-flex;}
 .task-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}

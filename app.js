@@ -433,7 +433,7 @@ function renderTask(t, isArchived = false) {
     <div class="task-row">
       ${dragHandle}
       <span class="status-dot ${t.status}"></span>
-      <span class="task-text">${renderMd(t.text)}</span>
+      <span class="task-text" ondblclick="promptEditTask('${t.id}')">${renderMd(t.text)}</span>
       ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
     </div>
