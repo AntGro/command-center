@@ -799,10 +799,12 @@ function renderMd(text) {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   // Italic (single * not preceded/followed by space only)
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-  // Links [text](url)
+  // Links [text](url) — supports https://, http://, and www. prefixes
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/\[([^\]]+)\]\((www\.[^\s)]+)\)/g, '<a href="https://$2" target="_blank" rel="noopener">$1</a>');
   // Bare URLs (not already in an <a> tag)
   html = html.replace(/(?<!href="|">)(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/(?<!href="|"|\/)(www\.[^\s<&]+)/g, '<a href="https://$1" target="_blank" rel="noopener">$1</a>');
   // Line breaks
   html = html.replace(/\n/g, '<br>');
   return html;
