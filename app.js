@@ -1319,6 +1319,32 @@ function switchView(view) {
 let allTodos = [];
 let todoFilter = 'pending';
 const CATEGORIES_KEY = 'todo_categories';
+const CATEGORY_COLORS_KEY = 'todo_category_colors';
+const DEFAULT_CATEGORY_PALETTE = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
+const GENERAL_CATEGORY_COLOR = '#6c6f7e';
+
+function getCategoryColors() {
+  try { return JSON.parse(localStorage.getItem(CATEGORY_COLORS_KEY) || '{}'); } catch { return {}; }
+}
+function saveCategoryColors(map) { localStorage.setItem(CATEGORY_COLORS_KEY, JSON.stringify(map)); }
+
+function getCategoryColor(catName) {
+  if (!catName) return GENERAL_CATEGORY_COLOR;
+  const map = getCategoryColors();
+  if (map[catName]) return map[catName];
+  // Auto-assign a color from the palette
+  const usedColors = new Set(Object.values(map));
+  const available = DEFAULT_CATEGORY_PALETTE.find(c => !usedColors.has(c)) || DEFAULT_CATEGORY_PALETTE[Object.keys(map).length % DEFAULT_CATEGORY_PALETTE.length];
+  map[catName] = available;
+  saveCategoryColors(map);
+  return available;
+}
+
+function setCategoryColor(catName, color) {
+  const map = getCategoryColors();
+  map[catName] = color;
+  saveCategoryColors(map);
+}
 
 function getCategories() {
   try {
@@ -1425,6 +1451,9 @@ function renderTodos() {
   // Always show General first, then user categories
   const categoryList = ['', ...categories];
 
+  // Render category navigation buttons in toolbar
+  renderCategoryToolbarButtons(categoryList);
+
   let html = '';
   for (const cat of categoryList) {
     html += renderCategoryCard(cat);
@@ -1438,6 +1467,42 @@ function renderTodos() {
     const catId = categoryToDomId(cat);
     initTodoDragDropForCard(catId);
   });
+}
+
+function renderCategoryToolbarButtons(categoryList) {
+  let container = document.getElementById('categoryNavButtons');
+  if (!container) {
+    // Create the container in the toolbar
+    const toolbar = document.querySelector('.todos-toolbar');
+    if (!toolbar) return;
+    container = document.createElement('div');
+    container.id = 'categoryNavButtons';
+    container.className = 'category-nav-buttons';
+    // Insert after the filters
+    const filters = toolbar.querySelector('.todo-filters');
+    if (filters) filters.after(container);
+    else toolbar.prepend(container);
+  }
+  container.innerHTML = categoryList.map(cat => {
+    const name = cat || 'General';
+    const color = getCategoryColor(cat);
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToCategory('${esc(cat).replace(/'/g, "\\'")}')" title="Go to ${esc(name)}">${esc(name)}</button>`;
+  }).join('');
+}
+
+function navigateToCategory(category) {
+  const catId = categoryToDomId(category);
+  const card = document.getElementById(catId);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Briefly highlight the card
+  card.style.boxShadow = `0 0 0 2px ${getCategoryColor(category)}`;
+  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+  // Focus the input for adding a new TODO
+  setTimeout(() => {
+    const input = card.querySelector('.todo-cat-input');
+    if (input) input.focus();
+  }, 400);
 }
 
 function categoryToDomId(cat) {
@@ -1466,7 +1531,10 @@ function renderCategoryCard(category) {
 
   const escapedCat = esc(category).replace(/'/g, "\\'");
 
+  const catColor = getCategoryColor(category);
+
   return `<div class="todo-category-card" id="${catId}">
+    <div class="todo-cat-accent" style="background:${catColor}"></div>
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
         <h3 class="todo-cat-name">${esc(catName)}</h3>
@@ -1680,6 +1748,10 @@ async function deleteCategory(name) {
       categories.splice(idx, 1);
       saveCategories(categories);
     }
+    // Clean up color
+    const colorMap = getCategoryColors();
+    delete colorMap[name];
+    saveCategoryColors(colorMap);
     showToast(`Category "${name}" deleted`, 'info');
     await refreshTodos();
   });

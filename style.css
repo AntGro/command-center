@@ -366,6 +366,8 @@ input,select,button{font-family:inherit;}
 
   /* ===== TODOS VIEW — MOBILE ===== */
   .todos-toolbar{padding:8px 8px;gap:6px;flex-direction:column;align-items:stretch;}
+  .category-nav-buttons{gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .category-nav-btn{flex-shrink:0;padding:6px 10px;font-size:0.78rem;}
   .todo-toolbar-right{width:100%;justify-content:space-between;}
   .todo-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
   .filter-btn{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;white-space:nowrap;min-height:36px;}
@@ -441,10 +443,16 @@ input,select,button{font-family:inherit;}
 .todo-sort select:focus{border-color:var(--accent);}
 .todo-add-category-btn{font-size:0.82rem;padding:5px 10px;}
 
+/* ===== CATEGORY NAV BUTTONS ===== */
+.category-nav-buttons{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.category-nav-btn{padding:5px 12px;border-radius:6px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:0.78rem;font-weight:600;transition:all 0.2s;font-family:inherit;white-space:nowrap;}
+.category-nav-btn:hover{background:color-mix(in srgb,var(--cat-color,var(--accent)) 12%,transparent);opacity:0.9;transform:translateY(-1px);}
+
 /* ===== CATEGORY CARD GRID ===== */
 .todo-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;padding:14px 8px;}
 .todo-category-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow 0.2s;}
 .todo-category-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.todo-cat-accent{height:3px;width:100%;}
 .todo-cat-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .todo-cat-header-left{display:flex;flex-direction:column;gap:2px;}
 .todo-cat-name{font-size:0.95rem;font-weight:600;color:var(--text);margin:0;}
