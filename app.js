@@ -1205,7 +1205,15 @@ function openRevisionModal(taskId) {
   document.getElementById('revisionTaskId').value = taskId;
   document.getElementById('revisionFeedback').value = '';
   document.getElementById('revisionModal').classList.add('visible');
-  document.getElementById('revisionFeedback').focus();
+  const ta = document.getElementById('revisionFeedback');
+  ta.focus();
+  // Enter submits, Shift+Enter inserts newline
+  ta.onkeydown = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitRevision();
+    }
+  };
 }
 
 function closeRevisionModal() {
