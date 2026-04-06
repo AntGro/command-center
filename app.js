@@ -364,7 +364,7 @@ function renderAllTasks() {
 
     // Active tasks
     if (!activeTasks.length) { container.innerHTML = '<p class="empty-msg">No tasks yet</p>'; }
-    else { container.innerHTML = activeTasks.map(t => renderTask(t)).join(''); initDragDrop(container, p.id); }
+    else { container.innerHTML = activeTasks.map(t => renderTask(t)).join(''); initDragDrop(container, p.id); initTaskHoverDelay(container); }
 
     // Archived tasks toggle
     const toggleEl = document.getElementById(`archive-toggle-${p.id}`);
@@ -374,6 +374,7 @@ function renderAllTasks() {
       toggleEl.style.display = 'flex';
       countEl.textContent = archivedTasks.length;
       archivedContainer.innerHTML = archivedTasks.map(t => renderTask(t, true)).join('');
+      initTaskHoverDelay(archivedContainer);
     } else {
       toggleEl.style.display = 'none';
       archivedContainer.innerHTML = '';
@@ -438,6 +439,31 @@ function renderTask(t, isArchived = false) {
     </div>
     ${meta ? `<div class="task-meta">${meta}</div>` : ''}
   </div>`;
+}
+
+// ===================================================================
+// TASK HOVER DELAY — show action buttons after 2 seconds of hover
+// ===================================================================
+function initTaskHoverDelay(container) {
+  const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
+  if (isTouchDevice) return; // on touch devices, CSS shows actions immediately
+
+  container.querySelectorAll('.task-item').forEach(item => {
+    let hoverTimer = null;
+    const actions = item.querySelector('.task-actions');
+    if (!actions) return;
+
+    item.addEventListener('mouseenter', () => {
+      hoverTimer = setTimeout(() => {
+        actions.classList.add('visible');
+      }, 2000);
+    });
+
+    item.addEventListener('mouseleave', () => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      actions.classList.remove('visible');
+    });
+  });
 }
 
 // ===================================================================
