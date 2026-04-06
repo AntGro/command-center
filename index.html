@@ -109,41 +109,20 @@
         <button class="filter-btn" data-filter="done" onclick="setTodoFilter('done')">Done</button>
         <button class="filter-btn" data-filter="all" onclick="setTodoFilter('all')">All</button>
       </div>
-      <div class="todo-sort">
-        <select id="todoSortBy" onchange="renderTodos()">
-          <option value="manual">Manual order</option>
-          <option value="due">Due date</option>
-          <option value="priority">Priority</option>
-          <option value="created">Created</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="bucket-bar" id="bucketBar">
-      <div class="bucket-tabs" id="bucketTabs"></div>
-      <button class="bucket-manage-btn" onclick="openBucketManager()" title="Manage buckets">⚙️</button>
-    </div>
-
-    <div class="todos-main-content">
-      <div class="todo-add-form">
-        <div class="todo-add-row">
-          <input type="text" id="todoInput" placeholder="What needs to be done?" maxlength="2000" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodo();}">
-          <select id="todoPriority">
-            <option value="normal">Normal</option>
-            <option value="low">Low</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
+      <div class="todo-toolbar-right">
+        <div class="todo-sort">
+          <select id="todoSortBy" onchange="renderTodos()">
+            <option value="manual">Manual order</option>
+            <option value="due">Due date</option>
+            <option value="priority">Priority</option>
+            <option value="created">Created</option>
           </select>
-          <input type="datetime-local" id="todoDueDate" title="Due date (optional)">
-          <select id="todoBucket" title="Bucket (optional)">
-            <option value="">General</option>
-          </select>
-          <button onclick="addTodo()">+ Add</button>
         </div>
+        <button class="btn todo-add-category-btn" onclick="openAddCategoryModal()" title="Add category">➕</button>
       </div>
-
-      <div id="todoList" class="todo-list"></div>
     </div>
+
+    <div class="todo-category-grid" id="todoCategoryGrid"></div>
   </div>
 
   <!-- Snooze Modal -->
@@ -269,18 +248,15 @@
     <div class="modal task-modal" id="taskExpandContent"></div>
   </div>
 
-  <!-- Bucket Manager Modal -->
-  <div class="modal-overlay" id="bucketManagerModal">
-    <div class="modal bucket-manager-modal">
-      <h2>📂 Manage Buckets</h2>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Create buckets to organize your TODOs by category. The "General" bucket always exists for uncategorized items.</p>
-      <div class="bucket-add-row">
-        <input type="text" id="newBucketName" placeholder="New bucket name…" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();addBucket();}">
-        <button onclick="addBucket()">+ Add</button>
-      </div>
-      <div id="bucketList" class="bucket-list"></div>
+  <!-- Add Category Modal -->
+  <div class="modal-overlay" id="addCategoryModal">
+    <div class="modal">
+      <h2>📂 Add Category</h2>
+      <label>Category Name</label>
+      <input type="text" id="newCategoryName" placeholder="e.g. Work, Personal, Shopping..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewCategory();}">
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeBucketManager()">Close</button>
+        <button class="modal-cancel" onclick="closeAddCategoryModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewCategory()">Create</button>
       </div>
     </div>
   </div>

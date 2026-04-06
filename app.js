@@ -1017,10 +1017,10 @@ document.addEventListener('click', e => {
   if (e.target.id === 'projectPromptModal') closeProjectPrompt();
   if (e.target.id === 'snoozeModal') closeSnoozeModal();
   if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
-  if (e.target.id === 'bucketManagerModal') closeBucketManager();
+  if (e.target.id === 'addCategoryModal') closeAddCategoryModal();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeBucketManager(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeAddCategoryModal(); }
 });
 
 // ===================================================================
@@ -1266,25 +1266,66 @@ function switchView(view) {
 }
 
 // ===================================================================
-// TODOS — DATA & CRUD
+// ===================================================================
+// TODOS — DATA & CRUD (Category Card Layout)
 // ===================================================================
 let allTodos = [];
 let todoFilter = 'pending';
+const CATEGORIES_KEY = 'todo_categories';
+
+function getCategories() {
+  try {
+    const raw = localStorage.getItem(CATEGORIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveCategories(cats) {
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(cats));
+}
+
+function syncCategoriesFromTodos() {
+  const known = getCategories();
+  const knownSet = new Set(known.map(c => c.toLowerCase()));
+  const discovered = new Set();
+  allTodos.forEach(t => {
+    if (t.category && !knownSet.has(t.category.toLowerCase())) {
+      discovered.add(t.category);
+    }
+  });
+  if (discovered.size > 0) {
+    saveCategories([...known, ...Array.from(discovered)]);
+  }
+}
+
+// Also migrate old bucket localStorage key if present
+function migrateBucketsToCategories() {
+  const oldKey = 'todo_buckets';
+  const old = localStorage.getItem(oldKey);
+  if (old) {
+    try {
+      const buckets = JSON.parse(old);
+      const existing = getCategories();
+      const existingSet = new Set(existing.map(c => c.toLowerCase()));
+      const newOnes = buckets.filter(b => !existingSet.has(b.toLowerCase()));
+      if (newOnes.length) saveCategories([...existing, ...newOnes]);
+    } catch {}
+    localStorage.removeItem(oldKey);
+  }
+}
 
 async function refreshTodos() {
   if (!sb) return;
   const { data, error } = await sb.from('todos').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) {
-    // Table might not exist yet — silently ignore
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
     showToast('Failed to load todos', 'error');
     return;
   }
   allTodos = data || [];
-  syncBucketsFromTodos();
+  migrateBucketsToCategories();
+  syncCategoriesFromTodos();
   if (currentView === 'todos') {
-    renderBucketBar();
-    populateBucketSelect();
     renderTodos();
     updateTodoStats();
   }
@@ -1292,30 +1333,24 @@ async function refreshTodos() {
 
 function setTodoFilter(filter) {
   todoFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
+  document.querySelectorAll('.todo-filters .filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   renderTodos();
 }
 
-function getFilteredTodos() {
+function getFilteredTodosForCategory(category) {
   const now = new Date();
-  let filtered = [...allTodos];
+  let filtered = allTodos.filter(t => {
+    const cat = t.category || '';
+    return cat === category;
+  });
 
-  // Filter by bucket
-  if (activeBucket === '__general__') {
-    filtered = filtered.filter(t => !t.category);
-  } else if (activeBucket) {
-    filtered = filtered.filter(t => t.category === activeBucket);
-  }
-
-  // Hide snoozed items from pending view (snooze_until in the future)
   if (todoFilter === 'pending') {
     filtered = filtered.filter(t => !t.done && (!t.snooze_until || new Date(t.snooze_until) <= now));
   } else if (todoFilter === 'done') {
     filtered = filtered.filter(t => t.done);
   }
-  // 'all' shows everything
 
   const sortBy = document.getElementById('todoSortBy')?.value || 'manual';
   if (sortBy === 'due') {
@@ -1336,19 +1371,72 @@ function getFilteredTodos() {
 }
 
 function renderTodos() {
-  const container = document.getElementById('todoList');
-  if (!container) return;
-  const filtered = getFilteredTodos();
-  updateTodoStats();
+  const grid = document.getElementById('todoCategoryGrid');
+  if (!grid) return;
 
-  if (!filtered.length) {
-    const emptyMsg = todoFilter === 'done' ? 'No completed TODOs yet' : todoFilter === 'pending' ? 'All caught up! 🎉' : 'No TODOs yet — add one above';
-    container.innerHTML = `<p class="empty-msg">${emptyMsg}</p>`;
-    return;
+  const categories = getCategories();
+  // Always show General first, then user categories
+  const categoryList = ['', ...categories];
+
+  let html = '';
+  for (const cat of categoryList) {
+    html += renderCategoryCard(cat);
   }
 
-  container.innerHTML = filtered.map(t => renderTodoItem(t)).join('');
-  initTodoDragDrop();
+  grid.innerHTML = html;
+  updateTodoStats();
+
+  // Init drag-and-drop for each card
+  categoryList.forEach(cat => {
+    const catId = categoryToDomId(cat);
+    initTodoDragDropForCard(catId);
+  });
+}
+
+function categoryToDomId(cat) {
+  if (!cat) return 'todo-cat-general';
+  return 'todo-cat-' + cat.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+}
+
+function renderCategoryCard(category) {
+  const catId = categoryToDomId(category);
+  const catName = category || 'General';
+  const isGeneral = !category;
+  const allInCat = allTodos.filter(t => (t.category || '') === category);
+  const pending = allInCat.filter(t => !t.done).length;
+  const done = allInCat.filter(t => t.done).length;
+  const filtered = getFilteredTodosForCategory(category);
+
+  const statsText = `${pending} pending` + (done > 0 ? ` · ${done} done` : '');
+
+  const deleteBtn = !isGeneral
+    ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="Delete category">🗑️</button>`
+    : '';
+
+  const emptyMsg = filtered.length === 0
+    ? `<p class="empty-msg">${todoFilter === 'done' ? 'No completed items' : todoFilter === 'pending' ? 'All caught up! 🎉' : 'No items yet'}</p>`
+    : '';
+
+  const escapedCat = esc(category).replace(/'/g, "\\'");
+
+  return `<div class="todo-category-card" id="${catId}">
+    <div class="todo-cat-header">
+      <div class="todo-cat-header-left">
+        <h3 class="todo-cat-name">${esc(catName)}</h3>
+        <span class="todo-cat-stats">${statsText}</span>
+      </div>
+      <div class="todo-cat-header-actions">
+        ${deleteBtn}
+      </div>
+    </div>
+    <div class="todo-cat-add">
+      <input type="text" placeholder="Add a TODO..." maxlength="2000" class="todo-cat-input" data-category="${esc(category)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodoToCategory(this);}">
+      <button onclick="addTodoToCategory(this.previousElementSibling)">+</button>
+    </div>
+    <div class="todo-cat-list" data-category="${esc(category)}">
+      ${emptyMsg || filtered.map(t => renderTodoItem(t)).join('')}
+    </div>
+  </div>`;
 }
 
 function renderTodoItem(t) {
@@ -1363,7 +1451,6 @@ function renderTodoItem(t) {
     const d = new Date(t.due_date);
     const diffMs = d - now;
     const diffH = Math.round(diffMs / (1000 * 60 * 60));
-    const diffD = Math.round(diffMs / (1000 * 60 * 60 * 24));
     if (isOverdue) {
       dueDateStr = `<span class="todo-due overdue">⚠️ Overdue (${formatRelativeDate(d)})</span>`;
     } else if (diffH < 24) {
@@ -1414,25 +1501,17 @@ function formatRelativeDate(d) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
 }
 
-async function addTodo() {
-  const input = document.getElementById('todoInput');
-  const text = input.value.trim();
+async function addTodoToCategory(inputEl) {
+  const text = inputEl.value.trim();
   if (!text) return;
-  const priority = document.getElementById('todoPriority').value;
-  const dueDateRaw = document.getElementById('todoDueDate').value;
-  const due_date = dueDateRaw ? new Date(dueDateRaw).toISOString() : null;
-  const category = document.getElementById('todoBucket')?.value || '';
+  const category = inputEl.dataset.category || '';
 
-  // Get max sort_order
-  const pendingTodos = allTodos.filter(t => !t.done);
+  const pendingTodos = allTodos.filter(t => !t.done && (t.category || '') === category);
   const maxOrder = pendingTodos.length > 0 ? Math.max(...pendingTodos.map(t => t.sort_order || 0)) + 1 : 0;
 
-  const { error } = await sb.from('todos').insert({ text, priority, due_date, category, sort_order: maxOrder });
+  const { error } = await sb.from('todos').insert({ text, priority: 'normal', category, sort_order: maxOrder });
   if (error) { showToast('Failed to add todo: ' + error.message, 'error'); return; }
-  input.value = '';
-  document.getElementById('todoDueDate').value = '';
-  document.getElementById('todoPriority').value = 'normal';
-  if (document.getElementById('todoBucket')) document.getElementById('todoBucket').value = '';
+  inputEl.value = '';
   showToast('TODO added', 'success');
   await refreshTodos();
 }
@@ -1507,6 +1586,59 @@ function updateTodoStats() {
 }
 
 // ===================================================================
+// CATEGORY MANAGEMENT
+// ===================================================================
+function openAddCategoryModal() {
+  document.getElementById('newCategoryName').value = '';
+  document.getElementById('addCategoryModal').classList.add('visible');
+  setTimeout(() => document.getElementById('newCategoryName').focus(), 100);
+}
+
+function closeAddCategoryModal() {
+  document.getElementById('addCategoryModal').classList.remove('visible');
+}
+
+function saveNewCategory() {
+  const input = document.getElementById('newCategoryName');
+  const name = input.value.trim();
+  if (!name) { showToast('Enter a category name', 'error'); return; }
+
+  const categories = getCategories();
+  if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
+    showToast('Category already exists', 'error');
+    return;
+  }
+
+  categories.push(name);
+  saveCategories(categories);
+  closeAddCategoryModal();
+  showToast(`Category "${name}" created`, 'success');
+  renderTodos();
+}
+
+async function deleteCategory(name) {
+  const todosInCat = allTodos.filter(t => t.category === name);
+  const msg = todosInCat.length > 0
+    ? `Delete "${name}"? Its ${todosInCat.length} TODO(s) will move to General.`
+    : `Delete empty category "${name}"?`;
+
+  showDeleteConfirm('Delete Category', msg, async () => {
+    // Move todos to General
+    for (const t of todosInCat) {
+      await sb.from('todos').update({ category: '' }).eq('id', t.id);
+    }
+    const categories = getCategories();
+    const idx = categories.findIndex(c => c === name);
+    if (idx !== -1) {
+      categories.splice(idx, 1);
+      saveCategories(categories);
+    }
+    showToast(`Category "${name}" deleted`, 'info');
+    await refreshTodos();
+  });
+}
+
+// ===================================================================
 // SNOOZE MODAL
 // ===================================================================
 function openSnoozeModal(todoId) {
@@ -1526,7 +1658,6 @@ function snoozeFor(amount, unit) {
     target = new Date(now.getTime() + amount * 60 * 60 * 1000);
   } else if (unit === 'd') {
     target = new Date(now.getTime() + amount * 24 * 60 * 60 * 1000);
-    // For "tomorrow", set to 9 AM
     if (amount === 1) { target.setHours(9, 0, 0, 0); }
   }
   doSnooze(target);
@@ -1549,147 +1680,12 @@ async function doSnooze(snoozeUntil) {
 }
 
 // ===================================================================
-// BUCKETS (categories for TODOs)
+// TODO DRAG & DROP REORDER (per category card)
 // ===================================================================
-const BUCKETS_KEY = 'todo_buckets';
-let activeBucket = ''; // '' = All, 'general' = General (no category), or bucket name
-
-function getBuckets() {
-  try {
-    const raw = localStorage.getItem(BUCKETS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveBuckets(buckets) {
-  localStorage.setItem(BUCKETS_KEY, JSON.stringify(buckets));
-}
-
-function syncBucketsFromTodos() {
-  // Auto-discover any categories in existing todos that aren't in bucket list
-  const knownBuckets = getBuckets();
-  const knownSet = new Set(knownBuckets.map(b => b.toLowerCase()));
-  const discovered = new Set();
-  allTodos.forEach(t => {
-    if (t.category && !knownSet.has(t.category.toLowerCase())) {
-      discovered.add(t.category);
-    }
-  });
-  if (discovered.size > 0) {
-    const updated = [...knownBuckets, ...Array.from(discovered)];
-    saveBuckets(updated);
-  }
-}
-
-function renderBucketBar() {
-  const tabs = document.getElementById('bucketTabs');
-  if (!tabs) return;
-  const buckets = getBuckets();
-  const counts = {};
-  const pendingTodos = allTodos.filter(t => !t.done);
-  pendingTodos.forEach(t => {
-    const cat = t.category || '';
-    counts[cat] = (counts[cat] || 0) + 1;
-  });
-
-  let html = `<button class="bucket-tab ${activeBucket === '' ? 'active' : ''}" onclick="setActiveBucket('')">All<span class="bucket-count">${pendingTodos.length}</span></button>`;
-  html += `<button class="bucket-tab ${activeBucket === '__general__' ? 'active' : ''}" onclick="setActiveBucket('__general__')">General<span class="bucket-count">${counts[''] || 0}</span></button>`;
-  buckets.forEach(name => {
-    const c = counts[name] || 0;
-    html += `<button class="bucket-tab ${activeBucket === name ? 'active' : ''}" onclick="setActiveBucket('${esc(name)}')">${esc(name)}<span class="bucket-count">${c}</span></button>`;
-  });
-  tabs.innerHTML = html;
-}
-
-function setActiveBucket(bucket) {
-  activeBucket = bucket;
-  renderBucketBar();
-  renderTodos();
-}
-
-function populateBucketSelect() {
-  const sel = document.getElementById('todoBucket');
-  if (!sel) return;
-  const buckets = getBuckets();
-  sel.innerHTML = '<option value="">General</option>' + buckets.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
-}
-
-function openBucketManager() {
-  renderBucketList();
-  document.getElementById('bucketManagerModal').classList.add('visible');
-}
-
-function closeBucketManager() {
-  document.getElementById('bucketManagerModal').classList.remove('visible');
-}
-
-function renderBucketList() {
-  const container = document.getElementById('bucketList');
-  if (!container) return;
-  const buckets = getBuckets();
-  let html = '<div class="bucket-list-item"><span class="bucket-name default">General (default — cannot be removed)</span></div>';
-  buckets.forEach((name, i) => {
-    html += `<div class="bucket-list-item">
-      <span class="bucket-name">${esc(name)}</span>
-      <button onclick="removeBucket(${i})" title="Remove bucket">🗑️</button>
-    </div>`;
-  });
-  container.innerHTML = html;
-}
-
-function addBucket() {
-  const input = document.getElementById('newBucketName');
-  const name = input.value.trim();
-  if (!name) return;
-  const buckets = getBuckets();
-  if (buckets.some(b => b.toLowerCase() === name.toLowerCase())) {
-    showToast('Bucket already exists', 'error');
-    return;
-  }
-  buckets.push(name);
-  saveBuckets(buckets);
-  input.value = '';
-  renderBucketList();
-  renderBucketBar();
-  populateBucketSelect();
-  showToast(`Bucket "${name}" created`, 'success');
-}
-
-async function removeBucket(index) {
-  const buckets = getBuckets();
-  const name = buckets[index];
-  showDeleteConfirm(
-    'Remove Bucket',
-    `Remove "${name}"? TODOs in this bucket will move to General.`,
-    async () => {
-      // Move all todos in this bucket back to general
-      const todosInBucket = allTodos.filter(t => t.category === name);
-      for (const t of todosInBucket) {
-        await sb.from('todos').update({ category: '' }).eq('id', t.id);
-      }
-      buckets.splice(index, 1);
-      saveBuckets(buckets);
-      if (activeBucket === name) activeBucket = '';
-      renderBucketList();
-      renderBucketBar();
-      populateBucketSelect();
-      await refreshTodos();
-      showToast(`Bucket "${name}" removed`, 'info');
-    }
-  );
-}
-
-async function changeTodoBucket(id, newBucket) {
-  const { error } = await sb.from('todos').update({ category: newBucket }).eq('id', id);
-  if (error) { showToast('Failed to update bucket', 'error'); return; }
-  await refreshTodos();
-}
-
-// ===================================================================
-// TODO DRAG & DROP REORDER
-// ===================================================================
-function initTodoDragDrop() {
-  const container = document.getElementById('todoList');
+function initTodoDragDropForCard(catId) {
+  const card = document.getElementById(catId);
+  if (!card) return;
+  const container = card.querySelector('.todo-cat-list');
   if (!container) return;
   let dragState = null;
 
@@ -1732,9 +1728,10 @@ function initTodoDragDrop() {
         if (el.classList.contains('drag-over')) { targetId = el.dataset.todoId; el.classList.remove('drag-over'); }
       });
       const draggedId = dragState.id;
+      const catKey = container.dataset.category || '';
       dragState = null;
       isDragging = false;
-      if (targetId && targetId !== draggedId) await reorderTodos(draggedId, targetId);
+      if (targetId && targetId !== draggedId) await reorderTodosInCategory(draggedId, targetId, catKey);
     };
 
     handle.addEventListener('pointerup', finishDrag);
@@ -1751,8 +1748,8 @@ function initTodoDragDrop() {
   });
 }
 
-async function reorderTodos(draggedId, targetId) {
-  const filtered = getFilteredTodos();
+async function reorderTodosInCategory(draggedId, targetId, category) {
+  const filtered = getFilteredTodosForCategory(category);
   const draggedIdx = filtered.findIndex(t => t.id === draggedId);
   const targetIdx = filtered.findIndex(t => t.id === targetId);
   if (draggedIdx === -1 || targetIdx === -1) return;
