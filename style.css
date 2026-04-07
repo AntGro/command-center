@@ -291,6 +291,13 @@ input,select,button{font-family:inherit;}
 
 /* Phone */
 @media(max-width:480px){
+  /* Prevent horizontal scroll & auto-zoom on input focus */
+  html,body{overflow-x:hidden;max-width:100vw;}
+  /* 16px minimum on ALL form controls prevents iOS/Android auto-zoom on focus */
+  input,textarea,select,.task-edit-input,.todo-cat-input,.add-task textarea{font-size:16px !important;}
+  /* Disable double-tap zoom on interactive elements */
+  button,a,input,textarea,select,label,.task-text,.todo-text{touch-action:manipulation;}
+
   /* Gate */
   .gate-box{padding:32px 20px;border-radius:14px;}
   .gate-box .logo{font-size:2.4rem;}
@@ -346,7 +353,7 @@ input,select,button{font-family:inherit;}
 
   /* Add task area */
   .add-task{padding:6px 12px 10px;gap:4px;}
-  .add-task textarea{font-size:0.82rem;padding:7px 10px;}
+  .add-task textarea{padding:7px 10px;}
   .add-task button{padding:7px 12px;font-size:0.82rem;}
 
   /* ===== TODOS VIEW — MOBILE ===== */
@@ -357,13 +364,13 @@ input,select,button{font-family:inherit;}
   .todo-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
   .filter-btn{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;white-space:nowrap;min-height:36px;}
   .todo-sort{flex:1;}
-  .todo-sort select{width:100%;padding:8px 10px;font-size:0.82rem;}
+  .todo-sort select{width:100%;padding:8px 10px;}
 
   /* Category grid: single column on phone */
   .todo-category-grid{grid-template-columns:1fr;gap:10px;padding:10px 6px;}
   .todo-cat-header{padding:10px 12px 8px;}
   .todo-cat-add{padding:0 12px 8px;}
-  .todo-cat-input{font-size:0.84rem;padding:10px 12px;}
+  .todo-cat-input{padding:10px 12px;}
   .todo-cat-add button{padding:10px 14px;font-size:0.84rem;}
   .todo-cat-header-actions{opacity:1;}
 
@@ -385,13 +392,13 @@ input,select,button{font-family:inherit;}
   #todosStatsBar{gap:6px;padding:10px 8px;justify-content:space-between;}
   #todosStatsBar .stat-value{font-size:1.3rem;}
   #todosStatsBar .stat-label{font-size:0.62rem;}
-  .todo-item .task-edit-input{font-size:0.86rem;padding:8px 10px;border-radius:8px;width:100%;}
+  .todo-item .task-edit-input{padding:8px 10px;border-radius:8px;width:100%;}
   .todo-cat-list .empty-msg{padding:12px 8px;font-size:0.82rem;}
 
   /* Modals — near full-width on phones */
   .modal{width:95%;padding:20px 16px;border-radius:12px;max-height:90vh;}
   .modal h2{font-size:0.95rem;}
-  .modal input{font-size:0.84rem;padding:8px 10px;}
+  .modal input{padding:8px 10px;}
   .modal label{font-size:0.74rem;}
   .modal-actions button{padding:8px 14px;font-size:0.84rem;}
   .task-modal{max-width:95%;}
