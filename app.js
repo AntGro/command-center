@@ -1,8 +1,7 @@
 // ===================================================================
 // CONSTANTS
 // ===================================================================
-const IDEAS_KEY = 'claw_cc_ideas'; // legacy localStorage key (migration only)
-const IDEA_STATUSES = ['idea', 'idea-shipped', 'idea-plan-requested'];
+const IDEAS_KEY = 'claw_cc_ideas'; // legacy localStorage key (cleanup only)
 const THEME_KEY = 'claw_cc_theme';
 const ARCHIVED_PROJECTS_KEY = 'claw_cc_archived_projects';
 const SHOW_ARCHIVED_KEY = 'claw_cc_show_archived';
@@ -133,18 +132,17 @@ async function connect(url, key) {
   await loadProjects();
   buildProjectCards();
   initProjectDragDrop();
-  populateIdeaProjectSelect();
   updateArchiveToggleBtn();
   renderArchivedProjects();
   await refreshAll();
 
-  // Migrate legacy localStorage ideas to Supabase (one-time)
-  await migrateLocalIdeas();
+  // Clean up any legacy localStorage ideas (one-time)
+  localStorage.removeItem(IDEAS_KEY);
 
   // Realtime subscription
   sb.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); populateIdeaProjectSelect(); await refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => refreshTodos())
     .subscribe();
@@ -199,7 +197,6 @@ async function archiveProject(id) {
   if (!ids.includes(id)) { ids.push(id); saveArchivedProjectIds(ids); }
   buildProjectCards();
   initProjectDragDrop();
-  populateIdeaProjectSelect();
   renderArchivedProjects();
   await refreshAll();
   showToast('Project archived', 'info');
@@ -210,7 +207,6 @@ async function unarchiveProject(id) {
   saveArchivedProjectIds(ids);
   buildProjectCards();
   initProjectDragDrop();
-  populateIdeaProjectSelect();
   renderArchivedProjects();
   await refreshAll();
   showToast('Project restored', 'success');
@@ -339,27 +335,18 @@ function updateTodoCharCounter(input) {
   counter.className = 'char-counter' + (len > TODO_MAX_LEN * 0.9 ? ' danger' : len > TODO_MAX_LEN * 0.7 ? ' warn' : '');
 }
 
-function populateIdeaProjectSelect() {
-  const sel = document.getElementById('ideaProject');
-  sel.innerHTML = '<option value="">No project</option>';
-  PROJECTS.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
-}
-
 // ===================================================================
 // SUPABASE TASK CRUD
 // ===================================================================
 let allTasks = [];
-let allIdeas = [];
 
 async function refreshAll() {
   if (!sb || isDragging) return;
   const { data, error } = await sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) { showToast('Failed to load tasks', 'error'); return; }
   const all = data || [];
-  allIdeas = all.filter(t => IDEA_STATUSES.includes(t.status));
-  allTasks = all.filter(t => !IDEA_STATUSES.includes(t.status));
+  allTasks = all;
   renderAllTasks();
-  renderIdeas();
   updateStats();
   updateFooterStats();
 }
@@ -760,102 +747,6 @@ async function deleteTask(id) {
 }
 
 // ===================================================================
-// IDEAS (Supabase-backed, stored in tasks table with idea-* statuses)
-// ===================================================================
-
-// Migrate any legacy localStorage ideas to Supabase (runs once)
-async function migrateLocalIdeas() {
-  try {
-    const raw = localStorage.getItem(IDEAS_KEY);
-    if (!raw) return;
-    const localIdeas = JSON.parse(raw);
-    if (!Array.isArray(localIdeas) || !localIdeas.length) { localStorage.removeItem(IDEAS_KEY); return; }
-    for (const idea of localIdeas) {
-      const supaStatus = idea.status === 'shipped' ? 'idea-shipped'
-                       : idea.status === 'plan-requested' ? 'idea-plan-requested'
-                       : 'idea';
-      await sb.from('tasks').insert({
-        project: idea.project || 'general',
-        text: idea.text,
-        status: supaStatus
-      });
-    }
-    localStorage.removeItem(IDEAS_KEY);
-    showToast(`Migrated ${localIdeas.length} idea(s) to Supabase`, 'success');
-    await refreshAll();
-  } catch (e) { /* silent — migration is best-effort */ }
-}
-
-async function addIdea() {
-  const input = document.getElementById('ideaInput');
-  const project = document.getElementById('ideaProject').value;
-  const text = input.value.trim();
-  if (!text) return;
-  if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
-  input.value = '';
-  const { error } = await sb.from('tasks').insert({ text, project: project || 'general', status: 'idea' });
-  if (error) { showToast('Failed to save idea', 'error'); return; }
-  await refreshAll();
-  showToast('Idea added 💡', 'success');
-}
-
-function renderIdeas() {
-  const container = document.getElementById('ideaList');
-  if (!allIdeas.length) { container.innerHTML = '<p class="empty-msg">No ideas yet — throw some in!</p>'; return; }
-  container.innerHTML = allIdeas.map(idea => {
-    const projName = PROJECTS.find(p => p.id === idea.project)?.name || idea.project;
-    let statusTag = '';
-    if (idea.status === 'idea-shipped') statusTag = '<span style="color:var(--accent);font-size:0.72rem;font-weight:600;margin-right:6px;">🪶 Shipped</span>';
-    if (idea.status === 'idea-plan-requested') statusTag = '<span style="color:var(--yellow);font-size:0.72rem;font-weight:600;margin-right:6px;">📋 Plan Requested</span>';
-    return `<div class="idea-item">
-      ${statusTag}
-      <span class="idea-text">${esc(idea.text)}</span>
-      <span class="idea-project">${esc(projName)}</span>
-      <div class="idea-actions">
-        ${idea.status === 'idea' ? `
-          <button class="ship-btn" onclick="shipIdea('${idea.id}')" title="Ship to Claw">🪶 Ship</button>
-          <button class="plan-btn" onclick="planIdea('${idea.id}')" title="Request Plan">📋 Plan</button>
-        ` : ''}
-        <button class="del-btn" onclick="deleteIdea('${idea.id}')" title="Delete">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function shipIdea(id) {
-  const idea = allIdeas.find(i => i.id === id);
-  if (!idea) return;
-  // Create the task
-  const { error: insertErr } = await sb.from('tasks').insert({ project: idea.project, text: idea.text, status: 'todo' });
-  if (insertErr) { showToast('Failed to ship', 'error'); return; }
-  // Mark idea as shipped
-  const { error: updateErr } = await sb.from('tasks').update({ status: 'idea-shipped' }).eq('id', id);
-  if (updateErr) { showToast('Shipped but failed to update idea status', 'error'); }
-  await refreshAll();
-  showToast('Shipped 🪶 — task created', 'success');
-}
-
-async function planIdea(id) {
-  const idea = allIdeas.find(i => i.id === id);
-  if (!idea) return;
-  // Create the plan-request task
-  const { error: insertErr } = await sb.from('tasks').insert({ project: idea.project, text: '[PLAN REQUEST] ' + idea.text, status: 'todo' });
-  if (insertErr) { showToast('Failed', 'error'); return; }
-  // Mark idea as plan-requested
-  const { error: updateErr } = await sb.from('tasks').update({ status: 'idea-plan-requested' }).eq('id', id);
-  if (updateErr) { showToast('Plan created but failed to update idea status', 'error'); }
-  await refreshAll();
-  showToast('Plan requested 📋 — task created', 'success');
-}
-
-async function deleteIdea(id) {
-  const { error } = await sb.from('tasks').delete().eq('id', id);
-  if (error) { showToast('Failed to delete idea', 'error'); return; }
-  await refreshAll();
-  showToast('Idea removed', 'info');
-}
-
-// ===================================================================
 // STATS
 // ===================================================================
 function updateStats() {
@@ -864,7 +755,6 @@ function updateStats() {
   document.getElementById('statProjects').textContent = PROJECTS.filter(p => !archivedIds.includes(p.id)).length;
   document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved' && t.status !== 'draft').length;
   document.getElementById('statReview').textContent = tasks.filter(t => t.status === 'review').length;
-  document.getElementById('statIdeas').textContent = allIdeas.length;
   const draftCount = tasks.filter(t => t.status === 'draft').length;
   const draftEl = document.getElementById('statDrafts');
   if (draftEl) draftEl.textContent = draftCount;
@@ -952,7 +842,6 @@ async function saveNewProject() {
   closeAddProjectModal();
   await loadProjects();
   buildProjectCards();
-  populateIdeaProjectSelect();
   await refreshAll();
   showToast(`Project "${name}" created`, 'success');
 }
@@ -1056,7 +945,6 @@ async function saveEditProject() {
   await loadProjects();
   buildProjectCards();
   initProjectDragDrop();
-  populateIdeaProjectSelect();
   await refreshAll();
   showToast(`Project "${name}" updated`, 'success');
 }
@@ -1332,12 +1220,10 @@ function updateTaskListMaxHeight() {
   const statsBar = document.querySelector('.stats-bar');
   const legend = document.querySelector('.legend');
   const footer = document.querySelector('.footer-stats');
-  const ideasSection = document.querySelector('.ideas-section');
   
-  // Calculate occupied height (header + stats + legend + footer + ideas + padding)
+  // Calculate occupied height (header + stats + legend + footer + padding)
   const occupiedHeight = (header?.offsetHeight || 0) + (statsBar?.offsetHeight || 0) + 
-    (legend?.offsetHeight || 0) + (footer?.offsetHeight || 0) + 
-    (ideasSection?.offsetHeight || 0) + 80; // 80px for padding/margins
+    (legend?.offsetHeight || 0) + (footer?.offsetHeight || 0) + 80; // 80px for padding/margins
   
   const availableHeight = window.innerHeight - occupiedHeight;
   // Each card has ~80px overhead (header, add-task, archive toggle, padding)

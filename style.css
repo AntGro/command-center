@@ -98,25 +98,7 @@ input,select,button{font-family:inherit;}
 .status-dot.revision{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4);}
 .status-dot.draft{background:transparent;border:2px dashed var(--muted);width:7px;height:7px;}
 
-/* ===== IDEAS SECTION ===== */
-.ideas-section{margin-bottom:28px;}
 .section-title{font-size:1rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px;}
-.idea-form{display:flex;gap:8px;margin-bottom:14px;}
-.idea-form input{flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
-.idea-form input:focus{border-color:var(--accent);}
-.idea-form select{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:0.82rem;outline:none;min-width:130px;}
-.idea-form select:focus{border-color:var(--accent);}
-.idea-form button{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap;font-size:0.88rem;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(100,108,255,0.2);}
-.idea-form button:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 4px 14px rgba(100,108,255,0.3);}
-.idea-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;transition:all 0.2s ease;}
-.idea-item:hover{border-color:var(--accent-dim);transform:translateX(2px);}
-.idea-text{flex:1;font-size:0.88rem;}
-.idea-project{font-size:0.72rem;padding:3px 8px;border-radius:5px;background:var(--surface2);white-space:nowrap;}
-.idea-actions{display:flex;gap:3px;}
-.idea-actions button{padding:5px 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.78rem;transition:all 0.2s ease;white-space:nowrap;}
-.idea-actions .ship-btn:hover{border-color:var(--accent);color:var(--accent);}
-.idea-actions .plan-btn:hover{border-color:var(--yellow);color:var(--yellow);}
-.idea-actions .del-btn:hover{border-color:var(--red);color:var(--red);}
 .empty-msg{color:var(--muted);font-size:0.82rem;font-style:italic;padding:8px 0;}
 
 /* ===== PROJECT GRID ===== */
@@ -298,8 +280,6 @@ input,select,button{font-family:inherit;}
 @media(max-width:860px){
   .project-grid{grid-template-columns:1fr;}
   .stats-bar{gap:20px;flex-wrap:wrap;}
-  .idea-form{flex-direction:column;}
-  .idea-form select{min-width:auto;}
   .app-header{padding:12px 8px;flex-wrap:wrap;gap:8px;}
   .view-switcher{order:3;flex:1 1 100%;justify-content:center;padding:4px 0 0;}
   .main-content{padding:6px;}
@@ -337,13 +317,6 @@ input,select,button{font-family:inherit;}
 
   /* Main content */
   .main-content{padding:6px 4px;}
-
-  /* Ideas section */
-  .idea-form{gap:6px;}
-  .idea-item{padding:8px 10px;gap:8px;flex-wrap:wrap;}
-  .idea-text{font-size:0.82rem;min-width:0;}
-  .idea-actions{flex-wrap:nowrap;gap:2px;}
-  .idea-actions button{padding:4px 7px;font-size:0.72rem;}
 
   /* Project cards */
   .project-grid{gap:10px;}

@@ -58,7 +58,6 @@
     <div class="stat"><span class="stat-value purple" id="statProjects">7</span><span class="stat-label">Projects</span></div>
     <div class="stat"><span class="stat-value blue" id="statTasks">0</span><span class="stat-label">Tasks</span></div>
     <div class="stat"><span class="stat-value yellow" id="statReview">0</span><span class="stat-label">Needs Review</span></div>
-    <div class="stat"><span class="stat-value" id="statIdeas">0</span><span class="stat-label">Ideas</span></div>
     <div class="stat"><span class="stat-value" id="statDrafts" style="color:var(--muted);">0</span><span class="stat-label">Drafts</span></div>
   </div>
 
@@ -72,17 +71,6 @@
   </div>
 
   <div class="main-content">
-    <!-- Ideas Section -->
-    <div class="ideas-section">
-      <div class="section-title">💡 Ideas Inbox</div>
-      <div class="idea-form">
-        <input type="text" id="ideaInput" placeholder="Throw an idea in..." maxlength="5000" onkeydown="if(event.key==='Enter')addIdea()">
-        <select id="ideaProject"><option value="">No project</option></select>
-        <button onclick="addIdea()">+ Add Idea</button>
-      </div>
-      <div id="ideaList"></div>
-    </div>
-
     <!-- Project Grid -->
     <div class="project-grid" id="projectGrid"></div>
 
