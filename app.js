@@ -512,8 +512,10 @@ function initTodoHoverDelay(container) {
 
   container.querySelectorAll('.todo-item').forEach(item => {
     let hoverTimer = null;
+    let clickTimer = null;
     const actions = item.querySelector('.todo-actions');
     const todoRow = item.querySelector('.todo-row');
+    const todoText = item.querySelector('.todo-text');
     if (!actions || !todoRow) return;
 
     todoRow.addEventListener('mouseenter', () => {
@@ -524,8 +526,26 @@ function initTodoHoverDelay(container) {
 
     todoRow.addEventListener('mouseleave', () => {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       actions.classList.remove('visible');
     });
+
+    // Single click on todo text shows actions immediately (with short delay to avoid
+    // triggering on double-click which should still open the inline editor)
+    if (todoText) {
+      todoText.addEventListener('click', () => {
+        if (todoText.dataset.editing) return;
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          actions.classList.add('visible');
+          // Clear the hover timer since actions are already visible
+          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+        }, 250);
+      });
+      todoText.addEventListener('dblclick', () => {
+        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      });
+    }
   });
 }
 
