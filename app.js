@@ -1272,7 +1272,7 @@ function toggleTheme() {
 })();
 
 // ===================================================================
-// VIEW SWITCHER (My Projects ↔ My TODOs)
+// VIEW SWITCHER (Projects ↔ TODOs)
 // ===================================================================
 let currentView = 'projects';
 
