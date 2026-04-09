@@ -150,9 +150,16 @@ async function connect(url, key) {
   // Initialize TODOs
   await refreshTodos();
 
-  // Restore last view
-  const savedView = localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
+  // Restore last view — hash takes priority over localStorage
+  const hashView = location.hash === '#todos' ? 'todos' : location.hash === '#projects' ? 'projects' : null;
+  const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
   switchView(savedView);
+
+  // Listen for back/forward navigation
+  window.addEventListener('hashchange', () => {
+    const h = location.hash === '#todos' ? 'todos' : 'projects';
+    if (h !== currentView) switchView(h);
+  });
 }
 
 // ===================================================================
@@ -1299,6 +1306,9 @@ let currentView = 'projects';
 function switchView(view) {
   currentView = view;
   localStorage.setItem(CURRENT_VIEW_KEY, view);
+  // Sync URL hash (no reload)
+  const newHash = '#' + view;
+  if (location.hash !== newHash) history.replaceState(null, '', newHash);
   const projectsView = document.getElementById('projectsView');
   const todosView = document.getElementById('todosView');
   const tabProjects = document.getElementById('tabProjects');
