@@ -1881,6 +1881,10 @@ function snoozeFor(amount, unit) {
   } else if (unit === 'd') {
     target = new Date(now.getTime() + amount * 24 * 60 * 60 * 1000);
     if (amount === 1) { target.setHours(9, 0, 0, 0); }
+  } else if (unit === 'M') {
+    target = new Date(now);
+    target.setMonth(target.getMonth() + amount);
+    target.setHours(9, 0, 0, 0);
   }
   doSnooze(target);
 }
