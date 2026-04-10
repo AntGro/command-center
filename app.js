@@ -2438,15 +2438,12 @@ async function saveNewChore() {
   if (!name) { showToast('Enter a chore name', 'error'); return; }
   if (!freq) { showToast('Enter a frequency rule', 'error'); return; }
 
-  const { data, error } = await sb.from('chores').insert({ name, frequency_rule: freq, category: cat });
+  const { data, error } = await sb.from('chores').insert({ name, frequency_rule: freq, category: cat }).select().single();
   if (error) { showToast('Failed to add chore: ' + error.message, 'error'); return; }
 
   // If lastDone was provided, create an initial completion
-  if (lastDoneVal && data) {
-    const choreId = data.id || (Array.isArray(data) ? data[0]?.id : null);
-    if (choreId) {
-      await sb.from('chore_completions').insert({ chore_id: choreId, completed_at: new Date(lastDoneVal).toISOString() });
-    }
+  if (lastDoneVal && data && data.id) {
+    await sb.from('chore_completions').insert({ chore_id: data.id, completed_at: new Date(lastDoneVal).toISOString() });
   }
 
   closeAddChoreModal();
