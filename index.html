@@ -41,6 +41,7 @@
     <div class="view-switcher">
       <button class="view-tab active" id="tabProjects" onclick="switchView('projects')">📁 Projects</button>
       <button class="view-tab" id="tabTodos" onclick="switchView('todos')">✅ TODOs</button>
+      <button class="view-tab" id="tabChores" onclick="switchView('chores')">🧹 Chores</button>
     </div>
     <div class="header-actions">
       <button class="btn" onclick="openAddProjectModal()" title="Add project">➕</button>
@@ -89,6 +90,8 @@
       <div class="stat"><span class="stat-value yellow" id="statTodosPending">0</span><span class="stat-label">Pending</span></div>
       <div class="stat"><span class="stat-value green" id="statTodosDone">0</span><span class="stat-label">Done</span></div>
       <div class="stat"><span class="stat-value red" id="statTodosOverdue">0</span><span class="stat-label">Overdue</span></div>
+      <div class="stat"><span class="stat-value orange" id="statTodosFlagged">0</span><span class="stat-label">Flagged</span></div>
+      <div class="stat"><span class="stat-value amber" id="statTodosOutdated">0</span><span class="stat-label">Outdated</span></div>
     </div>
 
     <div class="todos-toolbar">
@@ -96,6 +99,8 @@
         <button class="filter-btn active" data-filter="pending" onclick="setTodoFilter('pending')">Pending</button>
         <button class="filter-btn" data-filter="done" onclick="setTodoFilter('done')">Done</button>
         <button class="filter-btn" data-filter="all" onclick="setTodoFilter('all')">All</button>
+        <button class="filter-btn" data-filter="flagged" onclick="setTodoFilter('flagged')">🚩 Flagged</button>
+        <button class="filter-btn" data-filter="outdated" onclick="setTodoFilter('outdated')">🕰️ Outdated</button>
       </div>
       <div class="todo-toolbar-right">
         <div class="todo-sort">
@@ -111,6 +116,37 @@
     </div>
 
     <div class="todo-category-grid" id="todoCategoryGrid"></div>
+  </div>
+
+  <!-- ===== CHORES VIEW ===== -->
+  <div id="choresView" style="display:none;">
+    <div class="stats-bar" id="choresStatsBar">
+      <div class="stat"><span class="stat-value blue" id="statChoresTotal">0</span><span class="stat-label">Chores</span></div>
+      <div class="stat"><span class="stat-value red" id="statChoresOverdue">0</span><span class="stat-label">Overdue</span></div>
+      <div class="stat"><span class="stat-value yellow" id="statChoresDueSoon">0</span><span class="stat-label">Due This Week</span></div>
+      <div class="stat"><span class="stat-value green" id="statChoresOnTrack">0</span><span class="stat-label">On Track</span></div>
+    </div>
+
+    <div class="chores-toolbar">
+      <div class="chore-filters">
+        <button class="filter-btn active" data-filter="all" onclick="setChoreFilter('all')">All</button>
+        <button class="filter-btn" data-filter="overdue" onclick="setChoreFilter('overdue')">Overdue</button>
+        <button class="filter-btn" data-filter="due-soon" onclick="setChoreFilter('due-soon')">Due Soon</button>
+      </div>
+      <div class="chore-toolbar-right">
+        <div class="chore-sort">
+          <select id="choreSortBy" onchange="renderChores()">
+            <option value="due">Next due</option>
+            <option value="name">Name</option>
+            <option value="last-done">Last done</option>
+          </select>
+        </div>
+        <button class="btn" onclick="openAddChoreModal()" title="Add chore">➕</button>
+        <button class="btn" onclick="openAddChoreCategoryModal()" title="Add category">📂</button>
+      </div>
+    </div>
+
+    <div class="chore-category-grid" id="choreCategoryGrid"></div>
   </div>
 
   <!-- Snooze Modal -->
@@ -260,6 +296,83 @@
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeDeleteConfirm()">Cancel</button>
         <button class="modal-save delete-confirm-btn" id="deleteConfirmBtn" onclick="executeDeleteConfirm()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Chore Modal -->
+  <div class="modal-overlay" id="addChoreModal">
+    <div class="modal">
+      <h2>🧹 Add Chore</h2>
+      <label>Name</label>
+      <input type="text" id="newChoreName" placeholder="e.g. Hoovering, Laundry..." maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}">
+      <label>Frequency Rule (natural language)</label>
+      <input type="text" id="newChoreFrequency" placeholder='e.g. "every other weekend", "second Saturday of the month"' maxlength="300">
+      <label>Category</label>
+      <select id="newChoreCategory"></select>
+      <label>Last Done (optional)</label>
+      <input type="datetime-local" id="newChoreLastDone">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeAddChoreModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewChore()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Chore Modal -->
+  <div class="modal-overlay" id="editChoreModal">
+    <div class="modal">
+      <h2>✏️ Edit Chore</h2>
+      <input type="hidden" id="editChoreId">
+      <label>Name</label>
+      <input type="text" id="editChoreName" maxlength="200">
+      <label>Frequency Rule</label>
+      <input type="text" id="editChoreFrequency" maxlength="300">
+      <label>Category</label>
+      <select id="editChoreCategory"></select>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeEditChoreModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditChore()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chore Done Modal (with optional note) -->
+  <div class="modal-overlay" id="choreDoneModal">
+    <div class="modal chore-done-modal">
+      <h2>✅ Mark Chore Done</h2>
+      <p id="choreDoneName" style="font-size:0.88rem;margin-bottom:12px;"></p>
+      <label>Note (optional)</label>
+      <input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}">
+      <input type="hidden" id="choreDoneId">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeChoreDoneModal()">Cancel</button>
+        <button class="modal-save" onclick="submitChoreDone()">Done ✅</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chore History Modal -->
+  <div class="modal-overlay" id="choreHistoryModal">
+    <div class="modal chore-history-modal">
+      <h2>📋 Chore History</h2>
+      <p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p>
+      <div id="choreHistoryList"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeChoreHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Chore Category Modal -->
+  <div class="modal-overlay" id="addChoreCategoryModal">
+    <div class="modal">
+      <h2>📂 Add Chore Category</h2>
+      <label>Category Name</label>
+      <input type="text" id="newChoreCategoryName" placeholder="e.g. Kitchen, Bathroom, Laundry..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChoreCategory();}">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeAddChoreCategoryModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewChoreCategory()">Create</button>
       </div>
     </div>
   </div>

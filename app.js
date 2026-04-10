@@ -145,19 +145,27 @@ async function connect(url, key) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => refreshTodos())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chores' }, () => refreshChores())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores())
     .subscribe();
 
   // Initialize TODOs
   await refreshTodos();
 
+  // Initialize Chores
+  await refreshChores();
+
   // Restore last view — hash takes priority over localStorage
-  const hashView = location.hash === '#todos' ? 'todos' : location.hash === '#projects' ? 'projects' : null;
+  const validViews = ['projects', 'todos', 'chores'];
+  const rawHash = location.hash.replace('#', '');
+  const hashView = validViews.includes(rawHash) ? rawHash : null;
   const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
   switchView(savedView);
 
   // Listen for back/forward navigation
   window.addEventListener('hashchange', () => {
-    const h = location.hash === '#todos' ? 'todos' : 'projects';
+    const raw = location.hash.replace('#', '');
+    const h = validViews.includes(raw) ? raw : 'projects';
     if (h !== currentView) switchView(h);
   });
 }
@@ -1311,23 +1319,34 @@ function switchView(view) {
   if (location.hash !== newHash) history.replaceState(null, '', newHash);
   const projectsView = document.getElementById('projectsView');
   const todosView = document.getElementById('todosView');
+  const choresView = document.getElementById('choresView');
   const tabProjects = document.getElementById('tabProjects');
   const tabTodos = document.getElementById('tabTodos');
+  const tabChores = document.getElementById('tabChores');
   const addProjectBtn = document.querySelector('.header-actions .btn[onclick="openAddProjectModal()"]');
+
+  // Hide all
+  projectsView.style.display = 'none';
+  todosView.style.display = 'none';
+  if (choresView) choresView.style.display = 'none';
+  tabProjects.classList.remove('active');
+  tabTodos.classList.remove('active');
+  if (tabChores) tabChores.classList.remove('active');
 
   if (view === 'projects') {
     projectsView.style.display = '';
-    todosView.style.display = 'none';
     tabProjects.classList.add('active');
-    tabTodos.classList.remove('active');
     if (addProjectBtn) addProjectBtn.style.display = '';
-  } else {
-    projectsView.style.display = 'none';
+  } else if (view === 'todos') {
     todosView.style.display = '';
-    tabProjects.classList.remove('active');
     tabTodos.classList.add('active');
     if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderTodos();
+  } else if (view === 'chores') {
+    if (choresView) choresView.style.display = '';
+    if (tabChores) tabChores.classList.add('active');
+    if (addProjectBtn) addProjectBtn.style.display = 'none';
+    renderChores();
   }
 }
 
@@ -1442,6 +1461,10 @@ function getFilteredTodosForCategory(category) {
     filtered = filtered.filter(t => !t.done && (!t.snooze_until || new Date(t.snooze_until) <= now));
   } else if (todoFilter === 'done') {
     filtered = filtered.filter(t => t.done);
+  } else if (todoFilter === 'flagged') {
+    filtered = filtered.filter(t => !t.done && t.priority && t.priority !== 'normal');
+  } else if (todoFilter === 'outdated') {
+    filtered = filtered.filter(t => isTodoOutdated(t));
   }
 
   const sortBy = document.getElementById('todoSortBy')?.value || 'manual';
@@ -1624,12 +1647,29 @@ function renderCategoryCard(category) {
   </div>`;
 }
 
+const TODO_OUTDATED_DAYS = 7;
+
+function isTodoOutdated(t) {
+  if (t.done) return false;
+  const now = new Date();
+  const ref = new Date(t.updated_at || t.created_at);
+  const diffDays = (now - ref) / (1000 * 60 * 60 * 24);
+  return diffDays >= TODO_OUTDATED_DAYS;
+}
+
 function renderTodoItem(t) {
   const now = new Date();
   const isOverdue = t.due_date && !t.done && new Date(t.due_date) < now;
   const isSnoozed = t.snooze_until && new Date(t.snooze_until) > now;
-  const prioBadge = t.priority && t.priority !== 'normal'
+  const isOutdated = isTodoOutdated(t);
+  const isFlagged = t.priority && t.priority !== 'normal';
+  const prioBadge = isFlagged
     ? `<span class="todo-priority-badge priority-${t.priority}">${t.priority}</span>` : '';
+
+  // Flag button: cycles normal → high → urgent → normal
+  const flagIcon = t.priority === 'urgent' ? '🚩' : t.priority === 'high' ? '🏳️' : '⚑';
+  const flagTitle = t.priority === 'urgent' ? 'Unflag (urgent → normal)' : t.priority === 'high' ? 'Flag urgent' : 'Flag high';
+  const flagBtn = !t.done ? `<button class="todo-flag-btn ${isFlagged ? 'flagged' : ''}" onclick="cycleTodoPriority('${t.id}')" title="${flagTitle}">${flagIcon}</button>` : '';
 
   let dueDateStr = '';
   if (t.due_date) {
@@ -1650,11 +1690,27 @@ function renderTodoItem(t) {
     snoozeInfo = `<span class="todo-snoozed">💤 Snoozed until ${new Date(t.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
   }
 
+  let outdatedInfo = '';
+  if (isOutdated && !t.done) {
+    const ref = new Date(t.updated_at || t.created_at);
+    const daysAgo = Math.floor((now - ref) / (1000 * 60 * 60 * 24));
+    outdatedInfo = `<span class="todo-outdated-badge">🕰️ ${daysAgo}d old</span>`;
+  }
+
   const dragHandle = !t.done ? '<span class="todo-drag-handle" title="Drag to reorder">⠿</span>' : '';
 
-  return `<div class="todo-item ${t.done ? 'todo-done' : ''} ${isOverdue ? 'todo-overdue' : ''}" data-todo-id="${t.id}">
+  const classes = [
+    'todo-item',
+    t.done ? 'todo-done' : '',
+    isOverdue ? 'todo-overdue' : '',
+    isOutdated ? 'todo-outdated' : '',
+    isFlagged ? 'todo-flagged' : ''
+  ].filter(Boolean).join(' ');
+
+  return `<div class="${classes}" data-todo-id="${t.id}">
     <div class="todo-row">
       ${dragHandle}
+      ${flagBtn}
       <label class="todo-checkbox-label">
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
         <span class="todo-checkmark"></span>
@@ -1667,8 +1723,20 @@ function renderTodoItem(t) {
         <button onclick="deleteTodo('${t.id}')" title="Delete">🗑️</button>
       </div>
     </div>
-    ${dueDateStr || snoozeInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}</div>` : ''}
+    ${dueDateStr || snoozeInfo || outdatedInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}${outdatedInfo}</div>` : ''}
   </div>`;
+}
+
+async function cycleTodoPriority(id) {
+  const todo = allTodos.find(t => t.id === id);
+  if (!todo) return;
+  const cycle = { normal: 'high', high: 'urgent', urgent: 'normal' };
+  const next = cycle[todo.priority] || 'high';
+  const { error } = await sb.from('todos').update({ priority: next }).eq('id', id);
+  if (error) { showToast('Failed to update priority', 'error'); return; }
+  const labels = { high: '🏳️ Flagged high', urgent: '🚩 Flagged urgent', normal: 'Flag removed' };
+  showToast(labels[next] || `Priority: ${next}`, 'success');
+  await refreshTodos();
 }
 
 function formatRelativeDate(d) {
@@ -1795,12 +1863,16 @@ function updateTodoStats() {
   const done = allTodos.filter(t => t.done).length;
   const pending = allTodos.filter(t => !t.done).length;
   const overdue = allTodos.filter(t => !t.done && t.due_date && new Date(t.due_date) < now).length;
+  const flagged = allTodos.filter(t => !t.done && t.priority && t.priority !== 'normal').length;
+  const outdated = allTodos.filter(t => isTodoOutdated(t)).length;
 
   const el = id => document.getElementById(id);
   if (el('statTodosTotal')) el('statTodosTotal').textContent = total;
   if (el('statTodosPending')) el('statTodosPending').textContent = pending;
   if (el('statTodosDone')) el('statTodosDone').textContent = done;
   if (el('statTodosOverdue')) el('statTodosOverdue').textContent = overdue;
+  if (el('statTodosFlagged')) el('statTodosFlagged').textContent = flagged;
+  if (el('statTodosOutdated')) el('statTodosOutdated').textContent = outdated;
 }
 
 // ===================================================================
@@ -2084,3 +2156,456 @@ document.addEventListener('mousemove', e => {
   document.body.style.setProperty('--mouse-x', e.clientX + 'px');
   document.body.style.setProperty('--mouse-y', e.clientY + 'px');
 });
+
+// ===================================================================
+// ===================================================================
+// CHORES — DATA, CRUD & RENDERING
+// ===================================================================
+let allChores = [];
+let allChoreCompletions = [];
+let choreFilter = 'all';
+const CHORE_CATEGORIES_KEY = 'claw_cc_chore_categories';
+
+function getChoreCategories() {
+  try { return JSON.parse(localStorage.getItem(CHORE_CATEGORIES_KEY) || '[]'); } catch { return []; }
+}
+function saveChoreCategories(cats) { localStorage.setItem(CHORE_CATEGORIES_KEY, JSON.stringify(cats)); }
+
+function syncChoreCategoriesFromData() {
+  const known = getChoreCategories();
+  const knownSet = new Set(known.map(c => c.toLowerCase()));
+  const discovered = new Set();
+  allChores.forEach(c => {
+    if (c.category && c.category !== 'General' && !knownSet.has(c.category.toLowerCase())) {
+      discovered.add(c.category);
+    }
+  });
+  if (discovered.size > 0) saveChoreCategories([...known, ...Array.from(discovered)]);
+}
+
+async function refreshChores() {
+  if (!sb) return;
+  const { data: chores, error: chErr } = await sb.from('chores').select('*').order('created_at', { ascending: true });
+  if (chErr) {
+    if (chErr.code === '42P01' || chErr.message?.includes('does not exist')) return;
+    showToast('Failed to load chores', 'error');
+    return;
+  }
+  allChores = chores || [];
+
+  const { data: completions, error: compErr } = await sb.from('chore_completions').select('*').order('completed_at', { ascending: false });
+  if (!compErr) allChoreCompletions = completions || [];
+
+  syncChoreCategoriesFromData();
+  if (currentView === 'chores') {
+    renderChores();
+    updateChoreStats();
+  }
+}
+
+function getChoreLastDone(choreId) {
+  const comp = allChoreCompletions.find(c => c.chore_id === choreId);
+  return comp ? new Date(comp.completed_at) : null;
+}
+
+function getChoreCompletionCount(choreId) {
+  return allChoreCompletions.filter(c => c.chore_id === choreId).length;
+}
+
+function getChoreCompletions(choreId) {
+  return allChoreCompletions.filter(c => c.chore_id === choreId);
+}
+
+function choreDueStatus(chore) {
+  if (!chore.next_due) return 'no-date';
+  const now = new Date();
+  const due = new Date(chore.next_due);
+  const diffMs = due - now;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays <= 1) return 'due-today';
+  if (diffDays <= 7) return 'due-soon';
+  return 'on-track';
+}
+
+function formatChoreDue(chore) {
+  if (!chore.next_due) return '<span class="chore-due no-date">⏳ Awaiting schedule</span>';
+  const due = new Date(chore.next_due);
+  const now = new Date();
+  const diffMs = due - now;
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  const status = choreDueStatus(chore);
+
+  const dateStr = due.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  if (status === 'overdue') return `<span class="chore-due overdue">⚠️ Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
+  if (status === 'due-today') return `<span class="chore-due due-today">🔔 Due today</span>`;
+  if (status === 'due-soon') return `<span class="chore-due due-soon">📅 ${dateStr} (in ${diffDays}d)</span>`;
+  return `<span class="chore-due on-track">✅ ${dateStr} (in ${diffDays}d)</span>`;
+}
+
+function getFilteredChoresForCategory(category) {
+  let filtered = allChores.filter(c => (c.category || 'General') === (category || 'General'));
+  if (choreFilter === 'overdue') filtered = filtered.filter(c => choreDueStatus(c) === 'overdue');
+  else if (choreFilter === 'due-soon') filtered = filtered.filter(c => ['overdue', 'due-today', 'due-soon'].includes(choreDueStatus(c)));
+
+  const sortBy = document.getElementById('choreSortBy')?.value || 'due';
+  if (sortBy === 'due') {
+    filtered.sort((a, b) => {
+      if (!a.next_due && !b.next_due) return 0;
+      if (!a.next_due) return 1;
+      if (!b.next_due) return -1;
+      return new Date(a.next_due) - new Date(b.next_due);
+    });
+  } else if (sortBy === 'name') {
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortBy === 'last-done') {
+    filtered.sort((a, b) => {
+      const la = getChoreLastDone(a.id);
+      const lb = getChoreLastDone(b.id);
+      if (!la && !lb) return 0;
+      if (!la) return 1;
+      if (!lb) return -1;
+      return lb - la;
+    });
+  }
+  return filtered;
+}
+
+function setChoreFilter(filter) {
+  choreFilter = filter;
+  document.querySelectorAll('.chore-filters .filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderChores();
+}
+
+function renderChores() {
+  const grid = document.getElementById('choreCategoryGrid');
+  if (!grid) return;
+
+  const categories = getChoreCategories();
+  const categoryList = ['General', ...categories];
+
+  let html = '';
+  for (const cat of categoryList) {
+    html += renderChoreCategoryCard(cat);
+  }
+  grid.innerHTML = html;
+  updateChoreStats();
+}
+
+function renderChoreCategoryCard(category) {
+  const catName = category || 'General';
+  const isGeneral = catName === 'General';
+  const choresInCat = getFilteredChoresForCategory(category);
+  const totalInCat = allChores.filter(c => (c.category || 'General') === catName).length;
+  const overdueCount = allChores.filter(c => (c.category || 'General') === catName && choreDueStatus(c) === 'overdue').length;
+
+  const catColor = getCategoryColor(catName);
+  const statsText = `${totalInCat} chore${totalInCat !== 1 ? 's' : ''}` + (overdueCount > 0 ? ` · <span style="color:var(--red)">${overdueCount} overdue</span>` : '');
+
+  const deleteBtn = !isGeneral
+    ? `<button class="todo-cat-delete-btn" onclick="deleteChoreCategory('${esc(catName).replace(/'/g, "\\'")}')" title="Delete category">🗑️</button>`
+    : '';
+
+  const escapedCat = esc(catName).replace(/'/g, "\\'");
+
+  const items = choresInCat.length === 0
+    ? '<p class="empty-msg">No chores here</p>'
+    : choresInCat.map(c => renderChoreItem(c)).join('');
+
+  return `<div class="todo-category-card chore-category-card" data-category="${esc(catName)}">
+    <div class="todo-cat-accent" style="background:${catColor}"></div>
+    <div class="todo-cat-header">
+      <div class="todo-cat-header-left">
+        <div class="todo-cat-info">
+          <h3 class="todo-cat-name">${esc(catName)}</h3>
+          <span class="todo-cat-stats">${statsText}</span>
+        </div>
+      </div>
+      <div class="todo-cat-header-actions">
+        ${deleteBtn}
+      </div>
+    </div>
+    <div class="todo-cat-add">
+      <input type="text" placeholder="Add a chore..." maxlength="200" class="todo-cat-input chore-add-input" data-category="${esc(catName)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addChoreFromInput(this);}">
+      <button onclick="addChoreFromInput(this.previousElementSibling)">+</button>
+    </div>
+    <div class="chore-list todo-cat-list">
+      ${items}
+    </div>
+  </div>`;
+}
+
+function renderChoreItem(chore) {
+  const lastDone = getChoreLastDone(chore.id);
+  const completionCount = getChoreCompletionCount(chore.id);
+  const status = choreDueStatus(chore);
+  const dueHtml = formatChoreDue(chore);
+
+  const lastDoneStr = lastDone
+    ? `Last: ${lastDone.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${formatChoreRelative(lastDone)})`
+    : 'Never done';
+
+  return `<div class="chore-item chore-status-${status}" data-chore-id="${chore.id}">
+    <div class="chore-row">
+      <div class="chore-info">
+        <span class="chore-name">${esc(chore.name)}</span>
+        <span class="chore-frequency">${esc(chore.frequency_rule)}</span>
+      </div>
+      <div class="chore-actions">
+        <button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">✅</button>
+        <button onclick="openChoreHistory('${chore.id}')" title="History (${completionCount})" class="chore-history-btn">📋 ${completionCount}</button>
+        <button onclick="openEditChoreModal('${chore.id}')" title="Edit">✏️</button>
+        <button onclick="deleteChore('${chore.id}')" title="Delete">🗑️</button>
+      </div>
+    </div>
+    <div class="chore-meta">
+      ${dueHtml}
+      <span class="chore-last-done">${lastDoneStr}</span>
+    </div>
+  </div>`;
+}
+
+function formatChoreRelative(d) {
+  const now = new Date();
+  const diffMs = now - d;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}mo ago`;
+}
+
+function updateChoreStats() {
+  const total = allChores.length;
+  const overdue = allChores.filter(c => choreDueStatus(c) === 'overdue').length;
+  const dueSoon = allChores.filter(c => ['due-today', 'due-soon'].includes(choreDueStatus(c))).length;
+  const onTrack = allChores.filter(c => choreDueStatus(c) === 'on-track').length;
+
+  const el = id => document.getElementById(id);
+  if (el('statChoresTotal')) el('statChoresTotal').textContent = total;
+  if (el('statChoresOverdue')) el('statChoresOverdue').textContent = overdue;
+  if (el('statChoresDueSoon')) el('statChoresDueSoon').textContent = dueSoon;
+  if (el('statChoresOnTrack')) el('statChoresOnTrack').textContent = onTrack;
+}
+
+// ===================================================================
+// CHORE CRUD
+// ===================================================================
+function openAddChoreModal() {
+  document.getElementById('newChoreName').value = '';
+  document.getElementById('newChoreFrequency').value = '';
+  document.getElementById('newChoreLastDone').value = '';
+  populateChoreCategorySelect('newChoreCategory');
+  document.getElementById('addChoreModal').classList.add('visible');
+  setTimeout(() => document.getElementById('newChoreName').focus(), 100);
+}
+
+function closeAddChoreModal() {
+  document.getElementById('addChoreModal').classList.remove('visible');
+}
+
+function populateChoreCategorySelect(selectId) {
+  const sel = document.getElementById(selectId);
+  const cats = ['General', ...getChoreCategories()];
+  sel.innerHTML = cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+
+async function addChoreFromInput(inputEl) {
+  const name = inputEl.value.trim();
+  if (!name) return;
+  const category = inputEl.dataset.category || 'General';
+
+  // Quick-add: opens the full modal pre-filled with name + category
+  document.getElementById('newChoreName').value = name;
+  document.getElementById('newChoreFrequency').value = '';
+  document.getElementById('newChoreLastDone').value = '';
+  populateChoreCategorySelect('newChoreCategory');
+  document.getElementById('newChoreCategory').value = category;
+  document.getElementById('addChoreModal').classList.add('visible');
+  inputEl.value = '';
+  setTimeout(() => document.getElementById('newChoreFrequency').focus(), 100);
+}
+
+async function saveNewChore() {
+  const name = document.getElementById('newChoreName').value.trim();
+  const freq = document.getElementById('newChoreFrequency').value.trim();
+  const cat = document.getElementById('newChoreCategory').value || 'General';
+  const lastDoneVal = document.getElementById('newChoreLastDone').value;
+
+  if (!name) { showToast('Enter a chore name', 'error'); return; }
+  if (!freq) { showToast('Enter a frequency rule', 'error'); return; }
+
+  const { data, error } = await sb.from('chores').insert({ name, frequency_rule: freq, category: cat });
+  if (error) { showToast('Failed to add chore: ' + error.message, 'error'); return; }
+
+  // If lastDone was provided, create an initial completion
+  if (lastDoneVal && data) {
+    const choreId = data.id || (Array.isArray(data) ? data[0]?.id : null);
+    if (choreId) {
+      await sb.from('chore_completions').insert({ chore_id: choreId, completed_at: new Date(lastDoneVal).toISOString() });
+    }
+  }
+
+  closeAddChoreModal();
+  showToast(`Chore "${name}" added`, 'success');
+  await refreshChores();
+}
+
+function openEditChoreModal(choreId) {
+  const chore = allChores.find(c => c.id === choreId);
+  if (!chore) return;
+  document.getElementById('editChoreId').value = choreId;
+  document.getElementById('editChoreName').value = chore.name;
+  document.getElementById('editChoreFrequency').value = chore.frequency_rule;
+  populateChoreCategorySelect('editChoreCategory');
+  document.getElementById('editChoreCategory').value = chore.category || 'General';
+  document.getElementById('editChoreModal').classList.add('visible');
+  setTimeout(() => document.getElementById('editChoreName').focus(), 100);
+}
+
+function closeEditChoreModal() {
+  document.getElementById('editChoreModal').classList.remove('visible');
+}
+
+async function saveEditChore() {
+  const id = document.getElementById('editChoreId').value;
+  const name = document.getElementById('editChoreName').value.trim();
+  const freq = document.getElementById('editChoreFrequency').value.trim();
+  const cat = document.getElementById('editChoreCategory').value || 'General';
+
+  if (!name) { showToast('Enter a chore name', 'error'); return; }
+  if (!freq) { showToast('Enter a frequency rule', 'error'); return; }
+
+  const { error } = await sb.from('chores').update({ name, frequency_rule: freq, category: cat }).eq('id', id);
+  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  closeEditChoreModal();
+  showToast('Chore updated', 'success');
+  await refreshChores();
+}
+
+async function deleteChore(choreId) {
+  const chore = allChores.find(c => c.id === choreId);
+  if (!chore) return;
+  showDeleteConfirm(
+    'Delete Chore',
+    `Delete "${chore.name}"? All completion history will be lost.`,
+    async () => {
+      const { error } = await sb.from('chores').delete().eq('id', choreId);
+      if (error) { showToast('Delete failed', 'error'); return; }
+      showToast('Chore deleted', 'info');
+      await refreshChores();
+    }
+  );
+}
+
+// ===================================================================
+// CHORE DONE FLOW
+// ===================================================================
+function openChoreDoneModal(choreId) {
+  const chore = allChores.find(c => c.id === choreId);
+  if (!chore) return;
+  document.getElementById('choreDoneId').value = choreId;
+  document.getElementById('choreDoneName').textContent = `🧹 ${chore.name}`;
+  document.getElementById('choreDoneNote').value = '';
+  document.getElementById('choreDoneModal').classList.add('visible');
+  setTimeout(() => document.getElementById('choreDoneNote').focus(), 100);
+}
+
+function closeChoreDoneModal() {
+  document.getElementById('choreDoneModal').classList.remove('visible');
+}
+
+async function submitChoreDone() {
+  const choreId = document.getElementById('choreDoneId').value;
+  const note = document.getElementById('choreDoneNote').value.trim();
+  if (!choreId) return;
+
+  const row = { chore_id: choreId, completed_at: new Date().toISOString() };
+  if (note) row.note = note;
+
+  const { error } = await sb.from('chore_completions').insert(row);
+  if (error) { showToast('Failed to record completion', 'error'); return; }
+  closeChoreDoneModal();
+  showToast('Chore done! ✅', 'success');
+  await refreshChores();
+}
+
+// ===================================================================
+// CHORE HISTORY
+// ===================================================================
+function openChoreHistory(choreId) {
+  const chore = allChores.find(c => c.id === choreId);
+  if (!chore) return;
+  const completions = getChoreCompletions(choreId);
+  document.getElementById('choreHistoryName').textContent = `🧹 ${chore.name} — ${chore.frequency_rule}`;
+
+  if (completions.length === 0) {
+    document.getElementById('choreHistoryList').innerHTML = '<p class="empty-msg">No completions recorded yet</p>';
+  } else {
+    const items = completions.map(comp => {
+      const d = new Date(comp.completed_at);
+      const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const noteStr = comp.note ? ` — <em>${esc(comp.note)}</em>` : '';
+      return `<div class="chore-history-item">
+        <span class="chore-history-date">✅ ${dateStr} at ${timeStr}</span>
+        ${noteStr}
+      </div>`;
+    }).join('');
+    document.getElementById('choreHistoryList').innerHTML = items;
+  }
+
+  document.getElementById('choreHistoryModal').classList.add('visible');
+}
+
+function closeChoreHistoryModal() {
+  document.getElementById('choreHistoryModal').classList.remove('visible');
+}
+
+// ===================================================================
+// CHORE CATEGORY MANAGEMENT
+// ===================================================================
+function openAddChoreCategoryModal() {
+  document.getElementById('newChoreCategoryName').value = '';
+  document.getElementById('addChoreCategoryModal').classList.add('visible');
+  setTimeout(() => document.getElementById('newChoreCategoryName').focus(), 100);
+}
+
+function closeAddChoreCategoryModal() {
+  document.getElementById('addChoreCategoryModal').classList.remove('visible');
+}
+
+function saveNewChoreCategory() {
+  const name = document.getElementById('newChoreCategoryName').value.trim();
+  if (!name) { showToast('Enter a category name', 'error'); return; }
+  const cats = getChoreCategories();
+  if (cats.some(c => c.toLowerCase() === name.toLowerCase()) || name.toLowerCase() === 'general') {
+    showToast('Category already exists', 'error'); return;
+  }
+  cats.push(name);
+  saveChoreCategories(cats);
+  closeAddChoreCategoryModal();
+  showToast(`Category "${name}" created`, 'success');
+  renderChores();
+}
+
+async function deleteChoreCategory(name) {
+  const choresInCat = allChores.filter(c => (c.category || 'General') === name);
+  const msg = choresInCat.length > 0
+    ? `Delete "${name}"? Its ${choresInCat.length} chore(s) will move to General.`
+    : `Delete empty category "${name}"?`;
+
+  showDeleteConfirm('Delete Category', msg, async () => {
+    for (const c of choresInCat) {
+      await sb.from('chores').update({ category: 'General' }).eq('id', c.id);
+    }
+    const cats = getChoreCategories();
+    const idx = cats.findIndex(c => c === name);
+    if (idx !== -1) { cats.splice(idx, 1); saveChoreCategories(cats); }
+    showToast(`Category "${name}" deleted`, 'info');
+    await refreshChores();
+  });
+}

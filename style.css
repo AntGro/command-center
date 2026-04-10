@@ -274,6 +274,56 @@ input,select,button{font-family:inherit;}
 .md-code-block code{background:none;border:none;padding:0;font-size:inherit;}
 .task-text a,.task-meta-item a{color:var(--accent);text-decoration:underline;word-break:break-all;}
 
+/* ===== CHORES VIEW ===== */
+.chores-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 8px;border-bottom:1px solid var(--border);gap:12px;}
+.chore-filters{display:flex;gap:4px;}
+.chore-toolbar-right{display:flex;align-items:center;gap:8px;}
+.chore-sort select{padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;outline:none;font-family:inherit;}
+.chore-sort select:focus{border-color:var(--accent);}
+
+/* Chore category grid — reuses todo-category-card styling */
+.chore-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;padding:14px 8px;}
+
+/* Chore item */
+.chore-item{padding:10px 12px;background:var(--surface);border:1px solid transparent;border-radius:8px;transition:all 0.2s ease;}
+.chore-item:hover{border-color:var(--accent-dim);background:var(--surface2);}
+.chore-item.chore-status-overdue{border-left:3px solid var(--red);}
+.chore-item.chore-status-due-today{border-left:3px solid var(--yellow);}
+.chore-item.chore-status-due-soon{border-left:3px solid var(--yellow);opacity:0.9;}
+.chore-item.chore-status-on-track{border-left:3px solid var(--green);opacity:0.85;}
+.chore-item.chore-status-no-date{border-left:3px solid var(--muted);opacity:0.7;}
+
+.chore-row{display:flex;align-items:center;gap:10px;}
+.chore-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.chore-name{font-size:0.88rem;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chore-frequency{font-size:0.75rem;color:var(--muted);font-style:italic;}
+
+.chore-actions{display:flex;gap:2px;opacity:0;transition:opacity 0.2s;}
+.chore-item:hover .chore-actions{opacity:1;}
+.chore-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
+.chore-actions button:hover{background:var(--surface2);}
+.chore-done-btn{font-size:0.92rem !important;}
+.chore-history-btn{font-size:0.75rem !important;color:var(--muted);}
+
+.chore-meta{display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;}
+.chore-due{font-size:0.75rem;}
+.chore-due.overdue{color:var(--red);font-weight:600;}
+.chore-due.due-today{color:var(--yellow);font-weight:500;}
+.chore-due.due-soon{color:var(--yellow);}
+.chore-due.on-track{color:var(--green);}
+.chore-due.no-date{color:var(--muted);font-style:italic;}
+.chore-last-done{font-size:0.72rem;color:var(--muted);}
+
+/* Chore Done Modal */
+.chore-done-modal{max-width:400px;}
+
+/* Chore History Modal */
+.chore-history-modal{max-width:500px;}
+.chore-history-item{padding:8px 10px;font-size:0.82rem;border-bottom:1px solid var(--border);color:var(--text);}
+.chore-history-item:last-child{border-bottom:none;}
+.chore-history-item em{color:var(--muted);font-size:0.78rem;}
+.chore-history-date{font-weight:500;}
+
 /* ===== RESPONSIVE ===== */
 
 /* Tablet / small desktop */
@@ -287,6 +337,8 @@ input,select,button{font-family:inherit;}
   .legend{padding:8px 8px;}
   .todo-category-grid{grid-template-columns:1fr;}
   .todos-toolbar{flex-direction:column;gap:8px;}
+  .chore-category-grid{grid-template-columns:1fr;}
+  .chores-toolbar{flex-direction:column;gap:8px;}
 }
 
 /* Phone */
@@ -377,6 +429,8 @@ input,select,button{font-family:inherit;}
   /* Todo items: bigger tap targets */
   .todo-item{padding:10px 10px;border-radius:10px;}
   .todo-item.todo-overdue{border-left-width:3px;}
+  .todo-item.todo-outdated{border-left-width:3px;}
+  .todo-item.todo-flagged{border-left-width:3px;}
   .todo-row{gap:8px;flex-wrap:wrap;}
   .todo-text{font-size:0.86rem;min-width:0;word-break:break-word;flex:1 1 0;}
   .todo-checkmark{width:22px;height:22px;border-radius:6px;}
@@ -394,6 +448,20 @@ input,select,button{font-family:inherit;}
   #todosStatsBar .stat-label{font-size:0.62rem;}
   .todo-item .task-edit-input{padding:8px 10px;border-radius:8px;width:100%;}
   .todo-cat-list .empty-msg{padding:12px 8px;font-size:0.82rem;}
+
+  /* ===== CHORES VIEW — MOBILE ===== */
+  .chores-toolbar{padding:8px 8px;gap:6px;flex-direction:column;align-items:stretch;}
+  .chore-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .chore-filters .filter-btn{flex:1;text-align:center;padding:8px 8px;font-size:0.82rem;min-height:36px;}
+  .chore-toolbar-right{width:100%;justify-content:space-between;}
+  .chore-sort{flex:1;}
+  .chore-sort select{width:100%;padding:8px 10px;}
+  .chore-category-grid{grid-template-columns:1fr;gap:10px;padding:10px 6px;}
+  .chore-actions{opacity:1 !important;}
+  .chore-item{padding:10px 10px;}
+  #choresStatsBar{gap:6px;padding:10px 8px;justify-content:space-between;}
+  #choresStatsBar .stat-value{font-size:1.3rem;}
+  #choresStatsBar .stat-label{font-size:0.62rem;}
 
   /* Modals — near full-width on phones */
   .modal{width:95%;padding:20px 16px;border-radius:12px;max-height:90vh;}
@@ -513,6 +581,22 @@ input,select,button{font-family:inherit;}
 .todo-due.overdue{color:var(--red);font-weight:500;}
 .todo-due.due-soon{color:var(--yellow);}
 .todo-snoozed{font-size:0.75rem;color:var(--purple);font-style:italic;}
+
+/* Outdated TODO highlight */
+.todo-item.todo-outdated{border-left:3px solid var(--yellow);background:rgba(234,179,8,0.04);}
+.todo-outdated-badge{font-size:0.72rem;color:var(--yellow);font-weight:500;}
+
+/* Flag button */
+.todo-flag-btn{background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;opacity:0.45;transition:opacity 0.15s;flex-shrink:0;}
+.todo-flag-btn:hover{opacity:1;}
+.todo-flag-btn.flagged{opacity:1;}
+
+/* Flagged TODO item */
+.todo-item.todo-flagged{border-left:3px solid var(--orange, #f97316);}
+
+/* Stat colors for flagged/outdated */
+.stat-value.orange{color:var(--orange, #f97316);}
+.stat-value.amber{color:var(--yellow);}
 
 /* Green stat color */
 .stat-value.green{color:var(--green);}
