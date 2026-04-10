@@ -2220,10 +2220,13 @@ function choreDueStatus(chore) {
   if (!chore.next_due) return 'no-date';
   const now = new Date();
   const due = new Date(chore.next_due);
-  const diffMs = due - now;
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  // Compare calendar dates, not timestamps
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const diffDays = Math.round((dueDay - todayStart) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return 'overdue';
-  if (diffDays <= 1) return 'due-today';
+  if (diffDays === 0) return 'due-today';
+  if (diffDays === 1) return 'due-tomorrow';
   if (diffDays <= 7) return 'due-soon';
   return 'on-track';
 }
@@ -2232,13 +2235,15 @@ function formatChoreDue(chore) {
   if (!chore.next_due) return '<span class="chore-due no-date">⏳ Awaiting schedule</span>';
   const due = new Date(chore.next_due);
   const now = new Date();
-  const diffMs = due - now;
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const diffDays = Math.round((dueDay - todayStart) / (1000 * 60 * 60 * 24));
   const status = choreDueStatus(chore);
 
   const dateStr = due.toLocaleDateString([], { month: 'short', day: 'numeric' });
   if (status === 'overdue') return `<span class="chore-due overdue">⚠️ Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
   if (status === 'due-today') return `<span class="chore-due due-today">🔔 Due today</span>`;
+  if (status === 'due-tomorrow') return `<span class="chore-due due-today">📅 Tomorrow (${dateStr})</span>`;
   if (status === 'due-soon') return `<span class="chore-due due-soon">📅 ${dateStr} (in ${diffDays}d)</span>`;
   return `<span class="chore-due on-track">✅ ${dateStr} (in ${diffDays}d)</span>`;
 }
@@ -2246,7 +2251,7 @@ function formatChoreDue(chore) {
 function getFilteredChoresForCategory(category) {
   let filtered = allChores.filter(c => (c.category || 'General') === (category || 'General'));
   if (choreFilter === 'overdue') filtered = filtered.filter(c => choreDueStatus(c) === 'overdue');
-  else if (choreFilter === 'due-soon') filtered = filtered.filter(c => ['overdue', 'due-today', 'due-soon'].includes(choreDueStatus(c)));
+  else if (choreFilter === 'due-soon') filtered = filtered.filter(c => ['overdue', 'due-today', 'due-tomorrow', 'due-soon'].includes(choreDueStatus(c)));
 
   const sortBy = document.getElementById('choreSortBy')?.value || 'due';
   if (sortBy === 'due') {
@@ -2381,7 +2386,7 @@ function formatChoreRelative(d) {
 function updateChoreStats() {
   const total = allChores.length;
   const overdue = allChores.filter(c => choreDueStatus(c) === 'overdue').length;
-  const dueSoon = allChores.filter(c => ['due-today', 'due-soon'].includes(choreDueStatus(c))).length;
+  const dueSoon = allChores.filter(c => ['due-today', 'due-tomorrow', 'due-soon'].includes(choreDueStatus(c))).length;
   const onTrack = allChores.filter(c => choreDueStatus(c) === 'on-track').length;
 
   const el = id => document.getElementById(id);
