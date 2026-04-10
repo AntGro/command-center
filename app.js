@@ -1822,6 +1822,11 @@ async function editTodoInline(id) {
   if (!textEl || textEl.dataset.editing) return;
 
   textEl.dataset.editing = 'true';
+
+  // Create a wrapper for text + deadline editing
+  const wrapper = document.createElement('div');
+  wrapper.className = 'todo-edit-wrapper';
+
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = todo.text;
@@ -1831,16 +1836,56 @@ async function editTodoInline(id) {
   input.style.overflow = 'hidden';
   input.style.minHeight = '2.4em';
 
+  // Deadline date input
+  const deadlineRow = document.createElement('div');
+  deadlineRow.className = 'todo-edit-deadline-row';
+  const deadlineLabel = document.createElement('label');
+  deadlineLabel.textContent = '📅 Deadline:';
+  deadlineLabel.className = 'todo-edit-deadline-label';
+  const deadlineInput = document.createElement('input');
+  deadlineInput.type = 'datetime-local';
+  deadlineInput.className = 'todo-edit-deadline-input';
+  if (todo.due_date) {
+    // Format existing due_date for datetime-local input
+    const d = new Date(todo.due_date);
+    deadlineInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'todo-edit-deadline-clear';
+  clearBtn.textContent = '✕';
+  clearBtn.title = 'Clear deadline';
+  clearBtn.onclick = (e) => { e.stopPropagation(); deadlineInput.value = ''; };
+
+  deadlineRow.appendChild(deadlineLabel);
+  deadlineRow.appendChild(deadlineInput);
+  deadlineRow.appendChild(clearBtn);
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(deadlineRow);
+
   function autoSize() {
     input.style.height = 'auto';
     input.style.height = Math.max(input.scrollHeight, 40) + 'px';
   }
 
+  let finished = false;
   const finish = async (save) => {
-    if (save && input.value.trim() && input.value.trim() !== todo.text) {
-      const { error } = await sb.from('todos').update({ text: input.value.trim() }).eq('id', id);
-      if (error) showToast('Update failed', 'error');
-      else showToast('TODO updated', 'success');
+    if (finished) return;
+    finished = true;
+    if (save) {
+      const updates = {};
+      const newText = input.value.trim();
+      if (newText && newText !== todo.text) updates.text = newText;
+      // Update deadline
+      const newDeadline = deadlineInput.value ? new Date(deadlineInput.value).toISOString() : null;
+      const oldDeadline = todo.due_date || null;
+      if (newDeadline !== oldDeadline) updates.due_date = newDeadline;
+      if (Object.keys(updates).length > 0) {
+        const { error } = await sb.from('todos').update(updates).eq('id', id);
+        if (error) showToast('Update failed', 'error');
+        else showToast('TODO updated', 'success');
+      }
     }
     delete textEl.dataset.editing;
     await refreshTodos();
@@ -1850,9 +1895,18 @@ async function editTodoInline(id) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finish(true); }
     if (e.key === 'Escape') { e.preventDefault(); finish(false); }
   });
-  input.addEventListener('blur', () => finish(true));
+  deadlineInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  // Only finish on blur if focus leaves the entire wrapper
+  wrapper.addEventListener('focusout', (e) => {
+    setTimeout(() => {
+      if (!wrapper.contains(document.activeElement)) finish(true);
+    }, 150);
+  });
   input.addEventListener('input', autoSize);
-  textEl.replaceWith(input);
+  textEl.replaceWith(wrapper);
   // Use rAF to ensure layout is computed before reading scrollHeight
   requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }

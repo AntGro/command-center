@@ -610,3 +610,12 @@ input,select,button{font-family:inherit;}
 .snooze-options button:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
 .snooze-modal input[type="datetime-local"]{padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;font-family:inherit;}
 .snooze-modal input:focus{border-color:var(--accent);}
+
+/* ===== TODO INLINE EDIT DEADLINE ===== */
+.todo-edit-wrapper{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;}
+.todo-edit-deadline-row{display:flex;align-items:center;gap:6px;}
+.todo-edit-deadline-label{font-size:0.75rem;color:var(--muted);white-space:nowrap;margin:0 !important;}
+.todo-edit-deadline-input{flex:1;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:0.8rem;outline:none;font-family:inherit;}
+.todo-edit-deadline-input:focus{border-color:var(--accent);}
+.todo-edit-deadline-clear{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:0.72rem;padding:3px 7px;transition:all 0.15s;}
+.todo-edit-deadline-clear:hover{color:var(--red);border-color:var(--red);}
