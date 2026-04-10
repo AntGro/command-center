@@ -318,7 +318,7 @@ function buildProjectCards() {
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
         <textarea placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
-        <label class="draft-toggle" title="Save as draft (personal note, not picked up by Claw)"><input type="checkbox" id="draft-${p.id}" onchange="this.parentElement.classList.toggle('active',this.checked)">Draft</label>
+        <label class="draft-slider" title="Save as draft (personal note, not picked up by Claw)"><input type="checkbox" id="draft-${p.id}" onchange="this.parentElement.classList.toggle('active',this.checked)"><span class="draft-slider-track"><span class="draft-slider-thumb"></span></span><span class="draft-slider-label">Draft</span></label>
         <button onclick="addTask('${p.id}')">+</button>
       </div>
       <div class="char-counter" id="counter-${p.id}"></div>
