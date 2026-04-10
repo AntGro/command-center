@@ -128,8 +128,8 @@ input,select,button{font-family:inherit;}
 .task-row{display:flex;align-items:center;gap:9px;}
 .task-text{flex:1;font-size:0.88rem;line-height:1.35;cursor:default;}
 .task-text[ondblclick]{cursor:text;}
-.task-actions{display:none;gap:2px;}
-.task-actions.visible{display:inline-flex;}
+.task-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.task-actions.visible{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 .task-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .task-actions button:hover{background:var(--surface2);}
 .task-meta{margin-top:5px;padding-left:18px;display:flex;flex-direction:column;gap:3px;}
@@ -410,7 +410,7 @@ input,select,button{font-family:inherit;}
   .task-meta-item{font-size:0.72rem;padding:4px 8px;}
 
   /* Always show task actions on touch */
-  .task-actions{display:inline-flex !important;}
+  .task-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
   .task-actions button{font-size:0.78rem;padding:4px 6px;}
 
   /* Always show drag handles on touch */
