@@ -2399,12 +2399,15 @@ function renderChoreCategoryCard(category) {
 function renderChoreItem(chore) {
   const lastDone = getChoreLastDone(chore.id);
   const completionCount = getChoreCompletionCount(chore.id);
-  const status = choreDueStatus(chore);
-  const dueHtml = formatChoreDue(chore);
+  const isDraft = chore.is_draft;
+  const status = isDraft ? 'draft' : choreDueStatus(chore);
+  const dueHtml = isDraft ? '<span class="chore-due draft">📝 Draft</span>' : formatChoreDue(chore);
 
   const lastDoneStr = lastDone
     ? `Last: ${lastDone.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${formatChoreRelative(lastDone)})`
     : 'Never done';
+
+  const promoteBtn = isDraft ? `<button onclick="promoteChore('${chore.id}')" title="Promote to active chore" class="chore-promote-btn">▶ Activate</button>` : '';
 
   return `<div class="chore-item chore-status-${status}" data-chore-id="${chore.id}">
     <div class="chore-row">
@@ -2413,7 +2416,8 @@ function renderChoreItem(chore) {
         <span class="chore-frequency">${esc(chore.frequency_rule)}</span>
       </div>
       <div class="chore-actions">
-        <button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">✅</button>
+        ${promoteBtn}
+        ${!isDraft ? `<button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">✅</button>` : ''}
         <button onclick="openChoreHistory('${chore.id}')" title="History (${completionCount})" class="chore-history-btn">📋 ${completionCount}</button>
         <button onclick="openEditChoreModal('${chore.id}')" title="Edit">✏️</button>
         <button onclick="deleteChore('${chore.id}')" title="Delete">🗑️</button>
@@ -2421,7 +2425,7 @@ function renderChoreItem(chore) {
     </div>
     <div class="chore-meta">
       ${dueHtml}
-      <span class="chore-last-done">${lastDoneStr}</span>
+      ${!isDraft ? `<span class="chore-last-done">${lastDoneStr}</span>` : ''}
     </div>
   </div>`;
 }
@@ -2457,6 +2461,7 @@ function openAddChoreModal() {
   document.getElementById('newChoreName').value = '';
   document.getElementById('newChoreFrequency').value = '';
   document.getElementById('newChoreLastDone').value = '';
+  document.getElementById('newChoreDraft').checked = false;
   populateChoreCategorySelect('newChoreCategory');
   document.getElementById('addChoreModal').classList.add('visible');
   setTimeout(() => document.getElementById('newChoreName').focus(), 100);
@@ -2481,6 +2486,7 @@ async function addChoreFromInput(inputEl) {
   document.getElementById('newChoreName').value = name;
   document.getElementById('newChoreFrequency').value = '';
   document.getElementById('newChoreLastDone').value = '';
+  document.getElementById('newChoreDraft').checked = false;
   populateChoreCategorySelect('newChoreCategory');
   document.getElementById('newChoreCategory').value = category;
   document.getElementById('addChoreModal').classList.add('visible');
@@ -2493,11 +2499,12 @@ async function saveNewChore() {
   const freq = document.getElementById('newChoreFrequency').value.trim();
   const cat = document.getElementById('newChoreCategory').value || 'General';
   const lastDoneVal = document.getElementById('newChoreLastDone').value;
+  const isDraft = document.getElementById('newChoreDraft').checked;
 
   if (!name) { showToast('Enter a chore name', 'error'); return; }
   if (!freq) { showToast('Enter a frequency rule', 'error'); return; }
 
-  const { data, error } = await sb.from('chores').insert({ name, frequency_rule: freq, category: cat }).select().single();
+  const { data, error } = await sb.from('chores').insert({ name, frequency_rule: freq, category: cat, is_draft: isDraft }).select().single();
   if (error) { showToast('Failed to add chore: ' + error.message, 'error'); return; }
 
   // If lastDone was provided, create an initial completion
@@ -2555,6 +2562,13 @@ async function deleteChore(choreId) {
       await refreshChores();
     }
   );
+}
+
+async function promoteChore(choreId) {
+  const { error } = await sb.from('chores').update({ is_draft: false }).eq('id', choreId);
+  if (error) { showToast('Failed to promote chore', 'error'); return; }
+  showToast('Chore activated ✅', 'success');
+  await refreshChores();
 }
 
 // ===================================================================

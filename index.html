@@ -312,6 +312,10 @@
       <select id="newChoreCategory"></select>
       <label>Last Done (optional)</label>
       <input type="datetime-local" id="newChoreLastDone">
+      <label class="chore-draft-toggle">
+        <input type="checkbox" id="newChoreDraft">
+        <span>Save as draft (won't show due dates until promoted)</span>
+      </label>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeAddChoreModal()">Cancel</button>
         <button class="modal-save" onclick="saveNewChore()">Create</button>
