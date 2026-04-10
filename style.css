@@ -298,8 +298,8 @@ input,select,button{font-family:inherit;}
 .chore-name{font-size:0.88rem;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chore-frequency{font-size:0.75rem;color:var(--muted);font-style:italic;}
 
-.chore-actions{display:flex;gap:2px;opacity:0;transition:opacity 0.2s;}
-.chore-item:hover .chore-actions{opacity:1;}
+.chore-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.chore-item:hover .chore-actions{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 .chore-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .chore-actions button:hover{background:var(--surface2);}
 .chore-done-btn{font-size:0.92rem !important;}
@@ -318,7 +318,7 @@ input,select,button{font-family:inherit;}
 .chore-item.chore-status-draft{opacity:0.55;border-left:3px dashed var(--muted);}
 .chore-item.chore-status-draft .chore-name{font-style:italic;}
 .chore-due.draft{color:var(--muted);font-style:italic;}
-.chore-promote-btn{font-size:0.78rem;padding:4px 10px;background:var(--accent) !important;color:#fff !important;border:none;border-radius:4px;cursor:pointer;font-weight:600;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.15);letter-spacing:0.02em;flex-shrink:0;}
+.chore-promote-btn{font-size:0.78rem;padding:4px 10px;background:var(--accent) !important;color:#fff !important;border:none;border-radius:4px;cursor:pointer;font-weight:600;transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.15);letter-spacing:0.02em;flex-shrink:0;grid-column:1/-1;}
 .chore-promote-btn:hover{opacity:0.9;transform:scale(1.05);box-shadow:0 2px 6px rgba(0,0,0,0.2);}
 .chore-draft-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;color:var(--muted);margin-top:12px;user-select:none;}
 .chore-draft-toggle input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;margin:0;}
@@ -468,7 +468,7 @@ input,select,button{font-family:inherit;}
   .chore-sort{flex:1;}
   .chore-sort select{width:100%;padding:8px 10px;}
   .chore-category-grid{grid-template-columns:1fr;gap:10px;padding:10px 6px;}
-  .chore-actions{opacity:1 !important;}
+  .chore-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
   .chore-item{padding:10px 10px;}
   #choresStatsBar{gap:6px;padding:10px 8px;justify-content:space-between;}
   #choresStatsBar .stat-value{font-size:1.3rem;}
