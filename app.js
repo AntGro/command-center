@@ -2618,10 +2618,9 @@ function openChoreHistory(choreId) {
     const items = completions.map(comp => {
       const d = new Date(comp.completed_at);
       const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const noteStr = comp.note ? ` — <em>${esc(comp.note)}</em>` : '';
       return `<div class="chore-history-item">
-        <span class="chore-history-date">✅ ${dateStr} at ${timeStr}</span>
+        <span class="chore-history-date">✅ ${dateStr}</span>
         ${noteStr}
       </div>`;
     }).join('');
