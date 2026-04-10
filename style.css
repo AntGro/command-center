@@ -572,7 +572,7 @@ input,select,button{font-family:inherit;}
 /* Priority Badge */
 .todo-priority-badge{font-size:0.68rem;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;flex-shrink:0;}
 .priority-low{background:rgba(107,114,128,0.15);color:#9ca3af;}
-.priority-high{background:rgba(234,179,8,0.15);color:var(--yellow);}
+.priority-high{background:rgba(239,68,68,0.12);color:var(--red);}
 .priority-urgent{background:rgba(239,68,68,0.15);color:var(--red);}
 
 /* Due Date & Snooze Meta */
@@ -587,12 +587,12 @@ input,select,button{font-family:inherit;}
 .todo-outdated-badge{font-size:0.72rem;color:var(--yellow);font-weight:500;}
 
 /* Flag button */
-.todo-flag-btn{background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;opacity:0.45;transition:opacity 0.15s;flex-shrink:0;}
+.todo-flag-btn{background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;opacity:0.45;transition:opacity 0.15s, color 0.15s;flex-shrink:0;}
 .todo-flag-btn:hover{opacity:1;}
-.todo-flag-btn.flagged{opacity:1;}
+.todo-flag-btn.flagged{opacity:1;color:var(--red, #ef4444);filter:drop-shadow(0 0 2px rgba(239,68,68,0.3));}
 
 /* Flagged TODO item */
-.todo-item.todo-flagged{border-left:3px solid var(--orange, #f97316);}
+.todo-item.todo-flagged{border-left:3px solid var(--red, #ef4444);background:rgba(239,68,68,0.04);}
 
 /* Stat colors for flagged/outdated */
 .stat-value.orange{color:var(--orange, #f97316);}
