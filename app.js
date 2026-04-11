@@ -242,6 +242,25 @@ function toggleShowArchived() {
   localStorage.setItem(SHOW_ARCHIVED_KEY, String(!current));
   updateArchiveToggleBtn();
   renderArchivedProjects();
+  renderProjectNavButtons(visibleProjects);
+}
+
+function renderProjectNavButtons(projects) {
+  const container = document.getElementById('projectNavButtons');
+  if (!container) return;
+  container.innerHTML = projects.map(p =>
+    `<button class="category-nav-btn" style="--cat-color:${p.color};border-color:${p.color};color:${p.color}" onclick="navigateToProject('${p.id}')" title="Go to ${esc(p.name)}">${esc(p.name)}</button>`
+  ).join('');
+}
+
+function navigateToProject(projectId) {
+  const card = document.querySelector(`.project-card[data-project="${projectId}"]`);
+  if (!card) return;
+  const project = PROJECTS.find(p => p.id === projectId);
+  const color = project ? project.color : 'var(--accent)';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.style.boxShadow = `0 0 0 2px ${color}`;
+  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
 }
 
 function updateArchiveToggleBtn() {
