@@ -504,7 +504,7 @@ async function deleteAllArchivedTasks(projectId) {
 function truncateWithShowMore(text, maxLen, id, field) {
   if (!text || text.length <= maxLen) return renderMd(text || '');
   const truncated = renderMd(text.slice(0, maxLen)) + '…';
-  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderMd(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
+  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')" title="Show more">▼</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderMd(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')" title="Show less">▲</button></span>`;
 }
 
 function expandMeta(id, field) {

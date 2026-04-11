@@ -167,8 +167,8 @@ input,select,button{font-family:inherit;}
 .toast.info{border-color:var(--blue);color:var(--blue);}
 
 /* ===== SHOW MORE ===== */
-.show-more-btn{background:none;border:none;color:var(--accent);font-size:0.72rem;cursor:pointer;padding:2px 0;font-weight:500;}
-.show-more-btn:hover{text-decoration:underline;}
+.show-more-btn{background:none;border:none;color:var(--accent);font-size:0.65rem;cursor:pointer;padding:2px 4px;font-weight:500;line-height:1;vertical-align:middle;}
+.show-more-btn:hover{opacity:0.7;}
 
 /* ===== CHAR COUNTER ===== */
 .char-counter{font-size:0.68rem;color:var(--muted);text-align:right;margin-top:-6px;margin-bottom:4px;padding-right:4px;}
