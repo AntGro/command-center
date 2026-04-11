@@ -520,7 +520,7 @@ function renderTask(t, isArchived = false) {
   const isDraft = t.status === 'draft';
   let meta = '';
   if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
-  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
+  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${renderMd(t.hatch_response)}</div>`;
 
   let promoteBtn = '';
   let actionBtns = '';
