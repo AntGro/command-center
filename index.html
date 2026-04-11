@@ -39,16 +39,16 @@
   <header class="app-header">
     <h1>🪶 Command Center</h1>
     <div class="view-switcher">
-      <button class="view-tab active" id="tabProjects" onclick="switchView('projects')">📁 Projects</button>
-      <button class="view-tab" id="tabTodos" onclick="switchView('todos')">✅ TODOs</button>
-      <button class="view-tab" id="tabChores" onclick="switchView('chores')">🧹 Chores</button>
+      <button class="view-tab active" id="tabProjects" onclick="switchView('projects')"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg> Projects</button>
+      <button class="view-tab" id="tabTodos" onclick="switchView('todos')"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/></svg> TODOs</button>
+      <button class="view-tab" id="tabChores" onclick="switchView('chores')"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg> Chores</button>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="openAddProjectModal()" title="Add project">➕</button>
-      <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt">📝</button>
-      <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived">📦</button>
+      <button class="btn" onclick="openAddProjectModal()" title="Add project"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+      <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></button>
+      <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg></button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
-      <button class="btn" onclick="refreshAll()" title="Refresh">🔄</button>
+      <button class="btn" onclick="refreshAll()" title="Refresh"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
       <button class="btn btn-disconnect" onclick="disconnect()" title="Disconnect &amp; log out">🔌</button>
     </div>
   </header>
@@ -77,7 +77,7 @@
 
     <!-- Archived Projects Section -->
     <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
-      <div class="section-title">📦 Archived Projects</div>
+      <div class="section-title"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg> Archived Projects</div>
       <div id="archivedProjectsList"></div>
     </div>
   </div>
@@ -111,7 +111,7 @@
             <option value="created">Created</option>
           </select>
         </div>
-        <button class="btn todo-add-category-btn" onclick="openAddCategoryModal()" title="Add category">➕</button>
+        <button class="btn todo-add-category-btn" onclick="openAddCategoryModal()" title="Add category"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></button>
       </div>
     </div>
 
@@ -141,8 +141,8 @@
             <option value="last-done">Last done</option>
           </select>
         </div>
-        <button class="btn" onclick="openAddChoreModal()" title="Add chore">➕</button>
-        <button class="btn" onclick="openAddChoreCategoryModal()" title="Add category">📂</button>
+        <button class="btn" onclick="openAddChoreModal()" title="Add chore"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+        <button class="btn" onclick="openAddChoreCategoryModal()" title="Add category"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></button>
       </div>
     </div>
 
@@ -152,7 +152,7 @@
   <!-- Snooze Modal -->
   <div class="modal-overlay" id="snoozeModal">
     <div class="modal snooze-modal">
-      <h2>⏰ Snooze TODO</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Snooze TODO</h2>
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Pick when to be reminded about this item.</p>
       <div class="snooze-options">
         <button onclick="snoozeFor(1,'h')">1 hour</button>
@@ -175,8 +175,8 @@
   <!-- Footer Stats -->
   <div class="footer-stats" id="footerStats">
     <div class="db-stats">
-      <div class="db-stat">📊 Tasks: <span id="dbTaskCount">—</span></div>
-      <div class="db-stat">📁 Projects: <span id="dbProjectCount">—</span></div>
+      <div class="db-stat"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> Tasks: <span id="dbTaskCount">—</span></div>
+      <div class="db-stat"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg> Projects: <span id="dbProjectCount">—</span></div>
       <div class="db-stat">💾 DB: <span id="dbSizeMb">—</span> / 500 MB</div>
     </div>
     <div><a href="" id="supabaseDashLink" target="_blank">Supabase Dashboard ↗</a></div>
@@ -185,7 +185,7 @@
   <!-- Add Project Modal -->
   <div class="modal-overlay" id="addProjectModal">
     <div class="modal">
-      <h2>➕ Add Project</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Add Project</h2>
       <label>ID (slug, no spaces)</label>
       <input type="text" id="newProjectId" placeholder="my-project">
       <label>Name</label>
@@ -208,7 +208,7 @@
   <!-- Revision Feedback Modal -->
   <div class="modal-overlay" id="revisionModal">
     <div class="modal revision-modal">
-      <h2>🔄 Request Revision</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Request Revision</h2>
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Explain what needs to change — Claw will see this when picking up the revision.</p>
       <textarea id="revisionFeedback" placeholder="What needs to change... (Enter to submit, Shift+Enter for new line)"></textarea>
       <input type="hidden" id="revisionTaskId">
@@ -222,7 +222,7 @@
   <!-- Prompt Editor Modal (Global) -->
   <div class="modal-overlay" id="promptEditorModal">
     <div class="modal prompt-modal">
-      <h2>📝 Global Task-Pickup Prompt</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg> Global Task-Pickup Prompt</h2>
       <p class="prompt-hint">This prompt applies to all projects when Claw picks up tasks. Use it for general coding rules, style preferences, etc.</p>
       <textarea id="promptGlobalText" placeholder="e.g. Always create feature branches. Run tests before pushing. Prefer functional style..."></textarea>
       <div class="modal-actions">
@@ -235,7 +235,7 @@
   <!-- Prompt Editor Modal (Per-Project) -->
   <div class="modal-overlay" id="projectPromptModal">
     <div class="modal prompt-modal">
-      <h2 id="projectPromptTitle">📝 Project Prompt</h2>
+      <h2 id="projectPromptTitle"><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg> Project Prompt</h2>
       <p class="prompt-hint">This prompt applies only to tasks in this project. It supplements the global prompt.</p>
       <textarea id="promptProjectText" placeholder="Rules specific to this project..."></textarea>
       <input type="hidden" id="promptProjectId">
@@ -249,7 +249,7 @@
   <!-- Edit Project Modal -->
   <div class="modal-overlay" id="editProjectModal">
     <div class="modal">
-      <h2>✏️ Edit Project</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg> Edit Project</h2>
       <input type="hidden" id="editProjectId">
       <label>Name</label>
       <input type="text" id="editProjectName">
@@ -276,7 +276,7 @@
   <!-- Add Category Modal -->
   <div class="modal-overlay" id="addCategoryModal">
     <div class="modal">
-      <h2>📂 Add Category</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Add Category</h2>
       <label>Category Name</label>
       <input type="text" id="newCategoryName" placeholder="e.g. Work, Personal, Shopping..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewCategory();}">
       <div class="modal-actions">
@@ -303,7 +303,7 @@
   <!-- Add Chore Modal -->
   <div class="modal-overlay" id="addChoreModal">
     <div class="modal">
-      <h2>🧹 Add Chore</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg> Add Chore</h2>
       <label>Name</label>
       <input type="text" id="newChoreName" placeholder="e.g. Hoovering, Laundry..." maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}">
       <label>Frequency Rule (natural language)</label>
@@ -326,7 +326,7 @@
   <!-- Edit Chore Modal -->
   <div class="modal-overlay" id="editChoreModal">
     <div class="modal">
-      <h2>✏️ Edit Chore</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg> Edit Chore</h2>
       <input type="hidden" id="editChoreId">
       <label>Name</label>
       <input type="text" id="editChoreName" maxlength="200">
@@ -344,14 +344,14 @@
   <!-- Chore Done Modal (with optional note) -->
   <div class="modal-overlay" id="choreDoneModal">
     <div class="modal chore-done-modal">
-      <h2>✅ Mark Chore Done</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Mark Chore Done</h2>
       <p id="choreDoneName" style="font-size:0.88rem;margin-bottom:12px;"></p>
       <label>Note (optional)</label>
       <input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}">
       <input type="hidden" id="choreDoneId">
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeChoreDoneModal()">Cancel</button>
-        <button class="modal-save" onclick="submitChoreDone()">Done ✅</button>
+        <button class="modal-save" onclick="submitChoreDone()">Done <svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></button>
       </div>
     </div>
   </div>
@@ -359,7 +359,7 @@
   <!-- Chore History Modal -->
   <div class="modal-overlay" id="choreHistoryModal">
     <div class="modal chore-history-modal">
-      <h2>📋 Chore History</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Chore History</h2>
       <p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p>
       <div id="choreHistoryList"></div>
       <div class="modal-actions">
@@ -371,7 +371,7 @@
   <!-- Add Chore Category Modal -->
   <div class="modal-overlay" id="addChoreCategoryModal">
     <div class="modal">
-      <h2>📂 Add Chore Category</h2>
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Add Chore Category</h2>
       <label>Category Name</label>
       <input type="text" id="newChoreCategoryName" placeholder="e.g. Kitchen, Bathroom, Laundry..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChoreCategory();}">
       <div class="modal-actions">

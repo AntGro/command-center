@@ -635,3 +635,11 @@ input,select,button{font-family:inherit;}
 .todo-edit-deadline-input:focus{border-color:var(--accent);}
 .todo-edit-deadline-clear{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:0.72rem;padding:3px 7px;transition:all 0.15s;}
 .todo-edit-deadline-clear:hover{color:var(--red);border-color:var(--red);}
+/* Lucide inline SVG icons */
+.lucide-icon{display:inline-block;vertical-align:middle;flex-shrink:0;}
+button .lucide-icon,
+.btn .lucide-icon{vertical-align:middle;margin-right:0px;}
+h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1px;}
+.view-tab .lucide-icon{vertical-align:middle;margin-right:4px;position:relative;top:-1px;}
+.task-meta-label .lucide-icon,.todo-due .lucide-icon,.todo-snoozed .lucide-icon,.chore-due .lucide-icon,.chore-history-date .lucide-icon{vertical-align:middle;margin-right:3px;position:relative;top:-1px;}
+.db-stat .lucide-icon{vertical-align:middle;margin-right:3px;}

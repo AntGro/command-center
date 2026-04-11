@@ -11,6 +11,37 @@ const MAX_TEXT_LEN = 5000;
 const MAX_META_DISPLAY = 500;
 
 // ===================================================================
+// LUCIDE ICONS — inline SVG icon system
+// ===================================================================
+const LUCIDE_PATHS = {
+  'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  'brush': '<path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/>',
+  'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'file-text': '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  'refresh-cw': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  'folder-plus': '<path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  'folder-open': '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+  'package': '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/>',
+  'trash-2': '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  'pencil': '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
+  'clipboard-list': '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  'bar-chart-3': '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  'calendar': '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  'moon': '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
+  'bell': '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+  'eye': '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  'layout-grid': '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  'list-checks': '<path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/>',
+};
+
+function lucideIcon(name, size = 16) {
+  const paths = LUCIDE_PATHS[name];
+  if (!paths) return '';
+  return `<svg class="lucide-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+
+// ===================================================================
 // GATE LOGIC — simple URL + key, Chrome autofill handles persistence
 // ===================================================================
 function initGate() {
@@ -193,7 +224,7 @@ function updateArchiveToggleBtn() {
   const btn = document.getElementById('archiveToggleBtn');
   if (!btn) return;
   const active = isShowArchived();
-  btn.textContent = active ? '📂' : '📦';
+  btn.innerHTML = active ? lucideIcon('folder-open') : lucideIcon('package');
   btn.title = active ? 'Hide archived' : 'Show archived';
   btn.classList.toggle('btn-active', active);
 }
@@ -305,15 +336,15 @@ function buildProjectCards() {
         <div class="project-header-actions">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
           <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-          <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">📝</button>
-          <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">✏️</button>
-          <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">📦</button>
+          <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">${lucideIcon("file-text",16)}</button>
+          <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">${lucideIcon("pencil",16)}</button>
+          <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">${lucideIcon("package")}</button>
         </div>
       </div>
       <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">Loading...</p></div>
       <div class="archive-toggle" onclick="toggleArchivedTasks('${p.id}')" id="archive-toggle-${p.id}" style="display:none;">
         <span class="arrow" id="archive-arrow-${p.id}">▶</span> Archived tasks (<span id="archive-count-${p.id}">0</span>)
-        <button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllArchivedTasks('${p.id}')" title="Delete all archived tasks">🗑️ Delete all</button>
+        <button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllArchivedTasks('${p.id}')" title="Delete all archived tasks">${lucideIcon("trash-2",16)} Delete all</button>
       </div>
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
@@ -441,7 +472,7 @@ function collapseMeta(id, field) {
 function renderTask(t, isArchived = false) {
   const isDraft = t.status === 'draft';
   let meta = '';
-  if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">📋 Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
+  if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
   if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
 
   let promoteBtn = '';
@@ -450,14 +481,14 @@ function renderTask(t, isArchived = false) {
     promoteBtn = `<button class="promote-btn" onclick="updateTaskStatus('${t.id}','todo')" title="Promote to task">▶ Todo</button>`;
   }
   if (t.status === 'review') {
-    actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">✅</button>`;
-    actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">🔄</button>`;
+    actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">${lucideIcon("circle-check",16)}</button>`;
+    actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">${lucideIcon("refresh-cw",16)}</button>`;
   }
   if (t.status === 'approved' && isArchived) {
     actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
   }
-  actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">✏️</button>`;
-  actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>`;
+  actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>`;
+  actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>`;
 
   const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
   const draftClass = isDraft ? ' task-draft' : '';
@@ -1018,12 +1049,12 @@ function expandTask(id) {
   const project = PROJECTS.find(p => p.id === t.project);
   const content = document.getElementById('taskExpandContent');
   let meta = '';
-  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">📋 Plan:</strong><br>${renderMd(t.plan_note)}</div>`;
+  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">${lucideIcon("clipboard-list",16)} Plan:</strong><br>${renderMd(t.plan_note)}</div>`;
   if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">🪶 Claw:</strong><br>${renderMd(t.hatch_response)}</div>`;
 
   let actions = '';
   if (t.status === 'review') {
-    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">✅ Approve</button><button class="btn" onclick="closeTaskExpandModal();openRevisionModal('${t.id}');">🔄 Revision</button></div>`;
+    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">${lucideIcon("circle-check",16)} Approve</button><button class="btn" onclick="closeTaskExpandModal();openRevisionModal('${t.id}');">${lucideIcon("refresh-cw",16)} Revision</button></div>`;
   }
 
   content.innerHTML = `
@@ -1200,7 +1231,7 @@ async function saveGlobalPrompt() {
 async function openProjectPrompt(projectId) {
   await loadPrompts();
   const project = PROJECTS.find(p => p.id === projectId);
-  document.getElementById('projectPromptTitle').textContent = `📝 ${project ? project.name : projectId} Prompt`;
+  document.getElementById('projectPromptTitle').innerHTML = `${lucideIcon("file-text",20)} ${project ? project.name : projectId} Prompt`;
   document.getElementById('promptProjectId').value = projectId;
   document.getElementById('promptProjectText').value = promptsCache[projectId] || '';
   document.getElementById('projectPromptModal').classList.add('visible');
@@ -1589,7 +1620,7 @@ function renderCategoryCard(category) {
   const statsText = `${pending} pending` + (doneCount > 0 ? ` · ${doneCount} done` : '');
 
   const deleteBtn = !isGeneral
-    ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="Delete category">🗑️</button>`
+    ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="Delete category">${lucideIcon("trash-2",16)}</button>`
     : '';
 
   const activeEmptyMsg = displayActive.length === 0
@@ -1605,7 +1636,7 @@ function renderCategoryCard(category) {
   // Done toggle (collapsible, like archived tasks in projects)
   let doneToggle = '';
   if (doneCount > 0 && todoFilter !== 'done') {
-    const deleteAllBtn = `<button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllDoneTodos('${escapedCat}')" title="Delete all done">🗑️ Delete all</button>`;
+    const deleteAllBtn = `<button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllDoneTodos('${escapedCat}')" title="Delete all done">${lucideIcon("trash-2",16)} Delete all</button>`;
     doneToggle = `
       <div class="archive-toggle" onclick="toggleDoneTodos('${catId}')" id="done-toggle-${catId}">
         <span class="arrow" id="done-arrow-${catId}">▶</span> Done (${doneCount})
@@ -1679,15 +1710,15 @@ function renderTodoItem(t) {
     if (isOverdue) {
       dueDateStr = `<span class="todo-due overdue">⚠️ Overdue (${formatRelativeDate(d)})</span>`;
     } else if (diffH < 24) {
-      dueDateStr = `<span class="todo-due due-soon">🔔 Due ${formatRelativeDate(d)}</span>`;
+      dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell",16)} Due ${formatRelativeDate(d)}</span>`;
     } else {
-      dueDateStr = `<span class="todo-due">📅 ${formatRelativeDate(d)}</span>`;
+      dueDateStr = `<span class="todo-due">${lucideIcon("calendar",16)} ${formatRelativeDate(d)}</span>`;
     }
   }
 
   let snoozeInfo = '';
   if (isSnoozed) {
-    snoozeInfo = `<span class="todo-snoozed">💤 Snoozed until ${new Date(t.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+    snoozeInfo = `<span class="todo-snoozed">${lucideIcon("moon",16)} Snoozed until ${new Date(t.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
   }
 
   let outdatedInfo = '';
@@ -1718,9 +1749,9 @@ function renderTodoItem(t) {
       <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${t.text.length > 150 ? truncateWithShowMore(t.text, 150, t.id, 'todo') : renderMd(t.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
-        ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">💤</button>` : ''}
-        <button onclick="editTodoInline('${t.id}')" title="Edit">✏️</button>
-        <button onclick="deleteTodo('${t.id}')" title="Delete">🗑️</button>
+        ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">${lucideIcon("moon",16)}</button>` : ''}
+        <button onclick="editTodoInline('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>
+        <button onclick="deleteTodo('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>
       </div>
     </div>
     ${dueDateStr || snoozeInfo || outdatedInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}${outdatedInfo}</div>` : ''}
@@ -1840,7 +1871,7 @@ async function editTodoInline(id) {
   const deadlineRow = document.createElement('div');
   deadlineRow.className = 'todo-edit-deadline-row';
   const deadlineLabel = document.createElement('label');
-  deadlineLabel.textContent = '📅 Deadline:';
+  deadlineLabel.innerHTML = lucideIcon('calendar') + ' Deadline:';
   deadlineLabel.className = 'todo-edit-deadline-label';
   const deadlineInput = document.createElement('input');
   deadlineInput.type = 'datetime-local';
@@ -2296,10 +2327,10 @@ function formatChoreDue(chore) {
 
   const dateStr = due.toLocaleDateString([], { month: 'short', day: 'numeric' });
   if (status === 'overdue') return `<span class="chore-due overdue">⚠️ Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
-  if (status === 'due-today') return `<span class="chore-due due-today">🔔 Due today</span>`;
-  if (status === 'due-tomorrow') return `<span class="chore-due due-today">📅 Tomorrow (${dateStr})</span>`;
-  if (status === 'due-soon') return `<span class="chore-due due-soon">📅 ${dateStr} (in ${diffDays}d)</span>`;
-  return `<span class="chore-due on-track">✅ ${dateStr} (in ${diffDays}d)</span>`;
+  if (status === 'due-today') return `<span class="chore-due due-today">${lucideIcon("bell",16)} Due today</span>`;
+  if (status === 'due-tomorrow') return `<span class="chore-due due-today">${lucideIcon("calendar",16)} Tomorrow (${dateStr})</span>`;
+  if (status === 'due-soon') return `<span class="chore-due due-soon">${lucideIcon("calendar",16)} ${dateStr} (in ${diffDays}d)</span>`;
+  return `<span class="chore-due on-track">${lucideIcon("circle-check",16)} ${dateStr} (in ${diffDays}d)</span>`;
 }
 
 function getFilteredChoresForCategory(category) {
@@ -2364,7 +2395,7 @@ function renderChoreCategoryCard(category) {
   const statsText = `${totalInCat} chore${totalInCat !== 1 ? 's' : ''}` + (overdueCount > 0 ? ` · <span style="color:var(--red)">${overdueCount} overdue</span>` : '');
 
   const deleteBtn = !isGeneral
-    ? `<button class="todo-cat-delete-btn" onclick="deleteChoreCategory('${esc(catName).replace(/'/g, "\\'")}')" title="Delete category">🗑️</button>`
+    ? `<button class="todo-cat-delete-btn" onclick="deleteChoreCategory('${esc(catName).replace(/'/g, "\\'")}')" title="Delete category">${lucideIcon("trash-2",16)}</button>`
     : '';
 
   const escapedCat = esc(catName).replace(/'/g, "\\'");
@@ -2401,7 +2432,7 @@ function renderChoreItem(chore) {
   const completionCount = getChoreCompletionCount(chore.id);
   const isDraft = chore.is_draft;
   const status = isDraft ? 'draft' : choreDueStatus(chore);
-  const dueHtml = isDraft ? '<span class="chore-due draft">📝 Draft</span>' : formatChoreDue(chore);
+  const dueHtml = isDraft ? '<span class="chore-due draft">${lucideIcon("file-text",16)} Draft</span>' : formatChoreDue(chore);
 
   const lastDoneStr = lastDone
     ? `Last: ${lastDone.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${formatChoreRelative(lastDone)})`
@@ -2417,10 +2448,10 @@ function renderChoreItem(chore) {
       </div>
       <div class="chore-actions">
         ${promoteBtn}
-        ${!isDraft ? `<button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">✅</button>` : ''}
-        <button onclick="openChoreHistory('${chore.id}')" title="History (${completionCount})" class="chore-history-btn">📋 ${completionCount}</button>
-        <button onclick="openEditChoreModal('${chore.id}')" title="Edit">✏️</button>
-        <button onclick="deleteChore('${chore.id}')" title="Delete">🗑️</button>
+        ${!isDraft ? `<button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">${lucideIcon("circle-check",16)}</button>` : ''}
+        <button onclick="openChoreHistory('${chore.id}')" title="History (${completionCount})" class="chore-history-btn">${lucideIcon("clipboard-list",16)} ${completionCount}</button>
+        <button onclick="openEditChoreModal('${chore.id}')" title="Edit">${lucideIcon("pencil",16)}</button>
+        <button onclick="deleteChore('${chore.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>
       </div>
     </div>
     <div class="chore-meta">
@@ -2578,7 +2609,7 @@ function openChoreDoneModal(choreId) {
   const chore = allChores.find(c => c.id === choreId);
   if (!chore) return;
   document.getElementById('choreDoneId').value = choreId;
-  document.getElementById('choreDoneName').textContent = `🧹 ${chore.name}`;
+  document.getElementById('choreDoneName').innerHTML = `${lucideIcon("brush",16)} ${chore.name}`;
   document.getElementById('choreDoneNote').value = '';
   document.getElementById('choreDoneModal').classList.add('visible');
   setTimeout(() => document.getElementById('choreDoneNote').focus(), 100);
@@ -2610,7 +2641,7 @@ function openChoreHistory(choreId) {
   const chore = allChores.find(c => c.id === choreId);
   if (!chore) return;
   const completions = getChoreCompletions(choreId);
-  document.getElementById('choreHistoryName').textContent = `🧹 ${chore.name} — ${chore.frequency_rule}`;
+  document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${chore.name} — ${chore.frequency_rule}`;
 
   if (completions.length === 0) {
     document.getElementById('choreHistoryList').innerHTML = '<p class="empty-msg">No completions recorded yet</p>';
@@ -2620,7 +2651,7 @@ function openChoreHistory(choreId) {
       const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
       const noteStr = comp.note ? ` — <em>${esc(comp.note)}</em>` : '';
       return `<div class="chore-history-item">
-        <span class="chore-history-date">✅ ${dateStr}</span>
+        <span class="chore-history-date">${lucideIcon("circle-check",16)} ${dateStr}</span>
         ${noteStr}
       </div>`;
     }).join('');
