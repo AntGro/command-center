@@ -229,6 +229,13 @@ function renderAllTasks() {
     if (!container) return;
     const projectTasks = state.allTasks.filter(t => t.project === p.id);
     const activeTasks = projectTasks.filter(t => t.status !== 'approved');
+    // Sort: non-draft tasks first, then drafts, preserving sort_order within each group
+    activeTasks.sort((a, b) => {
+      const aDraft = a.status === 'draft' ? 1 : 0;
+      const bDraft = b.status === 'draft' ? 1 : 0;
+      if (aDraft !== bDraft) return aDraft - bDraft;
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    });
     const archivedTasks = projectTasks.filter(t => t.status === 'approved');
 
     // Active tasks
@@ -279,9 +286,12 @@ async function deleteAllArchivedTasks(projectId) {
 }
 
 function truncateWithShowMore(text, maxLen, id, field) {
-  if (!text || text.length <= maxLen) return renderMd(text || '');
-  const truncated = renderMd(text.slice(0, maxLen)) + '…';
-  return `<span id="meta-${id}-${field}-short">${truncated} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">show more</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderMd(text)} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">show less</button></span>`;
+  if (!text) return '';
+  const firstLine = text.split('\n')[0].slice(0, 120);
+  const renderedFirstLine = renderMd(firstLine + (text.length > firstLine.length ? '…' : ''));
+  const renderedFull = renderMd(text);
+  if (text.length <= 120 && !text.includes('\n')) return renderedFull;
+  return `<span id="meta-${id}-${field}-short">${renderedFirstLine} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">expand</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderedFull} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">collapse</button></span>`;
 }
 
 function expandMeta(id, field) {
