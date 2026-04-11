@@ -31,6 +31,7 @@ const LUCIDE_PATHS = {
   'moon': '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
   'bell': '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
   'eye': '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   'layout-grid': '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
   'list-checks': '<path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/>',
 };
@@ -42,7 +43,8 @@ const LUCIDE_COLORS = {
   'plus': '#8b5cf6',           // purple — add
   'trash-2': '#ef4444',        // red — delete
   'pencil': '#f59e0b',         // amber — edit
-  'moon': '#6366f1',           // indigo — snooze
+  'moon': '#6366f1',           // indigo — snooze/dark theme
+  'sun': '#f59e0b',            // amber — light theme
   'bell': '#f97316',           // orange — alert/due
   'calendar': '#0ea5e9',       // sky blue — dates
   'clipboard-list': '#8b5cf6', // purple — plan
@@ -862,13 +864,15 @@ async function deleteTask(id) {
 // ===================================================================
 function updateStats() {
   const tasks = allTasks;
-  const archivedIds = getArchivedProjectIds();
-  document.getElementById('statProjects').textContent = PROJECTS.filter(p => !archivedIds.includes(p.id)).length;
-  document.getElementById('statTasks').textContent = tasks.filter(t => t.status !== 'approved' && t.status !== 'draft').length;
-  document.getElementById('statReview').textContent = tasks.filter(t => t.status === 'review').length;
-  const draftCount = tasks.filter(t => t.status === 'draft').length;
-  const draftEl = document.getElementById('statDrafts');
-  if (draftEl) draftEl.textContent = draftCount;
+  const counts = { todo: 0, 'in-progress': 0, review: 0, approved: 0, revision: 0, draft: 0 };
+  tasks.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
+  const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n > 0 ? `(${n})` : ''; };
+  setCount('legendTodo', counts.todo);
+  setCount('legendInProgress', counts['in-progress']);
+  setCount('legendReview', counts.review);
+  setCount('legendApproved', counts.approved);
+  setCount('legendRevision', counts.revision);
+  setCount('legendDraft', counts.draft);
 }
 
 // ===================================================================
@@ -1328,12 +1332,11 @@ function updateTaskListMaxHeight() {
   const app = document.getElementById('app');
   if (!app || !app.classList.contains('active')) return;
   const header = document.querySelector('.app-header');
-  const statsBar = document.querySelector('.stats-bar');
   const legend = document.querySelector('.legend');
   const footer = document.querySelector('.footer-stats');
   
-  // Calculate occupied height (header + stats + legend + footer + padding)
-  const occupiedHeight = (header?.offsetHeight || 0) + (statsBar?.offsetHeight || 0) + 
+  // Calculate occupied height (header + legend + footer + padding)
+  const occupiedHeight = (header?.offsetHeight || 0) + 
     (legend?.offsetHeight || 0) + (footer?.offsetHeight || 0) + 80; // 80px for padding/margins
   
   const availableHeight = window.innerHeight - occupiedHeight;
@@ -1363,7 +1366,7 @@ function getSystemTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+  if (btn) btn.innerHTML = theme === 'light' ? lucideIcon('sun', 16) : lucideIcon('moon', 16);
 }
 
 function toggleTheme() {

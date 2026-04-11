@@ -47,7 +47,7 @@
       <button class="btn" onclick="openAddProjectModal()" title="Add project"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
       <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></button>
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg></button>
-      <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme">🌙</button>
+      <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme"></button>
       <button class="btn" onclick="refreshAll()" title="Refresh"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
       <button class="btn btn-disconnect" onclick="disconnect()" title="Disconnect &amp; log out">🔌</button>
     </div>
@@ -55,20 +55,13 @@
 
   <!-- ===== PROJECTS VIEW ===== -->
   <div id="projectsView">
-  <div class="stats-bar" id="statsBar">
-    <div class="stat"><span class="stat-value purple" id="statProjects">7</span><span class="stat-label">Projects</span></div>
-    <div class="stat"><span class="stat-value blue" id="statTasks">0</span><span class="stat-label">Tasks</span></div>
-    <div class="stat"><span class="stat-value yellow" id="statReview">0</span><span class="stat-label">Needs Review</span></div>
-    <div class="stat"><span class="stat-value" id="statDrafts" style="color:var(--muted);">0</span><span class="stat-label">Drafts</span></div>
-  </div>
-
   <div class="legend">
-    <div class="legend-item"><span class="status-dot todo"></span>Todo</div>
-    <div class="legend-item"><span class="status-dot in-progress"></span>In Progress</div>
-    <div class="legend-item"><span class="status-dot review"></span>Review</div>
-    <div class="legend-item"><span class="status-dot approved"></span>Approved</div>
-    <div class="legend-item"><span class="status-dot revision"></span>Revision</div>
-    <div class="legend-item"><span class="status-dot draft"></span>Draft</div>
+    <div class="legend-item"><span class="status-dot todo"></span>Todo <span class="legend-count" id="legendTodo"></span></div>
+    <div class="legend-item"><span class="status-dot in-progress"></span>In Progress <span class="legend-count" id="legendInProgress"></span></div>
+    <div class="legend-item"><span class="status-dot review"></span>Review <span class="legend-count" id="legendReview"></span></div>
+    <div class="legend-item"><span class="status-dot approved"></span>Approved <span class="legend-count" id="legendApproved"></span></div>
+    <div class="legend-item"><span class="status-dot revision"></span>Revision <span class="legend-count" id="legendRevision"></span></div>
+    <div class="legend-item"><span class="status-dot draft"></span>Draft <span class="legend-count" id="legendDraft"></span></div>
   </div>
 
   <div class="main-content">
