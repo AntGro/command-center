@@ -35,10 +35,34 @@ const LUCIDE_PATHS = {
   'list-checks': '<path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/>',
 };
 
-function lucideIcon(name, size = 16) {
+// Icon color map — semantic colors for each icon context
+const LUCIDE_COLORS = {
+  'circle-check': '#22c55e',   // green — approve/done
+  'refresh-cw': '#3b82f6',     // blue — refresh/revision
+  'plus': '#8b5cf6',           // purple — add
+  'trash-2': '#ef4444',        // red — delete
+  'pencil': '#f59e0b',         // amber — edit
+  'moon': '#6366f1',           // indigo — snooze
+  'bell': '#f97316',           // orange — alert/due
+  'calendar': '#0ea5e9',       // sky blue — dates
+  'clipboard-list': '#8b5cf6', // purple — plan
+  'file-text': '#6366f1',      // indigo — prompts/docs
+  'folder-plus': '#8b5cf6',    // purple — add project
+  'folder-open': '#f59e0b',    // amber — open folder
+  'package': '#71717a',        // gray — archive
+  'brush': '#ec4899',          // pink — chores
+  'layout-grid': '#6366f1',    // indigo — projects tab
+  'list-checks': '#22c55e',    // green — todos tab
+  'bar-chart-3': '#3b82f6',    // blue — stats
+  'eye': '#22c55e',            // green — watch
+  'clock': '#0ea5e9',          // sky blue — time
+};
+
+function lucideIcon(name, size = 16, color) {
   const paths = LUCIDE_PATHS[name];
   if (!paths) return '';
-  return `<svg class="lucide-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  const c = color || LUCIDE_COLORS[name] || 'currentColor';
+  return `<svg class="lucide-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 }
 
 // ===================================================================
