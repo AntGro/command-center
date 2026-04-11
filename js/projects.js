@@ -600,6 +600,50 @@ async function deleteTask(id) {
 // ADD PROJECT MODAL
 // ===================================================================
 // ===================================================================
+function initProjectModals() {
+  const app = document.getElementById('app');
+  const _li = (name, size=20) => {
+    // Use lucideIcon if available, else placeholder
+    return typeof lucideIcon === 'function' ? lucideIcon(name, size) : '';
+  };
+
+  // Add Project Modal
+  const m1 = document.createElement('div');
+  m1.className = 'modal-overlay'; m1.id = 'addProjectModal';
+  m1.innerHTML = `<div class="modal"><h2>${lucideIcon("plus",20)} Add Project</h2><label>ID (slug, no spaces)</label><input type="text" id="newProjectId" placeholder="my-project"><label>Name</label><input type="text" id="newProjectName" placeholder="My Project"><label>Color</label><input type="color" id="newProjectColor" value="#646cff" style="height:36px;padding:2px;"><label>Tech Stack</label><input type="text" id="newProjectTech" placeholder="e.g. React · Node · Vercel"><label>GitHub URL (optional)</label><input type="url" id="newProjectGithub" placeholder="https://github.com/..."><label>Live URL (optional)</label><input type="url" id="newProjectLive" placeholder="https://..."><div class="modal-actions"><button class="modal-cancel" onclick="closeAddProjectModal()">Cancel</button><button class="modal-save" onclick="saveNewProject()">Create</button></div></div>`;
+  app.appendChild(m1);
+
+  // Edit Project Modal
+  const m2 = document.createElement('div');
+  m2.className = 'modal-overlay'; m2.id = 'editProjectModal';
+  m2.innerHTML = `<div class="modal"><h2>${lucideIcon("pencil",20)} Edit Project</h2><input type="hidden" id="editProjectId"><label>Name</label><input type="text" id="editProjectName"><label>Color</label><input type="color" id="editProjectColor" style="height:36px;padding:2px;"><label>Tech Stack</label><input type="text" id="editProjectTech"><label>GitHub URL</label><input type="url" id="editProjectGithub" placeholder="https://github.com/..."><label>Live URL</label><input type="url" id="editProjectLive" placeholder="https://..."><div class="modal-actions"><button class="modal-cancel" onclick="closeEditProjectModal()">Cancel</button><button class="modal-save" onclick="saveEditProject()">Save</button></div></div>`;
+  app.appendChild(m2);
+
+  // Expanded Task Modal
+  const m3 = document.createElement('div');
+  m3.className = 'modal-overlay'; m3.id = 'taskExpandModal';
+  m3.innerHTML = `<div class="modal task-modal" id="taskExpandContent"></div>`;
+  app.appendChild(m3);
+
+  // Revision Feedback Modal
+  const m4 = document.createElement('div');
+  m4.className = 'modal-overlay'; m4.id = 'revisionModal';
+  m4.innerHTML = `<div class="modal revision-modal"><h2>${lucideIcon("refresh-cw",20)} Request Revision</h2><p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Explain what needs to change — Claw will see this when picking up the revision.</p><textarea id="revisionFeedback" placeholder="What needs to change... (Enter to submit, Shift+Enter for new line)"></textarea><input type="hidden" id="revisionTaskId"><div class="modal-actions"><button class="modal-cancel" onclick="closeRevisionModal()">Cancel</button><button class="modal-save" onclick="submitRevision()">Submit Revision</button></div></div>`;
+  app.appendChild(m4);
+
+  // Global Prompt Editor Modal
+  const m5 = document.createElement('div');
+  m5.className = 'modal-overlay'; m5.id = 'promptEditorModal';
+  m5.innerHTML = `<div class="modal prompt-modal"><h2>${lucideIcon("file-text",20)} Global Task-Pickup Prompt</h2><p class="prompt-hint">This prompt applies to all projects when Claw picks up tasks. Use it for general coding rules, style preferences, etc.</p><textarea id="promptGlobalText" placeholder="e.g. Always create feature branches. Run tests before pushing. Prefer functional style..."></textarea><div class="modal-actions"><button class="modal-cancel" onclick="closePromptEditor()">Cancel</button><button class="modal-save" onclick="saveGlobalPrompt()">Save</button></div></div>`;
+  app.appendChild(m5);
+
+  // Per-Project Prompt Editor Modal
+  const m6 = document.createElement('div');
+  m6.className = 'modal-overlay'; m6.id = 'projectPromptModal';
+  m6.innerHTML = `<div class="modal prompt-modal"><h2 id="projectPromptTitle">${lucideIcon("file-text",20)} Project Prompt</h2><p class="prompt-hint">This prompt applies only to tasks in this project. It supplements the global prompt.</p><textarea id="promptProjectText" placeholder="Rules specific to this project..."></textarea><input type="hidden" id="promptProjectId"><div class="modal-actions"><button class="modal-cancel" onclick="closeProjectPrompt()">Cancel</button><button class="modal-save" onclick="saveProjectPrompt()">Save</button></div></div>`;
+  app.appendChild(m6);
+}
+
 function openAddProjectModal() {
   document.getElementById('addProjectModal').classList.add('visible');
   document.getElementById('newProjectId').value = '';
@@ -614,11 +658,6 @@ function openAddProjectModal() {
 function closeAddProjectModal() {
   document.getElementById('addProjectModal').classList.remove('visible');
 }
-
-// Close modal on overlay click
-document.addEventListener('click', e => {
-  if (e.target.id === 'addProjectModal') closeAddProjectModal();
-});
 
 async function saveNewProject() {
   const id = document.getElementById('newProjectId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -956,7 +995,7 @@ document.addEventListener('input', e => {
 });
 export {
   loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
-  renderArchivedProjects, refreshAll, getArchivedProjectIds, loadPrompts,
+  renderArchivedProjects, refreshAll, getArchivedProjectIds, loadPrompts, initProjectModals,
 };
 
 window.addTask = addTask;

@@ -1,10 +1,10 @@
 import { lucideIcon } from './icons.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
-import { updateStats, showToast, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
+import { updateStats, showToast, updateFooterStats, updateTaskListMaxHeight, initUtilModals } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
-         renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
-import { refreshTodos, renderTodos } from './todos.js';
-import { refreshChores, renderChores } from './chores.js';
+         renderArchivedProjects, refreshAll, loadPrompts, initProjectModals } from './projects.js';
+import { refreshTodos, renderTodos, initTodoModals } from './todos.js';
+import { refreshChores, renderChores, initChoreModals } from './chores.js';
 
 // ===================================================================
 // GATE LOGIC
@@ -118,6 +118,12 @@ async function connect(url, key) {
 
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').classList.add('active');
+
+  // Initialize dynamically-created modals
+  initUtilModals();
+  initProjectModals();
+  initTodoModals();
+  initChoreModals();
 
   // Set Supabase dashboard link
   const projectRef = url.replace('https://', '').replace('.supabase.co', '');

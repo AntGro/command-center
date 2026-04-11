@@ -61,6 +61,26 @@ function updateStats() {
 // ===================================================================
 let _deleteConfirmCallback = null;
 
+
+function initUtilModals() {
+  const app = document.getElementById('app');
+  const deleteModal = document.createElement('div');
+  deleteModal.className = 'modal-overlay';
+  deleteModal.id = 'deleteConfirmModal';
+  deleteModal.innerHTML = `
+    <div class="modal delete-confirm-modal">
+      <span class="delete-confirm-icon" id="deleteConfirmIcon">⚠️</span>
+      <h2 id="deleteConfirmTitle">Confirm Delete</h2>
+      <p id="deleteConfirmMessage" class="delete-confirm-msg"></p>
+      <div id="deleteConfirmDetail" class="delete-confirm-detail" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeDeleteConfirm()">Cancel</button>
+        <button class="modal-save delete-confirm-btn" id="deleteConfirmBtn" onclick="executeDeleteConfirm()">Delete</button>
+      </div>
+    </div>`;
+  app.appendChild(deleteModal);
+}
+
 function showDeleteConfirm(title, message, onConfirm, detail) {
   document.getElementById('deleteConfirmTitle').textContent = title;
   document.getElementById('deleteConfirmMessage').textContent = message;
@@ -90,17 +110,16 @@ async function executeDeleteConfirm() {
 
 // Close modals on overlay click / Escape
 document.addEventListener('click', e => {
-  if (e.target.id === 'editProjectModal') closeEditProjectModal();
-  if (e.target.id === 'taskExpandModal') closeTaskExpandModal();
-  if (e.target.id === 'revisionModal') closeRevisionModal();
-  if (e.target.id === 'promptEditorModal') closePromptEditor();
-  if (e.target.id === 'projectPromptModal') closeProjectPrompt();
-  if (e.target.id === 'snoozeModal') closeSnoozeModal();
-  if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
-  if (e.target.id === 'addCategoryModal') closeAddCategoryModal();
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('visible');
+    _deleteConfirmCallback = null;
+  }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeAddCategoryModal(); }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
+    _deleteConfirmCallback = null;
+  }
 });
 
 
@@ -174,7 +193,7 @@ function formatRelativeDate(d) {
 export {
   esc, linkify, renderMd, showToast, formatRelativeDate,
   updateStats, showDeleteConfirm, closeDeleteConfirm, executeDeleteConfirm,
-  updateFooterStats, updateTaskListMaxHeight,
+  updateFooterStats, updateTaskListMaxHeight, initUtilModals,
 };
 
 window.closeDeleteConfirm = closeDeleteConfirm;
