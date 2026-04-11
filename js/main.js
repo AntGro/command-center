@@ -3,8 +3,8 @@ import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } fro
 import { updateStats, showToast, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
-import { refreshTodos } from './todos.js';
-import { refreshChores } from './chores.js';
+import { refreshTodos, renderTodos } from './todos.js';
+import { refreshChores, renderChores } from './chores.js';
 
 // ===================================================================
 // GATE LOGIC
