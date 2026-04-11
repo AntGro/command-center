@@ -248,6 +248,40 @@ function updateChoreStats() {
 // ===================================================================
 // CHORE CRUD
 // ===================================================================
+function initChoreModals() {
+  const app = document.getElementById('app');
+
+  // Add Chore Modal
+  const m1 = document.createElement('div');
+  m1.className = 'modal-overlay'; m1.id = 'addChoreModal';
+  m1.innerHTML = `<div class="modal"><h2>` + lucideIcon("brush",20) + ` Add Chore</h2><label>Name</label><input type="text" id="newChoreName" placeholder="e.g. Hoovering, Laundry..." maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}"><label>Frequency Rule (natural language)</label><input type="text" id="newChoreFrequency" placeholder='e.g. "every other weekend", "second Saturday of the month"' maxlength="300"><label>Category</label><select id="newChoreCategory"></select><label>Last Done (optional)</label><input type="date" id="newChoreLastDone"><label class="chore-draft-toggle"><input type="checkbox" id="newChoreDraft"><span>Save as draft (won\'t show due dates until promoted)</span></label><div class="modal-actions"><button class="modal-cancel" onclick="closeAddChoreModal()">Cancel</button><button class="modal-save" onclick="saveNewChore()">Create</button></div></div>`;
+  app.appendChild(m1);
+
+  // Edit Chore Modal
+  const m2 = document.createElement('div');
+  m2.className = 'modal-overlay'; m2.id = 'editChoreModal';
+  m2.innerHTML = `<div class="modal"><h2>` + lucideIcon("pencil",20) + ` Edit Chore</h2><input type="hidden" id="editChoreId"><label>Name</label><input type="text" id="editChoreName" maxlength="200"><label>Frequency Rule</label><input type="text" id="editChoreFrequency" maxlength="300"><label>Category</label><select id="editChoreCategory"></select><div class="modal-actions"><button class="modal-cancel" onclick="closeEditChoreModal()">Cancel</button><button class="modal-save" onclick="saveEditChore()">Save</button></div></div>`;
+  app.appendChild(m2);
+
+  // Chore Done Modal
+  const m3 = document.createElement('div');
+  m3.className = 'modal-overlay'; m3.id = 'choreDoneModal';
+  m3.innerHTML = `<div class="modal chore-done-modal"><h2>` + lucideIcon("circle-check",20) + ` Mark Chore Done</h2><p id="choreDoneName" style="font-size:0.88rem;margin-bottom:12px;"></p><label>Note (optional)</label><input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}"><input type="hidden" id="choreDoneId"><div class="modal-actions"><button class="modal-cancel" onclick="closeChoreDoneModal()">Cancel</button><button class="modal-save" onclick="submitChoreDone()">Done ` + lucideIcon("circle-check",16) + `</button></div></div>`;
+  app.appendChild(m3);
+
+  // Chore History Modal
+  const m4 = document.createElement('div');
+  m4.className = 'modal-overlay'; m4.id = 'choreHistoryModal';
+  m4.innerHTML = `<div class="modal chore-history-modal"><h2>` + lucideIcon("clipboard-list",20) + ` Chore History</h2><p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p><div id="choreHistoryList"></div><div class="modal-actions"><button class="modal-cancel" onclick="closeChoreHistoryModal()">Close</button></div></div>`;
+  app.appendChild(m4);
+
+  // Add Chore Category Modal
+  const m5 = document.createElement('div');
+  m5.className = 'modal-overlay'; m5.id = 'addChoreCategoryModal';
+  m5.innerHTML = `<div class="modal"><h2>` + lucideIcon("folder-plus",20) + ` Add Chore Category</h2><label>Category Name</label><input type="text" id="newChoreCategoryName" placeholder="e.g. Kitchen, Bathroom, Laundry..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChoreCategory();}"><div class="modal-actions"><button class="modal-cancel" onclick="closeAddChoreCategoryModal()">Cancel</button><button class="modal-save" onclick="saveNewChoreCategory()">Create</button></div></div>`;
+  app.appendChild(m5);
+}
+
 function openAddChoreModal() {
   document.getElementById('newChoreName').value = '';
   document.getElementById('newChoreFrequency').value = '';
@@ -473,7 +507,7 @@ async function deleteChoreCategory(name) {
 }
 
 
-export { refreshChores };
+export { refreshChores, renderChores, initChoreModals };
 
 window.setChoreFilter = setChoreFilter;
 window.openAddChoreModal = openAddChoreModal;

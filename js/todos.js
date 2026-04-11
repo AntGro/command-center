@@ -571,6 +571,22 @@ function updateTodoStats() {
 // ===================================================================
 // CATEGORY MANAGEMENT
 // ===================================================================
+function initTodoModals() {
+  const app = document.getElementById('app');
+
+  // Snooze Modal
+  const m1 = document.createElement('div');
+  m1.className = 'modal-overlay'; m1.id = 'snoozeModal';
+  m1.innerHTML = `<div class="modal snooze-modal"><h2>${lucideIcon("clock",20)} Snooze TODO</h2><p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Pick when to be reminded about this item.</p><div class="snooze-options"><button onclick="snoozeFor(1,'h')">1 hour</button><button onclick="snoozeFor(3,'h')">3 hours</button><button onclick="snoozeFor(1,'d')">Tomorrow</button><button onclick="snoozeFor(3,'d')">3 days</button><button onclick="snoozeFor(7,'d')">1 week</button><button onclick="snoozeFor(1,'M')">1 month</button></div><label style="margin-top:12px;">Or pick a date & time:</label><input type="datetime-local" id="snoozeCustomDate" style="width:100%;margin-top:4px;"><input type="hidden" id="snoozeTaskId"><div class="modal-actions"><button class="modal-cancel" onclick="closeSnoozeModal()">Cancel</button><button class="modal-save" onclick="submitSnooze()">Snooze</button></div></div>`;
+  app.appendChild(m1);
+
+  // Add Category Modal
+  const m2 = document.createElement('div');
+  m2.className = 'modal-overlay'; m2.id = 'addCategoryModal';
+  m2.innerHTML = `<div class="modal"><h2>${lucideIcon("folder-plus",20)} Add Category</h2><label>Category Name</label><input type="text" id="newCategoryName" placeholder="e.g. Work, Personal, Shopping..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewCategory();}"><div class="modal-actions"><button class="modal-cancel" onclick="closeAddCategoryModal()">Cancel</button><button class="modal-save" onclick="saveNewCategory()">Create</button></div></div>`;
+  app.appendChild(m2);
+}
+
 function openAddCategoryModal() {
   document.getElementById('newCategoryName').value = '';
   document.getElementById('addCategoryModal').classList.add('visible');
@@ -890,7 +906,7 @@ function initTodoHoverDelay(container) {
   });
 }
 
-export { refreshTodos, getCategoryColor, getCategoryColors };
+export { refreshTodos, renderTodos, getCategoryColor, getCategoryColors, initTodoModals };
 
 window.setTodoFilter = setTodoFilter;
 window.addTodoToCategory = addTodoToCategory;
