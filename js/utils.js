@@ -45,7 +45,7 @@ function updateStats() {
   const tasks = state.allTasks;
   const counts = { todo: 0, 'in-progress': 0, review: 0, approved: 0, revision: 0, draft: 0 };
   tasks.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
-  const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n > 0 ? `(${n})` : ''; };
+  const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = `(${n || 0})`; };
   setCount('legendTodo', counts.todo);
   setCount('legendInProgress', counts['in-progress']);
   setCount('legendReview', counts.review);

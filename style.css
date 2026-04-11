@@ -81,7 +81,7 @@ input,select,button{font-family:inherit;}
 /* ===== LEGEND ===== */
 .legend{display:flex;gap:18px;padding:10px 8px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--muted);}
-.legend-count{font-weight:600;color:var(--text);opacity:0.7;}
+.legend-count{}
 
 /* ===== MAIN CONTENT ===== */
 .main-content{padding:1rem;margin:0 auto;flex:1;}
