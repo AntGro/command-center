@@ -10,6 +10,87 @@ import { getCategoryColor } from './todos.js';
 // (state managed in supabase.js)
 let choreFilter = 'all';
 
+// ===================================================================
+// NEXT_DUE COMPUTATION (client-side, mirrors heartbeat logic)
+// ===================================================================
+function computeNextDue(frequencyRule, lastDoneDate, createdAt) {
+  if (!frequencyRule) return null;
+  const from = lastDoneDate ? new Date(lastDoneDate) : (createdAt ? new Date(createdAt) : new Date());
+  const rule = frequencyRule.toLowerCase().trim();
+
+  // Helper: next Saturday on or after a given date
+  function nextSaturday(d) {
+    const r = new Date(d);
+    const dow = r.getDay(); // 0=Sun..6=Sat
+    const add = dow === 6 ? 0 : (6 - dow);
+    r.setDate(r.getDate() + add);
+    return r;
+  }
+
+  // Helper: add months
+  function addMonths(d, n) {
+    const r = new Date(d);
+    r.setMonth(r.getMonth() + n);
+    return r;
+  }
+
+  // Helper: strip time, keep date only (UTC midnight)
+  function dateOnly(d) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  let next = null;
+
+  // --- French rules ---
+  if (/tous les week-?ends?/i.test(rule) || /chaque week-?end/i.test(rule) || rule === 'weekly' || rule === 'every week' || rule === 'every weekend') {
+    // +7 days from last done, snap to Saturday
+    const target = new Date(from);
+    target.setDate(target.getDate() + 7);
+    next = nextSaturday(target);
+  } else if (/un week-?end sur deux/i.test(rule) || /every other week-?end/i.test(rule) || /biweekly/i.test(rule) || /every 2 weeks/i.test(rule) || /every other week$/i.test(rule)) {
+    // +14 days from last done, snap to Saturday
+    const target = new Date(from);
+    target.setDate(target.getDate() + 14);
+    next = nextSaturday(target);
+  } else if (/tous les (\d+) mois/i.test(rule)) {
+    const m = parseInt(rule.match(/tous les (\d+) mois/i)[1], 10);
+    next = addMonths(from, m);
+  } else if (/tous les mois/i.test(rule) || rule === 'monthly' || rule === 'every month') {
+    next = addMonths(from, 1);
+  } else if (/every (\d+) months?/i.test(rule)) {
+    const m = parseInt(rule.match(/every (\d+) months?/i)[1], 10);
+    next = addMonths(from, m);
+  } else if (rule === 'daily' || rule === 'every day' || /tous les jours/i.test(rule)) {
+    next = new Date(from);
+    next.setDate(next.getDate() + 1);
+  } else if (rule === 'quarterly' || /trimestriel/i.test(rule)) {
+    next = addMonths(from, 3);
+  } else if (/every (\d+) weeks?/i.test(rule)) {
+    const w = parseInt(rule.match(/every (\d+) weeks?/i)[1], 10);
+    next = new Date(from);
+    next.setDate(next.getDate() + w * 7);
+  } else if (/toutes les (\d+) semaines?/i.test(rule)) {
+    const w = parseInt(rule.match(/toutes les (\d+) semaines?/i)[1], 10);
+    next = new Date(from);
+    next.setDate(next.getDate() + w * 7);
+  } else {
+    // Unknown rule — can't compute client-side, let heartbeat handle it
+    return null;
+  }
+
+  if (!next) return null;
+  // Return ISO date string (date only)
+  const d = dateOnly(next);
+  return d.toISOString().slice(0, 10) + 'T00:00:00+00:00';
+}
+
+async function updateChoreNextDue(choreId, frequencyRule, lastDoneDate, createdAt) {
+  const nextDue = computeNextDue(frequencyRule, lastDoneDate, createdAt);
+  if (!nextDue) return; // unknown rule, let heartbeat handle it
+  const { error } = await state.sb.from('chores').update({ next_due: nextDue }).eq('id', choreId);
+  if (error) console.warn('Failed to update next_due:', error.message);
+}
+
 function getChoreCategories() {
   try { return JSON.parse(localStorage.getItem(CHORE_CATEGORIES_KEY) || '[]'); } catch { return []; }
 }
@@ -335,6 +416,11 @@ async function saveNewChore() {
   // If lastDone was provided, create an initial completion
   if (lastDoneVal && data && data.id) {
     await state.sb.from('chore_completions').insert({ chore_id: data.id, completed_at: new Date(lastDoneVal).toISOString() });
+    // Compute next_due from the provided last-done date
+    await updateChoreNextDue(data.id, freq, new Date(lastDoneVal), data.created_at);
+  } else if (data && data.id) {
+    // No last done — compute from creation date
+    await updateChoreNextDue(data.id, freq, null, data.created_at);
   }
 
   closeAddChoreModal();
@@ -369,6 +455,12 @@ async function saveEditChore() {
 
   const { error } = await state.sb.from('chores').update({ name, frequency_rule: freq, category: cat }).eq('id', id);
   if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+
+  // Recompute next_due when frequency changes
+  const chore = state.allChores.find(c => c.id === id);
+  const lastDone = getChoreLastDone(id);
+  await updateChoreNextDue(id, freq, lastDone, chore?.created_at);
+
   closeEditChoreModal();
   showToast('Chore updated', 'success');
   await refreshChores();
@@ -424,6 +516,11 @@ async function submitChoreDone() {
 
   const { error } = await state.sb.from('chore_completions').insert(row);
   if (error) { showToast('Failed to record completion', 'error'); return; }
+
+  // Recompute next_due based on this new completion
+  const chore = state.allChores.find(c => c.id === choreId);
+  if (chore) await updateChoreNextDue(choreId, chore.frequency_rule, new Date(row.completed_at), chore.created_at);
+
   closeChoreDoneModal();
   showToast('Chore done! ✅', 'success');
   await refreshChores();
