@@ -242,7 +242,8 @@ function toggleShowArchived() {
   localStorage.setItem(SHOW_ARCHIVED_KEY, String(!current));
   updateArchiveToggleBtn();
   renderArchivedProjects();
-  renderProjectNavButtons(visibleProjects);
+  updateArchiveToggleBtn();
+  // Nav buttons don't change on archive toggle
 }
 
 function renderProjectNavButtons(projects) {
@@ -400,6 +401,7 @@ function buildProjectCards() {
   `).join('');
 
   renderArchivedProjects();
+  renderProjectNavButtons(visibleProjects);
 }
 
 function updateCharCounter(input) {
