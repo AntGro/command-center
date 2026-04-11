@@ -523,8 +523,8 @@ input,select,button{font-family:inherit;}
 
 /* ===== CATEGORY NAV BUTTONS ===== */
 .category-nav-buttons{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
-.category-nav-btn{padding:5px 12px;border-radius:6px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:0.78rem;font-weight:600;transition:all 0.2s;font-family:inherit;white-space:nowrap;}
-.category-nav-btn:hover{background:color-mix(in srgb,var(--cat-color,var(--accent)) 12%,transparent);opacity:0.9;transform:translateY(-1px);}
+.category-nav-btn{padding:5px 12px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:0.78rem;font-weight:600;transition:all 0.2s;font-family:inherit;white-space:nowrap;}
+.category-nav-btn:hover{background:color-mix(in srgb,var(--cat-color,var(--accent)) 15%,var(--surface));opacity:0.9;transform:translateY(-1px);}
 
 /* ===== CATEGORY CARD GRID ===== */
 .todo-category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;padding:14px 8px;}
