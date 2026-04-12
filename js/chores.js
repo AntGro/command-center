@@ -460,6 +460,14 @@ async function submitChoreDone() {
 function openChoreHistory(choreId) {
   const chore = state.allChores.find(c => c.id === choreId);
   if (!chore) return;
+  state._historyChoreId = choreId;
+  renderChoreHistoryList(choreId, chore);
+  document.getElementById('choreHistoryModal').classList.add('visible');
+}
+
+function renderChoreHistoryList(choreId, chore) {
+  if (!chore) chore = state.allChores.find(c => c.id === choreId);
+  if (!chore) return;
   const completions = getChoreCompletions(choreId);
   document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${chore.name} — ${chore.frequency_rule}`;
 
@@ -470,15 +478,74 @@ function openChoreHistory(choreId) {
       const d = new Date(comp.completed_at);
       const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
       const noteStr = comp.note ? ` — <em>${esc(comp.note)}</em>` : '';
-      return `<div class="chore-history-item">
+      return `<div class="chore-history-item" data-comp-id="${comp.id}">
         <span class="chore-history-date">${lucideIcon("circle-check",16)} ${dateStr}</span>
         ${noteStr}
+        <span class="chore-history-actions">
+          <button onclick="editChoreCompletion('${comp.id}')" title="Edit" class="chore-hist-btn">${lucideIcon("pencil",14,"#f59e0b")}</button>
+          <button onclick="deleteChoreCompletion('${comp.id}')" title="Delete" class="chore-hist-btn">${lucideIcon("trash-2",14,"#ef4444")}</button>
+        </span>
       </div>`;
     }).join('');
     document.getElementById('choreHistoryList').innerHTML = items;
   }
+}
 
-  document.getElementById('choreHistoryModal').classList.add('visible');
+async function deleteChoreCompletion(compId) {
+  if (!confirm('Delete this completion?')) return;
+  const { error } = await state.sb.from('chore_completions').delete().eq('id', compId);
+  if (error) { showToast('Failed to delete', 'error'); return; }
+  showToast('Completion deleted', 'success');
+  await refreshChores();
+  if (state._historyChoreId) {
+    await clearChoreNextDue(state._historyChoreId);
+    renderChoreHistoryList(state._historyChoreId);
+  }
+}
+
+async function editChoreCompletion(compId) {
+  const comp = state.allChoreCompletions.find(c => c.id === compId);
+  if (!comp) return;
+  const d = new Date(comp.completed_at);
+  const dateVal = d.toISOString().slice(0, 10);
+  const noteVal = comp.note || '';
+
+  const item = document.querySelector(`.chore-history-item[data-comp-id="${compId}"]`);
+  if (!item) return;
+  item.innerHTML = `
+    <div class="chore-history-edit">
+      <label>Date</label>
+      <input type="date" id="editCompDate_${compId}" value="${dateVal}">
+      <label>Note</label>
+      <input type="text" id="editCompNote_${compId}" value="${esc(noteVal)}" placeholder="Optional note..." maxlength="500">
+      <div class="chore-history-edit-actions">
+        <button onclick="saveChoreCompletion('${compId}')" class="modal-save">Save</button>
+        <button onclick="cancelEditCompletion()" class="modal-cancel">Cancel</button>
+      </div>
+    </div>`;
+}
+
+async function saveChoreCompletion(compId) {
+  const dateEl = document.getElementById(`editCompDate_${compId}`);
+  const noteEl = document.getElementById(`editCompNote_${compId}`);
+  if (!dateEl) return;
+  const newDate = new Date(dateEl.value + 'T12:00:00Z').toISOString();
+  const newNote = noteEl ? noteEl.value.trim() : null;
+  const updates = { completed_at: newDate };
+  if (newNote !== null) updates.note = newNote || null;
+
+  const { error } = await state.sb.from('chore_completions').update(updates).eq('id', compId);
+  if (error) { showToast('Failed to update', 'error'); return; }
+  showToast('Completion updated', 'success');
+  await refreshChores();
+  if (state._historyChoreId) {
+    await clearChoreNextDue(state._historyChoreId);
+    renderChoreHistoryList(state._historyChoreId);
+  }
+}
+
+function cancelEditCompletion() {
+  if (state._historyChoreId) renderChoreHistoryList(state._historyChoreId);
 }
 
 function closeChoreHistoryModal() {
@@ -547,6 +614,10 @@ window.closeChoreDoneModal = closeChoreDoneModal;
 window.submitChoreDone = submitChoreDone;
 window.openChoreHistory = openChoreHistory;
 window.closeChoreHistoryModal = closeChoreHistoryModal;
+window.editChoreCompletion = editChoreCompletion;
+window.saveChoreCompletion = saveChoreCompletion;
+window.deleteChoreCompletion = deleteChoreCompletion;
+window.cancelEditCompletion = cancelEditCompletion;
 window.openAddChoreCategoryModal = openAddChoreCategoryModal;
 window.closeAddChoreCategoryModal = closeAddChoreCategoryModal;
 window.saveNewChoreCategory = saveNewChoreCategory;
