@@ -291,7 +291,7 @@ function truncateWithShowMore(text, maxLen, id, field) {
   const renderedFirstLine = renderMd(firstLine + (text.length > firstLine.length ? '…' : ''));
   const renderedFull = renderMd(text);
   if (text.length <= 120 && !text.includes('\n')) return renderedFull;
-  return `<span id="meta-${id}-${field}-short">${renderedFirstLine} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')">expand</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderedFull} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')">collapse</button></span>`;
+  return `<span id="meta-${id}-${field}-short">${renderedFirstLine} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')" title="Show more">▼</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderedFull} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')" title="Show less">▲</button></span>`;
 }
 
 function expandMeta(id, field) {
@@ -307,7 +307,7 @@ function renderTask(t, isArchived = false) {
   const isDraft = t.status === 'draft';
   let meta = '';
   if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
-  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'resp')}</div>`;
+  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${renderMd(t.hatch_response)}</div>`;
 
   let promoteBtn = '';
   let actionBtns = '';
