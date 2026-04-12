@@ -492,15 +492,23 @@ function renderChoreHistoryList(choreId, chore) {
 }
 
 async function deleteChoreCompletion(compId) {
-  if (!confirm('Delete this completion?')) return;
-  const { error } = await state.sb.from('chore_completions').delete().eq('id', compId);
-  if (error) { showToast('Failed to delete', 'error'); return; }
-  showToast('Completion deleted', 'success');
-  await refreshChores();
-  if (state._historyChoreId) {
-    await clearChoreNextDue(state._historyChoreId);
-    renderChoreHistoryList(state._historyChoreId);
-  }
+  const comp = state.allChoreCompletions.find(c => c.id === compId);
+  const dateStr = comp ? new Date(comp.completed_at).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  showDeleteConfirm(
+    'Delete completion',
+    'Are you sure you want to delete this completion record?',
+    async () => {
+      const { error } = await state.sb.from('chore_completions').delete().eq('id', compId);
+      if (error) { showToast('Failed to delete', 'error'); return; }
+      showToast('Completion deleted', 'success');
+      await refreshChores();
+      if (state._historyChoreId) {
+        await clearChoreNextDue(state._historyChoreId);
+        renderChoreHistoryList(state._historyChoreId);
+      }
+    },
+    dateStr + (comp && comp.note ? ` — ${comp.note}` : '')
+  );
 }
 
 async function editChoreCompletion(compId) {
