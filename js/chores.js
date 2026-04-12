@@ -446,7 +446,7 @@ async function submitChoreDone() {
   if (error) { showToast('Failed to record completion', 'error'); return; }
 
   // Signal heartbeat to recompute next_due based on this new completion
-  if (chore) await clearChoreNextDue(choreId);
+  await clearChoreNextDue(choreId);
 
   closeChoreDoneModal();
   showToast('Chore done! ✅', 'success');
