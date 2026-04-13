@@ -9,6 +9,26 @@ import { esc, showToast, showDeleteConfirm } from './utils.js';
 const DEFAULT_CATEGORIES = ['Haut', 'Bas', 'Chaussures', 'Manteau'];
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
 
+// Distinct colors per category (cycles if more categories are added)
+const CATEGORY_COLORS = [
+  '#8b5cf6', // purple — Haut
+  '#3b82f6', // blue — Bas
+  '#f59e0b', // amber — Chaussures
+  '#10b981', // emerald — Manteau
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#f97316', // orange
+  '#6366f1', // indigo
+  '#14b8a6', // teal
+];
+
+function getCategoryColor(cat) {
+  const cats = getVestiaireCategories();
+  const idx = cats.indexOf(cat);
+  return CATEGORY_COLORS[(idx >= 0 ? idx : cats.length) % CATEGORY_COLORS.length];
+}
+
 function getVestiaireCategories() {
   try {
     const raw = localStorage.getItem(VESTIAIRE_CATEGORIES_KEY);
@@ -101,6 +121,7 @@ function renderCategoryCard(cat, items) {
   const icon = getCategoryIcon(cat);
   const escapedCat = esc(cat);
   const count = items.length;
+  const color = getCategoryColor(cat);
 
   let itemsHtml = '';
   if (count === 0) {
@@ -110,14 +131,15 @@ function renderCategoryCard(cat, items) {
   }
 
   return `<div class="project-card vestiaire-bucket" data-category="${escapedCat}">
+    <div class="project-accent" style="background:${color}"></div>
     <div class="project-card-header">
       <div style="display:flex;align-items:center;gap:8px;">
-        ${icon}
+        <span style="color:${color}">${icon}</span>
         <strong style="font-size:1rem;">${escapedCat}</strong>
         <span style="font-size:0.78rem;color:var(--muted);">(${count})</span>
       </div>
       <div class="project-header-actions" style="opacity:1;">
-        <button onclick="openAddVestiaireModal('${escapedCat}')" title="Add to ${escapedCat}" style="background:none;border:none;cursor:pointer;color:var(--accent);padding:2px 6px;border-radius:4px;transition:all 0.2s;">
+        <button onclick="openAddVestiaireModal('${escapedCat}')" title="Add to ${escapedCat}" style="background:none;border:none;cursor:pointer;color:${color};padding:2px 6px;border-radius:4px;transition:all 0.2s;">
           ${lucideIcon('plus', 16)}
         </button>
         <button onclick="deleteVestiaireCategory('${escapedCat}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;">
@@ -161,7 +183,8 @@ function renderVestiaireNavButtons(cats, items) {
   if (!container) return;
   container.innerHTML = cats.map(cat => {
     const count = items.filter(v => v.category === cat).length;
-    return `<button class="category-nav-btn" style="--cat-color:var(--accent);border-color:var(--accent);color:var(--accent)" onclick="navigateToVestiaireCat('${esc(cat)}')" title="${esc(cat)} (${count})">${esc(cat)} (${count})</button>`;
+    const color = getCategoryColor(cat);
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToVestiaireCat('${esc(cat)}')" title="${esc(cat)} (${count})">${esc(cat)} (${count})</button>`;
   }).join('');
 }
 
@@ -220,6 +243,7 @@ function initVestiaireModals() {
   m1.id = 'addVestiaireModal';
   m1.innerHTML = `<div class="modal">
     <h2>${lucideIcon('shirt', 20)} Add Clothing Item</h2>
+    <input type="hidden" id="newVestiaireCategory">
     <label>Name</label>
     <input type="text" id="newVestiaireName" placeholder="e.g. Oxford shirt, Chinos..." maxlength="200"
       onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewVestiaire();}">
@@ -227,8 +251,6 @@ function initVestiaireModals() {
     <input type="text" id="newVestiaireBrand" placeholder="e.g. Uniqlo, John Lewis..." maxlength="200">
     <label>Size</label>
     <input type="text" id="newVestiaireSize" placeholder="e.g. M, 28W32L, 42..." maxlength="100">
-    <label>Category</label>
-    <select id="newVestiaireCategory"></select>
     <label>Color (optional)</label>
     <input type="text" id="newVestiaireColor" placeholder="e.g. Navy, Blanc..." maxlength="100">
     <label>Notes (optional)</label>
@@ -301,7 +323,7 @@ function openAddVestiaireModal(preselectedCategory) {
   document.getElementById('newVestiaireSize').value = '';
   document.getElementById('newVestiaireColor').value = '';
   document.getElementById('newVestiaireNotes').value = '';
-  populateCategorySelect('newVestiaireCategory', preselectedCategory || '');
+  document.getElementById('newVestiaireCategory').value = preselectedCategory || getVestiaireCategories()[0] || '';
   document.getElementById('addVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('newVestiaireName').focus(), 100);
 }
