@@ -8,6 +8,7 @@ const state = {
   allTasks: [],
   allChores: [],
   allChoreCompletions: [],
+  allBirthdays: [],
   currentView: 'projects',
 };
 
