@@ -365,7 +365,7 @@ input,select,button{font-family:inherit;}
   .todos-toolbar{flex-direction:column;gap:8px;}
   .chore-category-grid{grid-template-columns:1fr;}
   .chores-toolbar{flex-direction:column;gap:8px;}
-  .vestiaire-toolbar{flex-direction:column;gap:8px;}
+  .vestiaire-item-actions{opacity:1 !important;}
 }
 
 /* Phone */
@@ -491,16 +491,7 @@ input,select,button{font-family:inherit;}
   #choresStatsBar .stat-label{font-size:0.62rem;}
 
   /* ===== VESTIAIRE VIEW — MOBILE ===== */
-  .vestiaire-toolbar{padding:8px 8px;gap:6px;flex-direction:column;align-items:stretch;}
-  .vestiaire-filters{gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
-  .vestiaire-filters .filter-btn{flex:0 0 auto;text-align:center;padding:8px 10px;font-size:0.82rem;min-height:36px;}
-  .vestiaire-toolbar-right{width:100%;justify-content:flex-end;}
-  .vestiaire-card{padding:10px 12px;gap:10px;}
-  .vestiaire-actions{opacity:1 !important;}
-  .vestiaire-actions button{min-height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;}
-  #vestiaireStatsBar{gap:6px;padding:10px 8px;justify-content:space-between;}
-  #vestiaireStatsBar .stat-value{font-size:1.3rem;}
-  #vestiaireStatsBar .stat-label{font-size:0.62rem;}
+
 
   /* Modals — near full-width on phones */
   .modal{width:95%;padding:20px 16px;border-radius:12px;max-height:90vh;}
@@ -715,28 +706,10 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 /* ===================================================================
    VESTIAIRE
    =================================================================== */
-.vestiaire-toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;margin-bottom:8px;gap:12px;}
-.vestiaire-filters{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
-.vestiaire-toolbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.vestiaire-grid{max-width:720px;margin:0 auto;}
-
-.vestiaire-section{margin-bottom:28px;}
-.vestiaire-section-title{font-size:0.88rem;font-weight:600;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-.vestiaire-section-count{font-size:0.75rem;font-weight:500;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:10px;opacity:0.75;}
-.vestiaire-list{display:flex;flex-direction:column;gap:8px;}
-
-.vestiaire-card{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;transition:all 0.2s;}
-.vestiaire-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,0,0,0.08);}
-
-.vestiaire-info{flex:1;min-width:0;}
-.vestiaire-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.vestiaire-name{font-weight:600;font-size:0.95rem;color:var(--text);}
-.vestiaire-brand{font-size:0.82rem;font-weight:500;color:#8b5cf6;background:rgba(139,92,246,0.1);padding:2px 8px;border-radius:12px;white-space:nowrap;}
-
-.vestiaire-meta{display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap;}
-.vestiaire-size{font-size:0.82rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:4px;background:var(--bg);padding:2px 8px;border-radius:8px;}
-.vestiaire-color{font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:4px;}
-.vestiaire-note{font-size:0.78rem;color:var(--muted);font-style:italic;opacity:0.75;}
+/* Vestiaire — bucket cards reuse .project-card / .project-grid */
+.vestiaire-item:hover .vestiaire-item-actions{opacity:1 !important;}
+.vestiaire-item:last-child{border-bottom:none !important;}
+.vestiaire-empty-cat{padding:12px 0;color:var(--muted);font-size:0.82rem;text-align:center;}
 
 .vestiaire-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
 .vestiaire-card:hover .vestiaire-actions{opacity:1;}

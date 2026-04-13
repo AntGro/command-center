@@ -3,15 +3,10 @@ import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
 
 // ===================================================================
-// VESTIAIRE — WARDROBE TRACKER
+// VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
 // ===================================================================
 
-// Default clothing categories
-const DEFAULT_CATEGORIES = [
-  'Hauts', 'Bas', 'Costumes', 'Chaussures',
-  'Manteaux & Vestes', 'Accessoires', 'Sous-vêtements'
-];
-
+const DEFAULT_CATEGORIES = ['Haut', 'Bas', 'Chaussures', 'Manteau'];
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
 
 function getVestiaireCategories() {
@@ -39,14 +34,13 @@ async function refreshVestiaire() {
   const { data, error } = await state.sb
     .from('vestiaire')
     .select('*')
-    .order('category', { ascending: true });
+    .order('name', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
     showToast('Failed to load vestiaire', 'error');
     return;
   }
   state.allVestiaire = data || [];
-  // Sync categories from data
   syncCategoriesFromData();
   if (state.currentView === 'vestiaire') {
     renderVestiaire();
@@ -65,7 +59,7 @@ function syncCategoriesFromData() {
 
 
 // ===================================================================
-// RENDERING
+// RENDERING — bucket cards (like Projects)
 // ===================================================================
 
 function renderVestiaire() {
@@ -73,62 +67,110 @@ function renderVestiaire() {
   if (!grid) return;
 
   const items = state.allVestiaire || [];
-  const filter = state.vestiaireFilter || 'all';
+  const cats = getVestiaireCategories();
 
   updateVestiaireStats(items);
+  renderVestiaireNavButtons(cats, items);
 
-  // Filter
-  let filtered = items;
-  if (filter !== 'all') {
-    filtered = items.filter(v => v.category === filter);
-  }
-
-  if (items.length === 0) {
-    grid.innerHTML = `<div class="vestiaire-empty">
-      ${lucideIcon('shirt', 48, 'var(--muted)')}
-      <p>No items in your wardrobe yet</p>
-      <button class="btn-primary" onclick="openAddVestiaireModal()">Add first item</button>
-    </div>`;
-    return;
-  }
-
-  // Group by category
+  // Group items by category
   const grouped = {};
-  filtered.forEach(v => {
+  cats.forEach(c => { grouped[c] = []; });
+  items.forEach(v => {
     const cat = v.category || 'Autre';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(v);
   });
 
-  // Sort categories
-  const cats = getVestiaireCategories();
-  const sortedKeys = Object.keys(grouped).sort((a, b) => {
-    const iA = cats.indexOf(a);
-    const iB = cats.indexOf(b);
-    if (iA === -1 && iB === -1) return a.localeCompare(b);
-    if (iA === -1) return 1;
-    if (iB === -1) return -1;
-    return iA - iB;
+  // Render a card per category
+  let html = '';
+  cats.forEach(cat => {
+    const catItems = grouped[cat] || [];
+    html += renderCategoryCard(cat, catItems);
   });
 
-  let html = '';
-  sortedKeys.forEach(cat => {
-    const catItems = grouped[cat];
-    html += `<div class="vestiaire-section">
-      <h3 class="vestiaire-section-title">
-        ${getCategoryIcon(cat)} ${esc(cat)}
-        <span class="vestiaire-section-count">${catItems.length}</span>
-      </h3>
-      <div class="vestiaire-list">
-        ${catItems.map(v => renderVestiaireCard(v)).join('')}
-      </div>
-    </div>`;
-  });
+  // "Autre" for uncategorized
+  if (grouped['Autre'] && grouped['Autre'].length > 0 && !cats.includes('Autre')) {
+    html += renderCategoryCard('Autre', grouped['Autre']);
+  }
 
   grid.innerHTML = html;
+  grid.className = 'project-grid';
+}
 
-  // Update filter buttons
-  updateFilterButtons(filter);
+function renderCategoryCard(cat, items) {
+  const icon = getCategoryIcon(cat);
+  const escapedCat = esc(cat);
+  const count = items.length;
+
+  let itemsHtml = '';
+  if (count === 0) {
+    itemsHtml = `<div class="vestiaire-empty-cat" style="padding:12px 0;color:var(--muted);font-size:0.82rem;text-align:center;">No items yet</div>`;
+  } else {
+    itemsHtml = items.map(v => renderVestiaireItem(v)).join('');
+  }
+
+  return `<div class="project-card vestiaire-bucket" data-category="${escapedCat}">
+    <div class="project-card-header">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${icon}
+        <strong style="font-size:1rem;">${escapedCat}</strong>
+        <span style="font-size:0.78rem;color:var(--muted);">(${count})</span>
+      </div>
+      <div class="project-header-actions" style="opacity:1;">
+        <button onclick="openAddVestiaireModal('${escapedCat}')" title="Add to ${escapedCat}" style="background:none;border:none;cursor:pointer;color:var(--accent);padding:2px 6px;border-radius:4px;transition:all 0.2s;">
+          ${lucideIcon('plus', 16)}
+        </button>
+        <button onclick="deleteVestiaireCategory('${escapedCat}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;">
+          ${lucideIcon('trash-2', 14)}
+        </button>
+      </div>
+    </div>
+    <div class="task-list" style="padding:4px 16px 12px;">
+      ${itemsHtml}
+    </div>
+  </div>`;
+}
+
+function renderVestiaireItem(v) {
+  const brandHtml = v.brand ? `<span style="font-size:0.75rem;color:var(--muted);margin-left:6px;">${esc(v.brand)}</span>` : '';
+  const metaParts = [];
+  if (v.size) metaParts.push(`${lucideIcon('ruler', 12)} ${esc(v.size)}`);
+  if (v.color) metaParts.push(`${lucideIcon('palette', 12)} ${esc(v.color)}`);
+  if (v.notes) metaParts.push(`${esc(v.notes)}`);
+  const metaHtml = metaParts.length
+    ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${metaParts.join('')}</div>`
+    : '';
+
+  return `<div class="vestiaire-item" style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;">
+        <span style="font-size:0.88rem;font-weight:500;">${esc(v.name)}</span>
+        ${brandHtml}
+      </div>
+      ${metaHtml}
+    </div>
+    <div class="vestiaire-item-actions" style="display:flex;gap:4px;opacity:0;transition:opacity 0.2s;">
+      <button onclick="openEditVestiaireModal('${v.id}')" title="Edit" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('pencil', 14)}</button>
+      <button onclick="deleteVestiaire('${v.id}')" title="Delete" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('trash-2', 14)}</button>
+    </div>
+  </div>`;
+}
+
+function renderVestiaireNavButtons(cats, items) {
+  const container = document.getElementById('vestiaireNavButtons');
+  if (!container) return;
+  container.innerHTML = cats.map(cat => {
+    const count = items.filter(v => v.category === cat).length;
+    return `<button class="category-nav-btn" style="--cat-color:var(--accent);border-color:var(--accent);color:var(--accent)" onclick="navigateToVestiaireCat('${esc(cat)}')" title="${esc(cat)} (${count})">${esc(cat)} (${count})</button>`;
+  }).join('');
+}
+
+function navigateToVestiaireCat(cat) {
+  const card = document.querySelector(`.vestiaire-bucket[data-category="${cat}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.style.boxShadow = '0 0 0 2px var(--accent)';
+  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
 }
 
 function getCategoryIcon(cat) {
@@ -147,32 +189,7 @@ function getCategoryIcon(cat) {
     return lucideIcon('watch', 18);
   if (lower.includes('sous-vêtement') || lower.includes('underwear') || lower.includes('chaussett'))
     return lucideIcon('layers', 18);
-  return lucideIcon('hanger', 18);
-}
-
-function renderVestiaireCard(v) {
-  const brandHtml = v.brand ? `<span class="vestiaire-brand">${esc(v.brand)}</span>` : '';
-  const sizeHtml = v.size ? `<span class="vestiaire-size">${lucideIcon('ruler', 14)} ${esc(v.size)}</span>` : '';
-  const colorHtml = v.color ? `<span class="vestiaire-color">${lucideIcon('palette', 14)} ${esc(v.color)}</span>` : '';
-  const noteHtml = v.notes ? `<span class="vestiaire-note">${esc(v.notes)}</span>` : '';
-
-  return `<div class="vestiaire-card" data-id="${v.id}">
-    <div class="vestiaire-info">
-      <div class="vestiaire-name-row">
-        <span class="vestiaire-name">${esc(v.name)}</span>
-        ${brandHtml}
-      </div>
-      <div class="vestiaire-meta">
-        ${sizeHtml}
-        ${colorHtml}
-        ${noteHtml}
-      </div>
-    </div>
-    <div class="vestiaire-actions">
-      <button onclick="openEditVestiaireModal('${v.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
-      <button onclick="deleteVestiaire('${v.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
-    </div>
-  </div>`;
+  return lucideIcon('tag', 18);
 }
 
 function updateVestiaireStats(items) {
@@ -187,27 +204,6 @@ function updateVestiaireStats(items) {
   if (el('statVestiaireCategories')) el('statVestiaireCategories').textContent = categories;
   if (el('statVestiaireBrands')) el('statVestiaireBrands').textContent = brands;
   if (el('statVestiaireSized')) el('statVestiaireSized').textContent = withSize;
-}
-
-function updateFilterButtons(activeFilter) {
-  const container = document.getElementById('vestiaireFilters');
-  if (!container) return;
-
-  const items = state.allVestiaire || [];
-  const cats = [...new Set(items.map(v => v.category).filter(Boolean))].sort();
-
-  let html = `<button class="filter-btn ${activeFilter === 'all' ? 'active' : ''}" onclick="setVestiaireFilter('all')">All</button>`;
-  cats.forEach(cat => {
-    const count = items.filter(v => v.category === cat).length;
-    html += `<button class="filter-btn ${activeFilter === cat ? 'active' : ''}" onclick="setVestiaireFilter('${esc(cat)}')">${esc(cat)} <span class="filter-count">(${count})</span></button>`;
-  });
-
-  container.innerHTML = html;
-}
-
-function setVestiaireFilter(filter) {
-  state.vestiaireFilter = filter;
-  renderVestiaire();
 }
 
 
@@ -275,9 +271,9 @@ function initVestiaireModals() {
   m3.className = 'modal-overlay';
   m3.id = 'addVestiaireCategoryModal';
   m3.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('folder-plus', 20)} Add Vestiaire Category</h2>
+    <h2>${lucideIcon('folder-plus', 20)} Add Category</h2>
     <label>Category Name</label>
-    <input type="text" id="newVestiaireCategoryName" placeholder="e.g. Sport, Formal..." maxlength="40"
+    <input type="text" id="newVestiaireCategoryName" placeholder="e.g. Sport, Formel..." maxlength="40"
       onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewVestiaireCategory();}">
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeAddVestiaireCategoryModal()">Cancel</button>
@@ -287,11 +283,11 @@ function initVestiaireModals() {
   app.appendChild(m3);
 }
 
-function populateCategorySelect(selectId) {
+function populateCategorySelect(selectId, preselect) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   const cats = getVestiaireCategories();
-  sel.innerHTML = cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.innerHTML = cats.map(c => `<option value="${esc(c)}" ${c === preselect ? 'selected' : ''}>${esc(c)}</option>`).join('');
 }
 
 
@@ -299,13 +295,13 @@ function populateCategorySelect(selectId) {
 // CRUD
 // ===================================================================
 
-function openAddVestiaireModal() {
+function openAddVestiaireModal(preselectedCategory) {
   document.getElementById('newVestiaireName').value = '';
   document.getElementById('newVestiaireBrand').value = '';
   document.getElementById('newVestiaireSize').value = '';
   document.getElementById('newVestiaireColor').value = '';
   document.getElementById('newVestiaireNotes').value = '';
-  populateCategorySelect('newVestiaireCategory');
+  populateCategorySelect('newVestiaireCategory', preselectedCategory || '');
   document.getElementById('addVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('newVestiaireName').focus(), 100);
 }
@@ -347,8 +343,7 @@ function openEditVestiaireModal(id) {
   document.getElementById('editVestiaireSize').value = v.size || '';
   document.getElementById('editVestiaireColor').value = v.color || '';
   document.getElementById('editVestiaireNotes').value = v.notes || '';
-  populateCategorySelect('editVestiaireCategory');
-  document.getElementById('editVestiaireCategory').value = v.category || '';
+  populateCategorySelect('editVestiaireCategory', v.category);
   document.getElementById('editVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('editVestiaireName').focus(), 100);
 }
@@ -422,6 +417,24 @@ function saveNewVestiaireCategory() {
   renderVestiaire();
 }
 
+function deleteVestiaireCategory(cat) {
+  const items = (state.allVestiaire || []).filter(v => v.category === cat);
+  if (items.length > 0) {
+    showToast(`Can't delete "${cat}" — it has ${items.length} item(s). Move or delete them first.`, 'error');
+    return;
+  }
+  showDeleteConfirm(
+    'Delete Category',
+    `Remove the "${cat}" category?`,
+    () => {
+      const cats = getVestiaireCategories().filter(c => c !== cat);
+      saveVestiaireCategories(cats);
+      showToast(`Category "${cat}" removed`, 'info');
+      renderVestiaire();
+    }
+  );
+}
+
 
 // ===================================================================
 // EXPORTS
@@ -437,8 +450,9 @@ window.openEditVestiaireModal = openEditVestiaireModal;
 window.closeEditVestiaireModal = closeEditVestiaireModal;
 window.saveEditVestiaire = saveEditVestiaire;
 window.deleteVestiaire = deleteVestiaire;
-window.setVestiaireFilter = setVestiaireFilter;
 window.openAddVestiaireCategoryModal = openAddVestiaireCategoryModal;
 window.closeAddVestiaireCategoryModal = closeAddVestiaireCategoryModal;
 window.saveNewVestiaireCategory = saveNewVestiaireCategory;
+window.deleteVestiaireCategory = deleteVestiaireCategory;
+window.navigateToVestiaireCat = navigateToVestiaireCat;
 window.renderVestiaire = renderVestiaire;
