@@ -158,7 +158,7 @@ function renderVestiaireItem(v) {
   const metaParts = [];
   if (v.size) metaParts.push(`${lucideIcon('ruler', 12)} ${esc(v.size)}`);
   if (v.color) metaParts.push(`${lucideIcon('palette', 12)} ${esc(v.color)}`);
-  if (v.notes) metaParts.push(`${esc(v.notes)}`);
+  if (v.note) metaParts.push(`${esc(v.note)}`);
   const metaHtml = metaParts.length
     ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${metaParts.join('')}</div>`
     : '';
@@ -346,7 +346,7 @@ async function saveNewVestiaire() {
   if (brand) row.brand = brand;
   if (size) row.size = size;
   if (color) row.color = color;
-  if (notes) row.notes = notes;
+  if (notes) row.note = notes;
 
   const { error } = await state.sb.from('vestiaire').insert(row);
   if (error) { showToast('Failed to add item: ' + error.message, 'error'); return; }
@@ -364,7 +364,7 @@ function openEditVestiaireModal(id) {
   document.getElementById('editVestiaireBrand').value = v.brand || '';
   document.getElementById('editVestiaireSize').value = v.size || '';
   document.getElementById('editVestiaireColor').value = v.color || '';
-  document.getElementById('editVestiaireNotes').value = v.notes || '';
+  document.getElementById('editVestiaireNotes').value = v.note || '';
   populateCategorySelect('editVestiaireCategory', v.category);
   document.getElementById('editVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('editVestiaireName').focus(), 100);
@@ -387,7 +387,7 @@ async function saveEditVestiaire() {
 
   const { error } = await state.sb.from('vestiaire').update({
     name, brand: brand || null, size: size || null, category,
-    color: color || null, notes: notes || null,
+    color: color || null, note: notes || null,
     updated_at: new Date().toISOString()
   }).eq('id', id);
   if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
