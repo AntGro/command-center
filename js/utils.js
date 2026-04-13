@@ -98,9 +98,12 @@ document.addEventListener('click', e => {
   if (e.target.id === 'snoozeModal') closeSnoozeModal();
   if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
   if (e.target.id === 'addCategoryModal') closeAddCategoryModal();
+  if (e.target.id === 'addVestiaireModal') closeAddVestiaireModal();
+  if (e.target.id === 'editVestiaireModal') closeEditVestiaireModal();
+  if (e.target.id === 'addVestiaireCategoryModal') closeAddVestiaireCategoryModal();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeAddCategoryModal(); }
+  if (e.key === 'Escape') { closeAddProjectModal(); closeEditProjectModal(); closeTaskExpandModal(); closeRevisionModal(); closePromptEditor(); closeProjectPrompt(); closeSnoozeModal(); closeDeleteConfirm(); closeAddCategoryModal(); if (window.closeAddVestiaireModal) closeAddVestiaireModal(); if (window.closeEditVestiaireModal) closeEditVestiaireModal(); if (window.closeAddVestiaireCategoryModal) closeAddVestiaireCategoryModal(); }
 });
 
 

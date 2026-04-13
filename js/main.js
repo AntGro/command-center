@@ -6,6 +6,7 @@ import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveTogg
 import { refreshTodos, renderTodos } from './todos.js';
 import { refreshChores, renderChores } from './chores.js';
 import { refreshBirthdays, renderBirthdays, initBirthdayModals } from './birthdays.js';
+import { refreshVestiaire, renderVestiaire, initVestiaireModals } from './vestiaire.js';
 
 // ===================================================================
 // GATE LOGIC
@@ -143,6 +144,7 @@ async function connect(url, key) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chores' }, () => refreshChores())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'birthdays' }, () => refreshBirthdays())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vestiaire' }, () => refreshVestiaire())
     .subscribe();
 
   // Initialize TODOs
@@ -155,8 +157,12 @@ async function connect(url, key) {
   initBirthdayModals();
   await refreshBirthdays();
 
+  // Initialize Vestiaire
+  initVestiaireModals();
+  await refreshVestiaire();
+
   // Restore last view — hash takes priority over localStorage
-  const validViews = ['projects', 'todos', 'chores', 'birthdays'];
+  const validViews = ['projects', 'todos', 'chores', 'birthdays', 'vestiaire'];
   const rawHash = location.hash.replace('#', '');
   const hashView = validViews.includes(rawHash) ? rawHash : null;
   const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
@@ -216,10 +222,12 @@ function switchView(view) {
   const todosView = document.getElementById('todosView');
   const choresView = document.getElementById('choresView');
   const birthdaysView = document.getElementById('birthdaysView');
+  const vestiaireView = document.getElementById('vestiaireView');
   const tabProjects = document.getElementById('tabProjects');
   const tabTodos = document.getElementById('tabTodos');
   const tabChores = document.getElementById('tabChores');
   const tabBirthdays = document.getElementById('tabBirthdays');
+  const tabVestiaire = document.getElementById('tabVestiaire');
   const addProjectBtn = document.querySelector('.header-actions .btn[onclick="openAddProjectModal()"]');
 
   // Hide all
@@ -227,10 +235,12 @@ function switchView(view) {
   todosView.style.display = 'none';
   if (choresView) choresView.style.display = 'none';
   if (birthdaysView) birthdaysView.style.display = 'none';
+  if (vestiaireView) vestiaireView.style.display = 'none';
   tabProjects.classList.remove('active');
   tabTodos.classList.remove('active');
   if (tabChores) tabChores.classList.remove('active');
   if (tabBirthdays) tabBirthdays.classList.remove('active');
+  if (tabVestiaire) tabVestiaire.classList.remove('active');
 
   if (view === 'projects') {
     projectsView.style.display = '';
@@ -251,6 +261,11 @@ function switchView(view) {
     if (tabBirthdays) tabBirthdays.classList.add('active');
     if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderBirthdays();
+  } else if (view === 'vestiaire') {
+    if (vestiaireView) vestiaireView.style.display = '';
+    if (tabVestiaire) tabVestiaire.classList.add('active');
+    if (addProjectBtn) addProjectBtn.style.display = 'none';
+    renderVestiaire();
   }
 }
 

@@ -9,6 +9,8 @@ const state = {
   allChores: [],
   allChoreCompletions: [],
   allBirthdays: [],
+  allVestiaire: [],
+  vestiaireFilter: 'all',
   currentView: 'projects',
 };
 
