@@ -481,12 +481,14 @@ window.openEditFlashcardModal = function(id) {
   const card = allCards.find(c => c.id === id);
   if (!card) return;
   closeAllFlashModals();
+  const decks = [...new Set(allCards.map(c => c.deck))].sort();
+  const deckOptions = decks.map(d => `<option value="${esc(d)}" ${d === card.deck ? 'selected' : ''}>${esc(d)}</option>`).join('');
   const html = `<div class="modal-overlay" id="editFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeEditFlashcardModal()">
     <div class="modal">
       <h2>${lucideIcon('pencil', 18, '#f59e0b')} Edit Flashcard</h2>
       <input type="hidden" id="editFlashId" value="${id}">
       <label>Deck</label>
-      <input type="text" id="editFlashDeck" value="${esc(card.deck)}">
+      <select id="editFlashDeck">${deckOptions}</select>
       <label>Front (Question)</label>
       <textarea id="editFlashFront" rows="3">${esc(card.front)}</textarea>
       <label>Back (Answer)</label>
