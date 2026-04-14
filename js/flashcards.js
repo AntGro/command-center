@@ -255,12 +255,16 @@ function renderFlashcardItem(c, color) {
   const isDue = !isNew && (!c.next_review || new Date(c.next_review) <= now);
   const R = c.last_review && c.stability ? retrievability(c.stability, c.last_review, now.toISOString()) : null;
 
-  // Status badge
+  // Status badge — styled like project status badges
   let badge = '';
   if (isNew) {
-    badge = `<span class="fc-badge fc-badge-new">NEW</span>`;
+    badge = `<span class="fc-status-badge fc-status-new">New</span>`;
   } else if (isDue) {
-    badge = `<span class="fc-badge fc-badge-due">DUE</span>`;
+    badge = `<span class="fc-status-badge fc-status-due">Due</span>`;
+  } else {
+    // Reviewed and not yet due — show next review date
+    const daysLeft = c.next_review ? Math.ceil((new Date(c.next_review) - now) / 86400000) : 0;
+    badge = `<span class="fc-status-badge fc-status-ok">${daysLeft}d</span>`;
   }
 
   // Strength indicator
@@ -271,11 +275,25 @@ function renderFlashcardItem(c, color) {
     strengthEl = `<div class="fc-strength-bar" title="${pct}% recall"><div class="fc-strength" style="width:${pct}%;background:${barColor};"></div></div>`;
   }
 
+  // Difficulty dots (1-10 scale, show as discrete indicator)
+  let diffDots = '';
+  if (c.last_review && c.difficulty) {
+    const d = Math.round(c.difficulty);
+    const dotColor = d <= 3 ? '#22c55e' : d <= 6 ? '#f59e0b' : '#ef4444';
+    diffDots = `<span class="fc-diff" title="Difficulty: ${c.difficulty}" style="color:${dotColor};">${'●'.repeat(Math.min(d, 5))}</span>`;
+  }
+
   const frontTrunc = c.front.length > 90 ? c.front.slice(0, 90) + '…' : c.front;
   return `<div class="fc-item${isDue ? ' fc-item--due' : ''}${isNew ? ' fc-item--new' : ''}" data-id="${c.id}">
-    ${badge}
-    <div class="fc-item-text">${esc(frontTrunc)}</div>
-    ${strengthEl}
+    <div class="fc-item-indicator" style="background:${isNew ? '#818cf8' : isDue ? '#f59e0b' : '#22c55e'};"></div>
+    <div class="fc-item-body">
+      <div class="fc-item-text">${esc(frontTrunc)}</div>
+      <div class="fc-item-meta">
+        ${badge}
+        ${strengthEl}
+        ${diffDots}
+      </div>
+    </div>
     <div class="fc-item-actions">
       <button class="icon-btn" title="Edit" onclick="openEditFlashcardModal('${c.id}')">${lucideIcon('pencil', 14)}</button>
       <button class="icon-btn" title="Delete" onclick="deleteFlashcard('${c.id}')">${lucideIcon('trash-2', 14)}</button>
