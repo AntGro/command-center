@@ -501,15 +501,15 @@ window.openAddFlashcardModal = function(deck) {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeAddFlashcardModal()">
     <div class="modal">
-      <h2>Add Flashcard</h2>
+      <h2>${lucideIcon('plus', 18, '#8b5cf6')} Add Flashcard</h2>
       <input type="hidden" id="newFlashDeck" value="${esc(deck || 'Général')}">
       <label>Front (Question)</label>
-      <textarea id="newFlashFront" rows="3" placeholder="Question…" style="width:100%;"></textarea>
+      <textarea id="newFlashFront" rows="3" placeholder="Question…"></textarea>
       <label>Back (Answer)</label>
-      <textarea id="newFlashBack" rows="3" placeholder="Answer…" style="width:100%;"></textarea>
+      <textarea id="newFlashBack" rows="3" placeholder="Answer…"></textarea>
       <div class="modal-actions">
-        <button class="btn" onclick="closeAddFlashcardModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveNewFlashcard()">Save</button>
+        <button class="modal-cancel" onclick="closeAddFlashcardModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewFlashcard()">Save</button>
       </div>
     </div>
   </div>`;
@@ -542,17 +542,17 @@ window.openEditFlashcardModal = function(id) {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="editFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeEditFlashcardModal()">
     <div class="modal">
-      <h2>Edit Flashcard</h2>
+      <h2>${lucideIcon('pencil', 18, '#f59e0b')} Edit Flashcard</h2>
       <input type="hidden" id="editFlashId" value="${id}">
       <label>Deck</label>
-      <input type="text" id="editFlashDeck" value="${esc(card.deck)}" style="width:100%;">
+      <input type="text" id="editFlashDeck" value="${esc(card.deck)}">
       <label>Front (Question)</label>
-      <textarea id="editFlashFront" rows="3" style="width:100%;">${esc(card.front)}</textarea>
+      <textarea id="editFlashFront" rows="3">${esc(card.front)}</textarea>
       <label>Back (Answer)</label>
-      <textarea id="editFlashBack" rows="3" style="width:100%;">${esc(card.back)}</textarea>
+      <textarea id="editFlashBack" rows="3">${esc(card.back)}</textarea>
       <div class="modal-actions">
-        <button class="btn" onclick="closeEditFlashcardModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveEditFlashcard()">Save</button>
+        <button class="modal-cancel" onclick="closeEditFlashcardModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditFlashcard()">Save</button>
       </div>
     </div>
   </div>`;
@@ -599,12 +599,12 @@ window.openAddNoteModal = function() {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addNoteModal" style="display:flex;" onclick="if(event.target===this)closeAddNoteModal()">
     <div class="modal">
-      <h2>Add Note</h2>
+      <h2>${lucideIcon('sticky-note', 18, '#9ca3af')} Add Note</h2>
       <label>What do you want to learn?</label>
-      <textarea id="newNoteContent" rows="4" placeholder="Anything you want to remember…" style="width:100%;"></textarea>
+      <textarea id="newNoteContent" rows="4" placeholder="Anything you want to remember…"></textarea>
       <div class="modal-actions">
-        <button class="btn" onclick="closeAddNoteModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveNewNote()">Save</button>
+        <button class="modal-cancel" onclick="closeAddNoteModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewNote()">Save</button>
       </div>
     </div>
   </div>`;
@@ -632,12 +632,12 @@ window.openEditNoteModal = function(id) {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="editNoteModal" style="display:flex;" onclick="if(event.target===this)closeEditNoteModal()">
     <div class="modal">
-      <h2>Edit Note</h2>
+      <h2>${lucideIcon('pencil', 18, '#f59e0b')} Edit Note</h2>
       <input type="hidden" id="editNoteId" value="${id}">
-      <textarea id="editNoteContent" rows="4" style="width:100%;">${esc(note.content)}</textarea>
+      <textarea id="editNoteContent" rows="4">${esc(note.content)}</textarea>
       <div class="modal-actions">
-        <button class="btn" onclick="closeEditNoteModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveEditNote()">Save</button>
+        <button class="modal-cancel" onclick="closeEditNoteModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditNote()">Save</button>
       </div>
     </div>
   </div>`;
@@ -675,17 +675,17 @@ window.convertNoteToCard = function(id) {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="convertNoteModal" style="display:flex;" onclick="if(event.target===this)closeConvertNoteModal()">
     <div class="modal">
-      <h2>Convert to Flashcard</h2>
+      <h2>${lucideIcon('arrow-right-left', 18, '#8b5cf6')} Convert to Flashcard</h2>
       <input type="hidden" id="convertNoteId" value="${id}">
       <label>Deck</label>
-      <input type="text" id="convertNoteDeck" value="Général" style="width:100%;">
+      <input type="text" id="convertNoteDeck" value="Général">
       <label>Front (Question)</label>
-      <textarea id="convertNoteFront" rows="3" placeholder="Question…" style="width:100%;">${esc(note.content)}</textarea>
+      <textarea id="convertNoteFront" rows="3" placeholder="Question…">${esc(note.content)}</textarea>
       <label>Back (Answer)</label>
-      <textarea id="convertNoteBack" rows="3" placeholder="Answer…" style="width:100%;"></textarea>
+      <textarea id="convertNoteBack" rows="3" placeholder="Answer…"></textarea>
       <div class="modal-actions">
-        <button class="btn" onclick="closeConvertNoteModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveConvertNote()">Convert</button>
+        <button class="modal-cancel" onclick="closeConvertNoteModal()">Cancel</button>
+        <button class="modal-save" onclick="saveConvertNote()">Convert</button>
       </div>
     </div>
   </div>`;
@@ -816,12 +816,12 @@ window.openAddFlashDeckModal = function() {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addFlashDeckModal" style="display:flex;" onclick="if(event.target===this)closeAddFlashDeckModal()">
     <div class="modal">
-      <h2>New Deck</h2>
+      <h2>${lucideIcon('book-open', 18, '#06b6d4')} New Deck</h2>
       <label>Deck Name</label>
-      <input type="text" id="newDeckName" placeholder="e.g. Histoire, Vocabulaire…" style="width:100%;">
+      <input type="text" id="newDeckName" placeholder="e.g. Histoire, Vocabulaire…">
       <div class="modal-actions">
-        <button class="btn" onclick="closeAddFlashDeckModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveNewFlashDeck()">Create</button>
+        <button class="modal-cancel" onclick="closeAddFlashDeckModal()">Cancel</button>
+        <button class="modal-save" onclick="saveNewFlashDeck()">Create</button>
       </div>
     </div>
   </div>`;

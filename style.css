@@ -248,10 +248,12 @@ input,select,button{font-family:inherit;}
 .project-card.expanded .task-meta-item{white-space:pre-wrap;}
 .expand-project-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;display:inline-flex;align-items:center;justify-content:center;}
 .expand-project-btn:hover{color:var(--accent);background:var(--surface2);}
-.modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;}
+.modal h2{font-size:1rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .modal label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:4px;margin-top:10px;}
 .modal input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;outline:none;}
 .modal input:focus{border-color:var(--accent);}
+.modal textarea{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.86rem;font-family:inherit;resize:vertical;outline:none;line-height:1.5;}
+.modal textarea:focus{border-color:var(--accent);}
 .modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
 .modal-actions button{padding:8px 18px;border-radius:7px;font-size:0.86rem;font-weight:600;cursor:pointer;border:none;transition:all 0.2s ease;}
 .modal-actions .modal-cancel{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
