@@ -112,6 +112,7 @@ let sessionActive = false;
 let sessionQueue = [];
 let sessionDone = 0;
 let sessionCorrect = 0;
+let sessionTotal = 0;
 
 const DECK_COLORS = [
   '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b',
@@ -157,7 +158,7 @@ function renderDeckNavButtons() {
   container.innerHTML = decks.map(deck => {
     const color = getDeckColor(deck);
     return `<button class="category-nav-btn" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="navigateToFlashDeck('${esc(deck)}')">${esc(deck)} (${allCards.filter(c=>c.deck===deck).length})</button>`;
-  }).join('') + `<button class="category-nav-btn" style="background:#6b728022;color:#9ca3af;border:1px dashed #6b728066;" onclick="navigateToFlashDeck('__notes')">📝 Notes (${allNotes.length})</button>`;
+  }).join('') + `<button class="category-nav-btn" style="background:#6b728022;color:#9ca3af;border:1px dashed #6b728066;" onclick="navigateToFlashDeck('__notes')">${lucideIcon('sticky-note', 14, '#9ca3af')} Notes (${allNotes.length})</button>`;
 }
 
 window.navigateToFlashDeck = function(deck) {
@@ -184,7 +185,7 @@ function renderDeckGrid() {
   const decks = [...new Set(allCards.map(c => c.deck))].sort();
   if (decks.length === 0) {
     grid.innerHTML = `<div class="fc-empty-state">
-      <div class="fc-empty-icon">🃏</div>
+      <div class="fc-empty-icon">${lucideIcon('book-open', 40, '#8b5cf6')}</div>
       <h3>No flashcards yet</h3>
       <p>Import from XML or create cards manually to start learning.</p>
     </div>`;
@@ -225,14 +226,14 @@ function renderDeckGrid() {
           <div class="fc-deck-chips">${chips.join('')}</div>
         </div>
         <div class="fc-deck-actions">
-          ${dueCount + newCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="Practice due cards">▶ Practice (${dueCount + newCount})</button>` : `<span class="fc-all-done">✓ All caught up</span>`}
+          ${dueCount + newCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="Practice due cards">${lucideIcon('play', 14, '#fff')} Practice (${dueCount + newCount})</button>` : `<span class="fc-all-done">${lucideIcon('circle-check', 14, '#22c55e')} All caught up</span>`}
           <button class="icon-btn" title="Add card" onclick="openAddFlashcardModal('${esc(deck)}')" style="color:${color};font-size:1.2rem;">+</button>
         </div>
       </div>
       <div class="fc-card-list">
         ${visibleCards.map(c => renderFlashcardItem(c, color)).join('')}
-        ${hasMore && isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show all ${cards.length} cards ▾</button>` : ''}
-        ${hasMore && !isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show less ▴</button>` : ''}
+        ${hasMore && isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show all ${cards.length} cards ${lucideIcon('chevron-down', 14, color)}</button>` : ''}
+        ${hasMore && !isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show less ${lucideIcon('chevron-up', 14, color)}</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -276,8 +277,8 @@ function renderFlashcardItem(c, color) {
     <div class="fc-item-text">${esc(frontTrunc)}</div>
     ${strengthEl}
     <div class="fc-item-actions">
-      <button class="icon-btn" title="Edit" onclick="openEditFlashcardModal('${c.id}')">✏️</button>
-      <button class="icon-btn" title="Delete" onclick="deleteFlashcard('${c.id}')">🗑️</button>
+      <button class="icon-btn" title="Edit" onclick="openEditFlashcardModal('${c.id}')">${lucideIcon('pencil', 14)}</button>
+      <button class="icon-btn" title="Delete" onclick="deleteFlashcard('${c.id}')">${lucideIcon('trash-2', 14)}</button>
     </div>
   </div>`;
 }
@@ -291,7 +292,7 @@ function renderNotesSection() {
       <div class="fc-deck-accent" style="background:#6b7280;"></div>
       <div class="fc-deck-header">
         <div class="fc-deck-title-row">
-          <span style="font-size:1.1rem;">📝</span>
+          <span>${lucideIcon('sticky-note', 18, '#9ca3af')}</span>
           <h3 class="fc-deck-name" style="color:#9ca3af;">Unstructured Notes</h3>
           <span class="fc-deck-count">${allNotes.length} items</span>
         </div>
@@ -304,9 +305,9 @@ function renderNotesSection() {
         ${allNotes.map(n => `<div class="fc-item" data-id="${n.id}">
           <div class="fc-item-text">${esc(n.content.length > 100 ? n.content.slice(0, 100) + '…' : n.content)}</div>
           <div class="fc-item-actions">
-            <button class="icon-btn" title="Convert to card" onclick="convertNoteToCard('${n.id}')">🃏</button>
-            <button class="icon-btn" title="Edit" onclick="openEditNoteModal('${n.id}')">✏️</button>
-            <button class="icon-btn" title="Delete" onclick="deleteNote('${n.id}')">🗑️</button>
+            <button class="icon-btn" title="Convert to card" onclick="convertNoteToCard('${n.id}')">${lucideIcon('arrow-right-left', 14)}</button>
+            <button class="icon-btn" title="Edit" onclick="openEditNoteModal('${n.id}')">${lucideIcon('pencil', 14)}</button>
+            <button class="icon-btn" title="Delete" onclick="deleteNote('${n.id}')">${lucideIcon('trash-2', 14)}</button>
           </div>
         </div>`).join('')}
       </div>
@@ -324,12 +325,36 @@ function startPractice(deckFilter) {
     return;
   }
 
-  // Shuffle due cards
-  pool.sort(() => Math.random() - 0.5);
-  sessionQueue = pool;
+  // Smart selection: prioritize by urgency
+  // 1. Failed cards (low stability, reviewed before) — most urgent
+  // 2. Overdue cards (next_review far in the past) — sorted by how overdue
+  // 3. New cards (never reviewed) — fill remaining slots
+  const SESSION_SIZE = 10;
+
+  const failed = pool.filter(c => c.last_review && c.stability > 0 && c.stability <= 2);
+  const overdue = pool.filter(c => c.last_review && c.stability > 2)
+    .sort((a, b) => new Date(a.next_review || 0) - new Date(b.next_review || 0));
+  const fresh = pool.filter(c => !c.last_review)
+    .sort(() => Math.random() - 0.5);
+
+  // Build queue: failed first, then most overdue, then new
+  let selected = [];
+  for (const group of [failed, overdue, fresh]) {
+    for (const card of group) {
+      if (selected.length >= SESSION_SIZE) break;
+      if (!selected.find(s => s.id === card.id)) selected.push(card);
+    }
+    if (selected.length >= SESSION_SIZE) break;
+  }
+
+  // Shuffle selected for variety (don't always show failed first)
+  selected.sort(() => Math.random() - 0.5);
+
+  sessionQueue = selected;
   sessionDone = 0;
   sessionCorrect = 0;
   sessionActive = true;
+  sessionTotal = selected.length;
   showPracticeOverlay();
   showNextCard();
 }
@@ -364,13 +389,12 @@ function showNextCard() {
   }
 
   const card = sessionQueue[0];
-  const total = sessionDone + sessionQueue.length;
-  const pct = total > 0 ? Math.round((sessionDone / total) * 100) : 0;
+  const pct = sessionTotal > 0 ? Math.round((sessionDone / sessionTotal) * 100) : 0;
 
   overlay.innerHTML = `
     <div class="practice-header">
       <div class="practice-progress-bar"><div class="practice-progress-fill" style="width:${pct}%;"></div></div>
-      <div class="practice-meta">${sessionDone} / ${total} · ${card.deck}</div>
+      <div class="practice-meta">${sessionDone} / ${sessionTotal} · ${card.deck}</div>
       <button class="practice-close" onclick="endPractice()">✕</button>
     </div>
     <div class="practice-card-area" onclick="revealCard()">
