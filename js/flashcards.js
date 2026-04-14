@@ -294,9 +294,9 @@ function renderFlashcardItem(c, color) {
         ${diffDots}
       </div>
     </div>
-    <div class="fc-item-actions">
-      <button class="icon-btn" title="Edit" onclick="openEditFlashcardModal('${c.id}')">${lucideIcon('pencil', 14)}</button>
-      <button class="icon-btn" title="Delete" onclick="deleteFlashcard('${c.id}')">${lucideIcon('trash-2', 14)}</button>
+    <div class="task-actions fc-actions">
+      <button onclick="openEditFlashcardModal('${c.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
+      <button onclick="deleteFlashcard('${c.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
     </div>
   </div>`;
 }
@@ -322,10 +322,10 @@ function renderNotesSection() {
         ${allNotes.length === 0 ? '<div class="fc-empty-note">Items you want to learn but haven\'t formalized as cards yet.</div>' : ''}
         ${allNotes.map(n => `<div class="fc-item" data-id="${n.id}">
           <div class="fc-item-text">${esc(n.content.length > 100 ? n.content.slice(0, 100) + '…' : n.content)}</div>
-          <div class="fc-item-actions">
-            <button class="icon-btn" title="Convert to card" onclick="convertNoteToCard('${n.id}')">${lucideIcon('arrow-right-left', 14)}</button>
-            <button class="icon-btn" title="Edit" onclick="openEditNoteModal('${n.id}')">${lucideIcon('pencil', 14)}</button>
-            <button class="icon-btn" title="Delete" onclick="deleteNote('${n.id}')">${lucideIcon('trash-2', 14)}</button>
+          <div class="task-actions fc-actions">
+            <button onclick="convertNoteToCard('${n.id}')" title="Convert to card">${lucideIcon('arrow-right-left', 16)}</button>
+            <button onclick="openEditNoteModal('${n.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
+            <button onclick="deleteNote('${n.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
           </div>
         </div>`).join('')}
       </div>

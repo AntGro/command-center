@@ -782,8 +782,8 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .fc-item--due .fc-item-text { color:#f59e0b; }
 .fc-item--new .fc-item-text { color:var(--text); }
 .fc-item-meta { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.fc-item-actions { opacity:0; transition:opacity 0.15s; display:flex; gap:2px; padding-right:8px; }
-.fc-item:hover .fc-item-actions { opacity:1; }
+.fc-item .task-actions.fc-actions { display:none; padding-right:8px; }
+.fc-item:hover .task-actions.fc-actions { display:grid; grid-template-columns:repeat(auto-fit, auto); gap:2px; justify-items:center; }
 
 /* Status badges — match project status badges */
 .fc-status-badge { font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; letter-spacing:0.02em; }
@@ -880,4 +880,5 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
   .fc-search { max-width:100%; margin-left:0; }
   .fc-deck-header { padding:12px 14px 10px; }
   .fc-deck-actions { width:100%; justify-content:flex-end; }
+  .fc-item .task-actions.fc-actions { display:grid !important; grid-template-columns:auto auto; gap:2px; justify-items:center; }
 }
