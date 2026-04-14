@@ -138,9 +138,7 @@ window.navigateToFlashDeck = function(deck) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
-// ── Collapse/Search State ──
-const deckCollapsed = {};
-const PREVIEW_COUNT = 8;
+// ── Search State ──
 let searchQuery = '';
 
 // ── Main Render ──
@@ -254,10 +252,6 @@ function renderDeckBucket(deck, q) {
   const newCount = allDeckCards.filter(c => !c.last_review).length;
   const dueCount = allDeckCards.filter(c => c.last_review && (!c.next_review || new Date(c.next_review) <= now)).length;
 
-  const isCollapsed = deckCollapsed[deck] !== false;
-  const visibleCards = isCollapsed ? cards.slice(0, PREVIEW_COUNT) : cards;
-  const hasMore = cards.length > PREVIEW_COUNT;
-
   const chips = [];
   if (newCount > 0) chips.push(`<span class="fc-chip fc-chip-new">${newCount} new</span>`);
   if (dueCount > 0) chips.push(`<span class="fc-chip fc-chip-due">${dueCount} due</span>`);
@@ -279,8 +273,7 @@ function renderDeckBucket(deck, q) {
       </div>
     </div>
     <div class="task-list">
-      ${visibleCards.map(c => renderFlashcardItem(c, color)).join('')}
-      ${hasMore ? `<div class="fc-show-more-row"><button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">${isCollapsed ? `Show all ${cards.length} cards ${lucideIcon('chevron-down', 14, color)}` : `Show less ${lucideIcon('chevron-up', 14, color)}`}</button></div>` : ''}
+      ${cards.map(c => renderFlashcardItem(c, color)).join('')}
     </div>
   </div>`;
 }
@@ -322,11 +315,6 @@ function renderFlashcardItem(c, color) {
     </div>
   </div>`;
 }
-
-window.toggleDeckCollapse = function(deck) {
-  deckCollapsed[deck] = deckCollapsed[deck] === false ? true : false;
-  renderAllBuckets();
-};
 
 window.filterFlashcards = function(e) {
   searchQuery = e.target.value;
