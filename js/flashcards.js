@@ -448,11 +448,6 @@ window.rateCard = async function(rating) {
   sessionDone++;
   if (rating >= 3) sessionCorrect++;
 
-  // Requeue failed cards for end of session
-  if (rating === 1) {
-    sessionQueue.push(card);
-  }
-
   showNextCard();
 };
 
