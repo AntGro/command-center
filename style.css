@@ -749,62 +749,46 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
    FLASHCARDS
    ═══════════════════════════════════════════════════════ */
 
-/* ═══════ Flashcard Deck Cards ═══════ */
+/* ═══════ Flashcard — Minimal additions (reuses .project-card, .todo-item) ═══════ */
 .fc-action-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
 .fc-action-bar .btn { font-size:0.85rem; padding:6px 14px; }
 .fc-search { flex:1; min-width:160px; max-width:280px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.85rem; margin-left:auto; }
 .fc-search:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 2px rgba(139,92,246,0.15); }
 
-.fc-deck-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; position:relative; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-.fc-deck-accent { height:3px; width:100%; }
-.fc-deck-header { padding:16px 20px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.fc-deck-title-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.fc-deck-name { margin:0; font-family:'EB Garamond','DM Sans',serif; font-size:1.2rem; font-weight:600; }
-.fc-deck-count { font-size:0.78rem; color:var(--muted); }
-.fc-deck-chips { display:flex; gap:6px; flex-wrap:wrap; }
-.fc-chip { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:600; }
+.fc-chip { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:600; display:inline-block; }
 .fc-chip-new { background:rgba(99,102,241,0.15); color:#818cf8; }
 .fc-chip-due { background:rgba(245,158,11,0.15); color:#f59e0b; }
-.fc-chip-mastered { background:rgba(34,197,94,0.15); color:#22c55e; }
 
-.fc-deck-actions { display:flex; align-items:center; gap:8px; }
-.fc-practice-btn { border:none; color:#fff; padding:6px 16px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+.fc-practice-btn { border:none; color:#fff; padding:5px 14px; border-radius:8px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:opacity 0.15s; display:inline-flex; align-items:center; gap:4px; }
 .fc-practice-btn:hover { opacity:0.85; }
-.fc-all-done { font-size:0.8rem; color:#22c55e; font-weight:500; }
+.fc-all-done { font-size:0.78rem; color:#22c55e; font-weight:500; display:inline-flex; align-items:center; gap:4px; }
 
-.fc-card-list { padding:0 0 8px; }
-.fc-item { display:flex; align-items:center; gap:0; padding:0; border-bottom:1px solid var(--border); transition:background 0.15s; min-height:40px; }
-.fc-item:last-child { border-bottom:none; }
-.fc-item:hover { background:rgba(255,255,255,0.03); }
-.fc-item-indicator { width:3px; align-self:stretch; border-radius:0; flex-shrink:0; }
-.fc-item-body { flex:1; display:flex; align-items:center; gap:10px; padding:8px 12px; min-width:0; }
-.fc-item-text { flex:1; font-size:0.85rem; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.fc-item--due .fc-item-text { color:#f59e0b; }
-.fc-item--new .fc-item-text { color:var(--text); }
-.fc-item-meta { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.fc-item .task-actions.fc-actions { display:none; padding-right:8px; }
-.fc-item:hover .task-actions.fc-actions { display:grid; grid-template-columns:repeat(auto-fit, auto); gap:2px; justify-items:center; }
-
-/* Status badges — match project status badges */
 .fc-status-badge { font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; letter-spacing:0.02em; }
 .fc-status-new { background:rgba(99,102,241,0.15); color:#818cf8; }
 .fc-status-due { background:rgba(245,158,11,0.15); color:#f59e0b; }
 .fc-status-ok { background:rgba(34,197,94,0.12); color:#22c55e; }
 
-/* Difficulty dots */
-.fc-diff { font-size:0.5rem; letter-spacing:1px; opacity:0.7; }
-
 .fc-strength-bar { width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden; flex-shrink:0; }
 .fc-strength { height:100%; border-radius:2px; transition:width 0.3s; }
 
-.fc-show-more { display:block; width:100%; padding:8px; background:none; border:none; font-size:0.82rem; font-weight:500; cursor:pointer; opacity:0.7; transition:opacity 0.15s; }
+.fc-show-more { display:block; width:100%; padding:8px; background:none; border:none; font-size:0.82rem; font-weight:500; cursor:pointer; opacity:0.7; transition:opacity 0.15s; color:var(--text); }
 .fc-show-more:hover { opacity:1; }
 
-.fc-empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+.fc-empty-state { text-align:center; padding:48px 20px; color:var(--muted); grid-column:1/-1; }
 .fc-empty-icon { font-size:2.5rem; margin-bottom:12px; }
-.fc-empty-state h3 { font-family:'EB Garamond','DM Sans',serif; color:var(--text); margin-bottom:8px; }
+.fc-empty-state h3 { font-family:'DM Sans',sans-serif; color:var(--text); margin-bottom:8px; }
 .fc-empty-state p { font-size:0.85rem; }
-.fc-empty-note { padding:12px; color:var(--muted); font-size:0.85rem; }
+
+/* ═══════ Draft Proposal ═══════ */
+.fc-proposal { margin:4px 16px 8px 32px; padding:10px 14px; border-radius:8px; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); font-size:0.84rem; }
+.fc-proposal-label { font-size:0.72rem; font-weight:600; color:#22c55e; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.fc-proposal-qa { margin-bottom:4px; line-height:1.5; color:var(--text); }
+.fc-proposal-qa strong { color:var(--muted); margin-right:4px; }
+.fc-proposal-actions { display:flex; gap:8px; margin-top:8px; }
+.fc-proposal-accept { border:none; background:#22c55e; color:#fff; padding:4px 14px; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.fc-proposal-accept:hover { background:#16a34a; }
+.fc-proposal-reject { border:1px solid var(--border); background:none; color:var(--muted); padding:4px 14px; border-radius:6px; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.fc-proposal-reject:hover { color:var(--red); border-color:var(--red); }
 
 /* ═══════ Practice Overlay ═══════ */
 .practice-overlay {
@@ -821,7 +805,6 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .practice-close { background:none; border:none; color:rgba(255,255,255,0.5); font-size:1.4rem; cursor:pointer; padding:4px 8px; }
 .practice-close:hover { color:#fff; }
 
-/* Card flip */
 .practice-card-area { perspective:1000px; cursor:pointer; width:100%; max-width:520px; }
 .practice-card {
   width:100%; min-height:280px; position:relative;
@@ -839,12 +822,11 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .practice-card-back { transform:rotateY(180deg); background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.2); }
 
 .practice-card-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }
-.practice-card-text { font-size:1.15rem; color:#fff; line-height:1.6; font-family:'EB Garamond','DM Sans',serif; }
+.practice-card-text { font-size:1.15rem; color:#fff; line-height:1.6; font-family:'DM Sans',sans-serif; }
 
 .practice-hint { margin-top:20px; font-size:0.85rem; color:rgba(255,255,255,0.35); animation:pulse-hint 2s infinite; }
 @keyframes pulse-hint { 0%,100%{opacity:0.35;} 50%{opacity:0.7;} }
 
-/* Rating buttons */
 .practice-buttons { display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; justify-content:center; }
 .rating-btn {
   padding:12px 20px; border:none; border-radius:10px; font-size:0.95rem; font-weight:600;
@@ -857,10 +839,9 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .rating-good  { background:#22c55e; } .rating-good:hover  { box-shadow:0 0 16px rgba(34,197,94,0.4); }
 .rating-easy  { background:#3b82f6; } .rating-easy:hover  { box-shadow:0 0 16px rgba(59,130,246,0.4); }
 
-/* Session summary */
 .practice-summary { text-align:center; color:#fff; }
 .practice-summary-emoji { font-size:3rem; margin-bottom:12px; }
-.practice-summary h2 { font-family:'EB Garamond','DM Sans',serif; font-size:1.6rem; margin-bottom:20px; }
+.practice-summary h2 { font-family:'DM Sans',sans-serif; font-size:1.6rem; margin-bottom:20px; }
 .practice-summary-stats { display:flex; gap:32px; justify-content:center; margin-bottom:28px; }
 .practice-summary-stat { display:flex; flex-direction:column; align-items:center; }
 .practice-stat-val { font-size:2rem; font-weight:700; color:#8b5cf6; }
@@ -868,7 +849,6 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .practice-done-btn { background:#8b5cf6; color:#fff; padding:10px 32px; border-radius:10px; font-size:1rem; border:none; cursor:pointer; }
 .practice-done-btn:hover { background:#7c3aed; }
 
-/* Mobile */
 @media (max-width:600px) {
   .practice-card-area { max-width:95vw; }
   .practice-card-front, .practice-card-back { padding:24px 18px; min-height:220px; }
@@ -878,7 +858,4 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
   .fc-action-bar { flex-direction:column; }
   .fc-action-bar .btn { width:100%; }
   .fc-search { max-width:100%; margin-left:0; }
-  .fc-deck-header { padding:12px 14px 10px; }
-  .fc-deck-actions { width:100%; justify-content:flex-end; }
-  .fc-item .task-actions.fc-actions { display:grid !important; grid-template-columns:auto auto; gap:2px; justify-items:center; }
 }
