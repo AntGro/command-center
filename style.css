@@ -755,6 +755,9 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .fc-search { flex:1; min-width:160px; max-width:280px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.85rem; margin-left:auto; }
 .fc-search:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 2px rgba(139,92,246,0.15); }
 
+/* Show actions on hover for flashcard items (no JS delay like todos) */
+#flashcardGrid .todo-item:hover .todo-actions { display:inline-flex; }
+
 .fc-chip { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:600; display:inline-block; }
 .fc-chip-new { background:rgba(99,102,241,0.15); color:#818cf8; }
 .fc-chip-due { background:rgba(245,158,11,0.15); color:#f59e0b; }
@@ -858,4 +861,5 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
   .fc-action-bar { flex-direction:column; }
   .fc-action-bar .btn { width:100%; }
   .fc-search { max-width:100%; margin-left:0; }
+  #flashcardGrid .todo-actions { display:inline-flex !important; }
 }
