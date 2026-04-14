@@ -740,3 +740,96 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 
 /* Purple stat value for categories */
 .stat-value.purple{color:#8b5cf6;}
+
+/* ═══════════════════════════════════════════════════════
+   FLASHCARDS
+   ═══════════════════════════════════════════════════════ */
+
+/* Action bar */
+.fc-action-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.fc-action-bar .btn { font-size:0.85rem; padding:6px 14px; }
+
+/* Card items in deck */
+.flashcard-item { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:6px; transition:background 0.15s; }
+.flashcard-item:hover { background:rgba(255,255,255,0.04); }
+.flashcard-item .task-actions { opacity:0; transition:opacity 0.15s; }
+.flashcard-item:hover .task-actions { opacity:1; }
+.fc-item-text { flex:1; font-size:0.85rem; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fc-due .fc-item-text { color:#f59e0b; }
+
+/* Strength bar */
+.fc-strength-bar { width:40px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden; flex-shrink:0; }
+.fc-strength { height:100%; border-radius:2px; transition:width 0.3s; }
+
+/* ═══════ Practice Overlay ═══════ */
+.practice-overlay {
+  position:fixed; inset:0; z-index:9999;
+  background:rgba(10,10,20,0.96);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:20px; box-sizing:border-box;
+}
+
+.practice-header { position:absolute; top:0; left:0; right:0; padding:16px 20px; display:flex; align-items:center; gap:12px; }
+.practice-progress-bar { flex:1; height:6px; border-radius:3px; background:rgba(255,255,255,0.1); overflow:hidden; }
+.practice-progress-fill { height:100%; background:linear-gradient(90deg,#8b5cf6,#06b6d4); border-radius:3px; transition:width 0.3s; }
+.practice-meta { font-size:0.8rem; color:rgba(255,255,255,0.5); white-space:nowrap; }
+.practice-close { background:none; border:none; color:rgba(255,255,255,0.5); font-size:1.4rem; cursor:pointer; padding:4px 8px; }
+.practice-close:hover { color:#fff; }
+
+/* Card flip */
+.practice-card-area { perspective:1000px; cursor:pointer; width:100%; max-width:520px; }
+.practice-card {
+  width:100%; min-height:280px; position:relative;
+  transform-style:preserve-3d; transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.practice-card.flipped { transform:rotateY(180deg); }
+
+.practice-card-front, .practice-card-back {
+  position:absolute; inset:0; backface-visibility:hidden;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  padding:32px 28px; border-radius:16px; text-align:center;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+.practice-card-back { transform:rotateY(180deg); background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.2); }
+
+.practice-card-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }
+.practice-card-text { font-size:1.15rem; color:#fff; line-height:1.6; font-family:'EB Garamond','DM Sans',serif; }
+
+.practice-hint { margin-top:20px; font-size:0.85rem; color:rgba(255,255,255,0.35); animation:pulse-hint 2s infinite; }
+@keyframes pulse-hint { 0%,100%{opacity:0.35;} 50%{opacity:0.7;} }
+
+/* Rating buttons */
+.practice-buttons { display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; justify-content:center; }
+.rating-btn {
+  padding:12px 20px; border:none; border-radius:10px; font-size:0.95rem; font-weight:600;
+  cursor:pointer; color:#fff; min-width:80px; transition:transform 0.1s,box-shadow 0.15s;
+}
+.rating-btn:active { transform:scale(0.95); }
+.rating-num { font-size:0.7rem; opacity:0.6; margin-right:4px; }
+.rating-again { background:#ef4444; } .rating-again:hover { box-shadow:0 0 16px rgba(239,68,68,0.4); }
+.rating-hard  { background:#f97316; } .rating-hard:hover  { box-shadow:0 0 16px rgba(249,115,22,0.4); }
+.rating-good  { background:#22c55e; } .rating-good:hover  { box-shadow:0 0 16px rgba(34,197,94,0.4); }
+.rating-easy  { background:#3b82f6; } .rating-easy:hover  { box-shadow:0 0 16px rgba(59,130,246,0.4); }
+
+/* Session summary */
+.practice-summary { text-align:center; color:#fff; }
+.practice-summary-emoji { font-size:3rem; margin-bottom:12px; }
+.practice-summary h2 { font-family:'EB Garamond','DM Sans',serif; font-size:1.6rem; margin-bottom:20px; }
+.practice-summary-stats { display:flex; gap:32px; justify-content:center; margin-bottom:28px; }
+.practice-summary-stat { display:flex; flex-direction:column; align-items:center; }
+.practice-stat-val { font-size:2rem; font-weight:700; color:#8b5cf6; }
+.practice-stat-lbl { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:4px; }
+.practice-done-btn { background:#8b5cf6; color:#fff; padding:10px 32px; border-radius:10px; font-size:1rem; border:none; cursor:pointer; }
+.practice-done-btn:hover { background:#7c3aed; }
+
+/* Mobile */
+@media (max-width:600px) {
+  .practice-card-area { max-width:95vw; }
+  .practice-card-front, .practice-card-back { padding:24px 18px; min-height:220px; }
+  .practice-card-text { font-size:1rem; }
+  .rating-btn { padding:14px 16px; font-size:0.9rem; min-width:70px; flex:1; }
+  .practice-buttons { gap:6px; }
+  .fc-action-bar { flex-direction:column; }
+  .fc-action-bar .btn { width:100%; }
+}

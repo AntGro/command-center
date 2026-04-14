@@ -7,6 +7,7 @@ import { refreshTodos, renderTodos } from './todos.js';
 import { refreshChores, renderChores } from './chores.js';
 import { refreshBirthdays, renderBirthdays, initBirthdayModals } from './birthdays.js';
 import { refreshVestiaire, renderVestiaire, initVestiaireModals } from './vestiaire.js';
+import { refreshFlashcards, renderFlashcards, initFlashcardModals } from './flashcards.js';
 
 // ===================================================================
 // GATE LOGIC
@@ -145,6 +146,8 @@ async function connect(url, key) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'birthdays' }, () => refreshBirthdays())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'vestiaire' }, () => refreshVestiaire())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => refreshFlashcards())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcard_notes' }, () => refreshFlashcards())
     .subscribe();
 
   // Initialize TODOs
@@ -161,8 +164,12 @@ async function connect(url, key) {
   initVestiaireModals();
   await refreshVestiaire();
 
+  // Initialize Flashcards
+  initFlashcardModals();
+  await refreshFlashcards();
+
   // Restore last view — hash takes priority over localStorage
-  const validViews = ['projects', 'todos', 'chores', 'birthdays', 'vestiaire'];
+  const validViews = ['projects', 'todos', 'chores', 'birthdays', 'vestiaire', 'flashcards'];
   const rawHash = location.hash.replace('#', '');
   const hashView = validViews.includes(rawHash) ? rawHash : null;
   const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
@@ -223,11 +230,13 @@ function switchView(view) {
   const choresView = document.getElementById('choresView');
   const birthdaysView = document.getElementById('birthdaysView');
   const vestiaireView = document.getElementById('vestiaireView');
+  const flashcardsView = document.getElementById('flashcardsView');
   const tabProjects = document.getElementById('tabProjects');
   const tabTodos = document.getElementById('tabTodos');
   const tabChores = document.getElementById('tabChores');
   const tabBirthdays = document.getElementById('tabBirthdays');
   const tabVestiaire = document.getElementById('tabVestiaire');
+  const tabFlashcards = document.getElementById('tabFlashcards');
   const addProjectBtn = document.querySelector('.header-actions .btn[onclick="openAddProjectModal()"]');
 
   // Hide all
@@ -236,11 +245,13 @@ function switchView(view) {
   if (choresView) choresView.style.display = 'none';
   if (birthdaysView) birthdaysView.style.display = 'none';
   if (vestiaireView) vestiaireView.style.display = 'none';
+  if (flashcardsView) flashcardsView.style.display = 'none';
   tabProjects.classList.remove('active');
   tabTodos.classList.remove('active');
   if (tabChores) tabChores.classList.remove('active');
   if (tabBirthdays) tabBirthdays.classList.remove('active');
   if (tabVestiaire) tabVestiaire.classList.remove('active');
+  if (tabFlashcards) tabFlashcards.classList.remove('active');
 
   if (view === 'projects') {
     projectsView.style.display = '';
@@ -266,6 +277,11 @@ function switchView(view) {
     if (tabVestiaire) tabVestiaire.classList.add('active');
     if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderVestiaire();
+  } else if (view === 'flashcards') {
+    if (flashcardsView) flashcardsView.style.display = '';
+    if (tabFlashcards) tabFlashcards.classList.add('active');
+    if (addProjectBtn) addProjectBtn.style.display = 'none';
+    renderFlashcards();
   }
 }
 
