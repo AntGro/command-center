@@ -165,6 +165,11 @@ window.navigateToFlashDeck = function(deck) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
+// ── State for collapse/search ──
+const deckCollapsed = {}; // deck -> bool (true = showing only preview)
+const PREVIEW_COUNT = 8;
+let searchQuery = '';
+
 // ── Main Render ──
 function renderFlashcards() {
   renderFlashcardStats();
@@ -178,45 +183,99 @@ function renderDeckGrid() {
   if (!grid) return;
   const decks = [...new Set(allCards.map(c => c.deck))].sort();
   if (decks.length === 0) {
-    grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">No flashcards yet. Import XML or add cards manually.</div>`;
+    grid.innerHTML = `<div class="fc-empty-state">
+      <div class="fc-empty-icon">🃏</div>
+      <h3>No flashcards yet</h3>
+      <p>Import from XML or create cards manually to start learning.</p>
+    </div>`;
     return;
   }
 
+  const q = searchQuery.toLowerCase().trim();
+
   grid.innerHTML = decks.map(deck => {
-    const cards = allCards.filter(c => c.deck === deck);
+    let cards = allCards.filter(c => c.deck === deck);
+    if (q) cards = cards.filter(c => c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q));
+    if (cards.length === 0 && q) return '';
+
     const color = getDeckColor(deck);
     const now = new Date();
-    const dueCount = cards.filter(c => !c.next_review || new Date(c.next_review) <= now).length;
+    const allDeckCards = allCards.filter(c => c.deck === deck);
+    const newCount = allDeckCards.filter(c => !c.last_review).length;
+    const dueCount = allDeckCards.filter(c => c.last_review && (!c.next_review || new Date(c.next_review) <= now)).length;
+    const masteredCount = allDeckCards.filter(c => c.stability > 21).length;
 
-    return `<div class="project-card" id="flashDeck-${esc(deck)}" style="border-top:3px solid ${color};">
-      <div class="project-card-header">
-        <span class="project-card-title" style="color:${color};">
-          <svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          ${esc(deck)} <span style="font-size:0.75rem;color:var(--muted);">(${cards.length} cards${dueCount ? ', <strong style="color:#f59e0b;">' + dueCount + ' due</strong>' : ''})</span>
-        </span>
-        <div class="project-card-actions">
-          <button class="icon-btn" title="Practice this deck" onclick="startPractice('${esc(deck)}')">▶</button>
-          <button class="icon-btn" title="Add card" onclick="openAddFlashcardModal('${esc(deck)}')" style="color:${color};">+</button>
+    const isCollapsed = deckCollapsed[deck] !== false; // default collapsed
+    const visibleCards = isCollapsed ? cards.slice(0, PREVIEW_COUNT) : cards;
+    const hasMore = cards.length > PREVIEW_COUNT;
+
+    // Mini stats chips
+    const chips = [];
+    if (newCount > 0) chips.push(`<span class="fc-chip fc-chip-new">${newCount} new</span>`);
+    if (dueCount > 0) chips.push(`<span class="fc-chip fc-chip-due">${dueCount} due</span>`);
+    if (masteredCount > 0) chips.push(`<span class="fc-chip fc-chip-mastered">${masteredCount} mastered</span>`);
+
+    return `<div class="fc-deck-card" id="flashDeck-${esc(deck)}">
+      <div class="fc-deck-accent" style="background:${color};"></div>
+      <div class="fc-deck-header">
+        <div class="fc-deck-title-row">
+          <svg class="lucide-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <h3 class="fc-deck-name" style="color:${color};">${esc(deck)}</h3>
+          <span class="fc-deck-count">${allDeckCards.length} cards</span>
+          <div class="fc-deck-chips">${chips.join('')}</div>
+        </div>
+        <div class="fc-deck-actions">
+          ${dueCount + newCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="Practice due cards">▶ Practice (${dueCount + newCount})</button>` : `<span class="fc-all-done">✓ All caught up</span>`}
+          <button class="icon-btn" title="Add card" onclick="openAddFlashcardModal('${esc(deck)}')" style="color:${color};font-size:1.2rem;">+</button>
         </div>
       </div>
-      <div class="task-list">
-        ${cards.map(c => renderFlashcardItem(c, color)).join('')}
+      <div class="fc-card-list">
+        ${visibleCards.map(c => renderFlashcardItem(c, color)).join('')}
+        ${hasMore && isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show all ${cards.length} cards ▾</button>` : ''}
+        ${hasMore && !isCollapsed ? `<button class="fc-show-more" onclick="toggleDeckCollapse('${esc(deck)}')" style="color:${color};">Show less ▴</button>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
+window.toggleDeckCollapse = function(deck) {
+  deckCollapsed[deck] = deckCollapsed[deck] === false ? true : false;
+  renderDeckGrid();
+};
+
+window.filterFlashcards = function(e) {
+  searchQuery = e.target.value;
+  renderDeckGrid();
+};
+
 function renderFlashcardItem(c, color) {
   const now = new Date();
-  const isDue = !c.next_review || new Date(c.next_review) <= now;
+  const isNew = !c.last_review;
+  const isDue = !isNew && (!c.next_review || new Date(c.next_review) <= now);
   const R = c.last_review && c.stability ? retrievability(c.stability, c.last_review, now.toISOString()) : null;
-  const strengthBar = R !== null ? `<div class="fc-strength" style="width:${Math.round(R*100)}%;background:${R>0.8?'#22c55e':R>0.5?'#f59e0b':'#ef4444'};"></div>` : '';
 
-  const frontTrunc = c.front.length > 80 ? c.front.slice(0, 80) + '…' : c.front;
-  return `<div class="task-row flashcard-item${isDue ? ' fc-due' : ''}" data-id="${c.id}">
+  // Status badge
+  let badge = '';
+  if (isNew) {
+    badge = `<span class="fc-badge fc-badge-new">NEW</span>`;
+  } else if (isDue) {
+    badge = `<span class="fc-badge fc-badge-due">DUE</span>`;
+  }
+
+  // Strength indicator
+  let strengthEl = '';
+  if (R !== null) {
+    const pct = Math.round(R * 100);
+    const barColor = R > 0.8 ? '#22c55e' : R > 0.5 ? '#f59e0b' : '#ef4444';
+    strengthEl = `<div class="fc-strength-bar" title="${pct}% recall"><div class="fc-strength" style="width:${pct}%;background:${barColor};"></div></div>`;
+  }
+
+  const frontTrunc = c.front.length > 90 ? c.front.slice(0, 90) + '…' : c.front;
+  return `<div class="fc-item${isDue ? ' fc-item--due' : ''}${isNew ? ' fc-item--new' : ''}" data-id="${c.id}">
+    ${badge}
     <div class="fc-item-text">${esc(frontTrunc)}</div>
-    <div class="fc-strength-bar">${strengthBar}</div>
-    <div class="task-actions">
+    ${strengthEl}
+    <div class="fc-item-actions">
       <button class="icon-btn" title="Edit" onclick="openEditFlashcardModal('${c.id}')">✏️</button>
       <button class="icon-btn" title="Delete" onclick="deleteFlashcard('${c.id}')">🗑️</button>
     </div>
@@ -228,18 +287,23 @@ function renderNotesSection() {
   const container = document.getElementById('flashcardNotesSection');
   if (!container) return;
   container.innerHTML = `
-    <div class="project-card" style="border-top:3px solid #6b7280;">
-      <div class="project-card-header">
-        <span class="project-card-title" style="color:#9ca3af;">📝 Unstructured Notes <span style="font-size:0.75rem;color:var(--muted);">(${allNotes.length})</span></span>
-        <div class="project-card-actions">
-          <button class="icon-btn" title="Add note" onclick="openAddNoteModal()" style="color:#9ca3af;">+</button>
+    <div class="fc-deck-card" id="flashcardNotesDeck" style="margin-top:16px;">
+      <div class="fc-deck-accent" style="background:#6b7280;"></div>
+      <div class="fc-deck-header">
+        <div class="fc-deck-title-row">
+          <span style="font-size:1.1rem;">📝</span>
+          <h3 class="fc-deck-name" style="color:#9ca3af;">Unstructured Notes</h3>
+          <span class="fc-deck-count">${allNotes.length} items</span>
+        </div>
+        <div class="fc-deck-actions">
+          <button class="icon-btn" title="Add note" onclick="openAddNoteModal()" style="color:#9ca3af;font-size:1.2rem;">+</button>
         </div>
       </div>
-      <div class="task-list">
-        ${allNotes.length === 0 ? '<div style="padding:12px;color:var(--muted);font-size:0.85rem;">Items you want to learn but haven\'t formalized as cards yet.</div>' : ''}
-        ${allNotes.map(n => `<div class="task-row flashcard-item" data-id="${n.id}">
+      <div class="fc-card-list">
+        ${allNotes.length === 0 ? '<div class="fc-empty-note">Items you want to learn but haven\'t formalized as cards yet.</div>' : ''}
+        ${allNotes.map(n => `<div class="fc-item" data-id="${n.id}">
           <div class="fc-item-text">${esc(n.content.length > 100 ? n.content.slice(0, 100) + '…' : n.content)}</div>
-          <div class="task-actions">
+          <div class="fc-item-actions">
             <button class="icon-btn" title="Convert to card" onclick="convertNoteToCard('${n.id}')">🃏</button>
             <button class="icon-btn" title="Edit" onclick="openEditNoteModal('${n.id}')">✏️</button>
             <button class="icon-btn" title="Delete" onclick="deleteNote('${n.id}')">🗑️</button>
