@@ -1136,8 +1136,15 @@ function showDeleteConfirm(title, message, onConfirm, detail) {
   } else {
     detailEl.style.display = 'none';
   }
+  // Reset button state
+  const btn = document.getElementById('deleteConfirmBtn');
+  btn.classList.remove('loading');
+  btn.disabled = false;
+  document.getElementById('deleteConfirmBtnText').textContent = 'Delete';
   _deleteConfirmCallback = onConfirm;
   document.getElementById('deleteConfirmModal').classList.add('visible');
+  // Focus cancel button for safety (prevent accidental Enter-to-delete)
+  setTimeout(() => document.getElementById('deleteConfirmCancelBtn').focus(), 50);
 }
 
 function closeDeleteConfirm() {
@@ -1148,8 +1155,21 @@ function closeDeleteConfirm() {
 async function executeDeleteConfirm() {
   if (_deleteConfirmCallback) {
     const cb = _deleteConfirmCallback;
-    closeDeleteConfirm();
-    await cb();
+    const btn = document.getElementById('deleteConfirmBtn');
+    // Show loading state
+    btn.classList.add('loading');
+    btn.disabled = true;
+    document.getElementById('deleteConfirmBtnText').textContent = 'Deleting…';
+    try {
+      closeDeleteConfirm();
+      await cb();
+    } catch (e) {
+      showToast('Delete failed: ' + (e.message || e), 'error');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      document.getElementById('deleteConfirmBtnText').textContent = 'Delete';
+    }
   }
 }
 

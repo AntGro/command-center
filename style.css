@@ -258,19 +258,32 @@ input,select,button{font-family:inherit;}
 .modal-actions .modal-cancel:hover{border-color:var(--text);color:var(--text);transform:translateY(-1px);}
 .modal-actions .modal-save{background:var(--accent);color:#fff;box-shadow:0 2px 10px rgba(100,108,255,0.25);}
 .modal-actions .modal-save:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 4px 16px rgba(100,108,255,0.35);}
-.delete-confirm-modal{max-width:380px;text-align:center;border-top:3px solid var(--red);animation:modalSlideIn 0.2s ease-out;}
-.delete-confirm-icon{font-size:2.4rem;margin-bottom:8px;display:block;animation:warningPulse 1.5s ease-in-out infinite;}
-.delete-confirm-modal h2{color:var(--red);font-size:1rem;margin-bottom:6px;}
+.delete-confirm-modal{max-width:400px;text-align:center;border-top:3px solid var(--red);animation:deleteModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(239,68,68,0.1);}
+.delete-confirm-icon-wrap{width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;animation:iconBounceIn 0.4s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;}
+.delete-confirm-icon-svg{color:var(--red);flex-shrink:0;}
+.delete-confirm-modal h2{color:var(--red);font-size:1.05rem;margin-bottom:6px;font-weight:700;}
 .delete-confirm-msg{font-size:0.88rem;color:var(--muted);margin:8px 0 4px;line-height:1.5;}
-.delete-confirm-detail{font-size:0.78rem;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:10px 0 4px;line-height:1.4;word-break:break-word;}
-.delete-confirm-modal .modal-actions{justify-content:center;gap:12px;}
-.delete-confirm-btn{background:var(--red) !important;color:#fff !important;transition:all 0.2s;}
-.delete-confirm-btn:hover{opacity:0.85;transform:scale(1.02);}
-.delete-confirm-modal .modal-cancel{transition:all 0.2s;}
-.delete-confirm-modal .modal-cancel:hover{border-color:var(--text);color:var(--text);}
+.delete-confirm-detail{font-size:0.8rem;color:var(--text);background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:8px;padding:10px 14px;margin:12px 0 4px;line-height:1.4;word-break:break-word;}
+.delete-confirm-modal .modal-actions{justify-content:center;gap:12px;margin-top:20px;}
+.delete-confirm-modal .modal-actions button{min-width:110px;padding:10px 20px;font-size:0.88rem;}
+.delete-confirm-btn{background:var(--red) !important;color:#fff !important;transition:all 0.2s;display:inline-flex !important;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 12px rgba(239,68,68,0.25) !important;}
+.delete-confirm-btn:hover{background:#dc2626 !important;transform:translateY(-1px) !important;box-shadow:0 4px 20px rgba(239,68,68,0.35) !important;}
+.delete-confirm-btn:active{transform:translateY(0) scale(0.98) !important;}
+.delete-confirm-btn.loading{pointer-events:none;opacity:0.7;}
+.delete-confirm-btn.loading .lucide-icon{display:none;}
+.delete-confirm-btn.loading #deleteConfirmBtnText::before{content:'';display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:btnSpin 0.6s linear infinite;margin-right:6px;vertical-align:middle;}
+.delete-confirm-modal .modal-cancel{transition:all 0.2s;font-weight:600;}
+.delete-confirm-modal .modal-cancel:hover{border-color:var(--text);color:var(--text);transform:translateY(-1px);}
+.delete-confirm-modal .modal-cancel:active{transform:translateY(0) scale(0.98);}
+[data-theme="light"] .delete-confirm-modal{box-shadow:0 20px 60px rgba(0,0,0,0.12),0 0 40px rgba(239,68,68,0.06);}
+[data-theme="light"] .delete-confirm-icon-wrap{background:rgba(239,68,68,0.08);}
+[data-theme="light"] .delete-confirm-detail{background:rgba(239,68,68,0.04);border-color:rgba(239,68,68,0.12);}
 @keyframes modalSlideIn{from{opacity:0;transform:translateY(-8px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes overlayFadeIn{from{opacity:0;}to{opacity:1;}}
 @keyframes warningPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+@keyframes deleteModalIn{from{opacity:0;transform:translateY(-12px) scale(0.93);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes iconBounceIn{from{opacity:0;transform:scale(0.5);}to{opacity:1;transform:scale(1);}}
+@keyframes btnSpin{to{transform:rotate(360deg);}}
 
 /* ===== INLINE EDIT ===== */
 .task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;min-height:2.4em;line-height:1.35;box-sizing:border-box;}
