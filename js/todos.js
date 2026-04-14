@@ -303,6 +303,7 @@ const TODO_OUTDATED_DAYS = 7;
 
 function isTodoOutdated(t) {
   if (t.done) return false;
+  if (!t.due_date) return false;
   const now = new Date();
   const ref = new Date(t.updated_at || t.created_at);
   const diffDays = (now - ref) / (1000 * 60 * 60 * 24);
