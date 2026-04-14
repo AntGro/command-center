@@ -283,6 +283,10 @@ function switchView(view) {
     if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderFlashcards();
   }
+
+  // Scroll active tab into view on mobile (horizontal carousel)
+  const activeTab = document.querySelector('.view-tab.active');
+  if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 // ===================================================================
