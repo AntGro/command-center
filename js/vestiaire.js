@@ -163,11 +163,20 @@ function renderVestiaireItem(v) {
     ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${metaParts.join('')}</div>`
     : '';
 
+  // Purchase status badge
+  let statusBadge = '';
+  if (v.purchase_status === 'achete') {
+    statusBadge = `<span style="font-size:0.65rem;padding:1px 6px;border-radius:4px;background:#10b98120;color:#10b981;font-weight:600;margin-left:6px;">Acheté</span>`;
+  } else if (v.purchase_status === 'essaye') {
+    statusBadge = `<span style="font-size:0.65rem;padding:1px 6px;border-radius:4px;background:#f59e0b20;color:#f59e0b;font-weight:600;margin-left:6px;">Essayé</span>`;
+  }
+
   return `<div class="vestiaire-item" style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;">
         <span style="font-size:0.88rem;font-weight:500;">${esc(v.name)}</span>
         ${brandHtml}
+        ${statusBadge}
       </div>
       ${metaHtml}
     </div>
@@ -255,6 +264,12 @@ function initVestiaireModals() {
     <input type="text" id="newVestiaireColor" placeholder="e.g. Navy, Blanc..." maxlength="100">
     <label>Notes (optional)</label>
     <input type="text" id="newVestiaireNotes" placeholder="e.g. Slim fit, bought at..." maxlength="500">
+    <label>Status</label>
+    <select id="newVestiairePurchaseStatus">
+      <option value="">—</option>
+      <option value="essaye">Essayé</option>
+      <option value="achete">Acheté</option>
+    </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeAddVestiaireModal()">Cancel</button>
       <button class="modal-save" onclick="saveNewVestiaire()">Add</button>
@@ -281,6 +296,12 @@ function initVestiaireModals() {
     <input type="text" id="editVestiaireColor" maxlength="100">
     <label>Notes (optional)</label>
     <input type="text" id="editVestiaireNotes" maxlength="500">
+    <label>Status</label>
+    <select id="editVestiairePurchaseStatus">
+      <option value="">—</option>
+      <option value="essaye">Essayé</option>
+      <option value="achete">Acheté</option>
+    </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeEditVestiaireModal()">Cancel</button>
       <button class="modal-save" onclick="saveEditVestiaire()">Save</button>
@@ -323,6 +344,7 @@ function openAddVestiaireModal(preselectedCategory) {
   document.getElementById('newVestiaireSize').value = '';
   document.getElementById('newVestiaireColor').value = '';
   document.getElementById('newVestiaireNotes').value = '';
+  document.getElementById('newVestiairePurchaseStatus').value = '';
   document.getElementById('newVestiaireCategory').value = preselectedCategory || getVestiaireCategories()[0] || '';
   document.getElementById('addVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('newVestiaireName').focus(), 100);
@@ -339,6 +361,7 @@ async function saveNewVestiaire() {
   const category = document.getElementById('newVestiaireCategory').value;
   const color = document.getElementById('newVestiaireColor').value.trim();
   const notes = document.getElementById('newVestiaireNotes').value.trim();
+  const purchaseStatus = document.getElementById('newVestiairePurchaseStatus').value;
 
   if (!name) { showToast('Enter a name', 'error'); return; }
 
@@ -347,6 +370,7 @@ async function saveNewVestiaire() {
   if (size) row.size = size;
   if (color) row.color = color;
   if (notes) row.note = notes;
+  if (purchaseStatus) row.purchase_status = purchaseStatus;
 
   const { error } = await state.sb.from('vestiaire').insert(row);
   if (error) { showToast('Failed to add item: ' + error.message, 'error'); return; }
@@ -365,6 +389,7 @@ function openEditVestiaireModal(id) {
   document.getElementById('editVestiaireSize').value = v.size || '';
   document.getElementById('editVestiaireColor').value = v.color || '';
   document.getElementById('editVestiaireNotes').value = v.note || '';
+  document.getElementById('editVestiairePurchaseStatus').value = v.purchase_status || '';
   populateCategorySelect('editVestiaireCategory', v.category);
   document.getElementById('editVestiaireModal').classList.add('visible');
   setTimeout(() => document.getElementById('editVestiaireName').focus(), 100);
@@ -382,12 +407,14 @@ async function saveEditVestiaire() {
   const category = document.getElementById('editVestiaireCategory').value;
   const color = document.getElementById('editVestiaireColor').value.trim();
   const notes = document.getElementById('editVestiaireNotes').value.trim();
+  const purchaseStatus = document.getElementById('editVestiairePurchaseStatus').value;
 
   if (!name) { showToast('Enter a name', 'error'); return; }
 
   const { error } = await state.sb.from('vestiaire').update({
     name, brand: brand || null, size: size || null, category,
     color: color || null, note: notes || null,
+    purchase_status: purchaseStatus || null,
     updated_at: new Date().toISOString()
   }).eq('id', id);
   if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
