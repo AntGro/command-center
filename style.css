@@ -512,6 +512,7 @@ input,select,button{font-family:inherit;}
   #choresStatsBar .stat-label{font-size:0.62rem;}
 
   /* ===== BIRTHDAYS VIEW — MOBILE ===== */
+  .birthday-grid{padding:10px 6px;}
   .birthday-list{grid-template-columns:1fr;gap:8px;}
   .birthday-card{padding:10px 12px;gap:10px;}
   .birthday-avatar{width:36px;height:36px;font-size:0.95rem;}
@@ -692,11 +693,11 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 /* ===== BIRTHDAYS ===== */
 .birthdays-toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;margin-bottom:8px;}
 .birthday-toolbar-right{display:flex;align-items:center;gap:8px;}
-.birthday-grid{}
+.birthday-grid{padding:14px 8px;}
 
 .birthday-section{margin-bottom:28px;}
 .birthday-section-title{font-size:0.88rem;font-weight:600;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-.birthday-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;}
+.birthday-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
 
 .birthday-card{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:all 0.2s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .birthday-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,0,0,0.08);}
