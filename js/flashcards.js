@@ -225,11 +225,11 @@ function renderDraftItem(d) {
 
   return `<div class="todo-item" data-draft-id="${d.id}">
     <div class="todo-row">
-      <span class="todo-text" ondblclick="openEditDraftModal('${d.id}')">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
+      <span class="todo-text" ondblclick="startInlineEditDraft('${d.id}', this)" style="cursor:text;">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
       ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">⏳ Generating…</span>` : ''}
       <div class="todo-actions">
         ${!hasProposal && !isPending ? `<button onclick="requestProposal('${d.id}')" title="Generate flashcard">${lucideIcon('sparkles', 16)}</button>` : ''}
-        <button onclick="openEditDraftModal('${d.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
+        <button onclick="startInlineEditDraftById('${d.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
         <button onclick="deleteDraft('${d.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
       </div>
     </div>
@@ -364,36 +364,62 @@ window.quickAddDraft = async function() {
   showToast('Draft added');
 };
 
-window.openEditDraftModal = function(id) {
+// ── Inline Draft Editing ──
+window.startInlineEditDraft = function(id, spanEl) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
-  closeAllFlashModals();
-  const html = `<div class="modal-overlay" id="editDraftModal" style="display:flex;" onclick="if(event.target===this)closeEditDraftModal()">
-    <div class="modal">
-      <h2>${lucideIcon('pencil', 18, '#f59e0b')} Edit Draft</h2>
-      <input type="hidden" id="editDraftId" value="${id}">
-      <textarea id="editDraftContent" rows="4">${esc(draft.content)}</textarea>
-      <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeEditDraftModal()">Cancel</button>
-        <button class="modal-save" onclick="saveEditDraft()">Save</button>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
+  // Prevent double-activation
+  if (spanEl.querySelector('textarea')) return;
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'inline-edit-textarea';
+  textarea.value = draft.content;
+  textarea.rows = Math.max(2, Math.ceil(draft.content.length / 60));
+  textarea.style.cssText = 'width:100%;font:inherit;resize:vertical;padding:4px 6px;border:1px solid #8b5cf6;border-radius:4px;background:var(--bg-card,#1a1a2e);color:inherit;box-sizing:border-box;';
+
+  const originalText = spanEl.textContent;
+  spanEl.textContent = '';
+  spanEl.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  let saved = false;
+  const save = async () => {
+    if (saved) return;
+    saved = true;
+    const content = textarea.value.trim();
+    if (!content) {
+      // Restore original if empty
+      spanEl.textContent = originalText;
+      showToast('Content required');
+      return;
+    }
+    if (content !== draft.content && state.sb) {
+      await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
+      await refreshFlashcards();
+      showToast('Draft updated');
+    } else {
+      // No change — just restore display
+      spanEl.textContent = content.length > 120 ? content.slice(0, 120) + '…' : content;
+    }
+  };
+
+  const cancel = () => {
+    if (saved) return;
+    saved = true;
+    spanEl.textContent = originalText;
+  };
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
+  textarea.addEventListener('blur', () => { if (!saved) save(); });
 };
 
-window.closeEditDraftModal = function() {
-  const m = document.getElementById('editDraftModal'); if (m) m.remove();
-};
-
-window.saveEditDraft = async function() {
-  const id = document.getElementById('editDraftId').value;
-  const content = document.getElementById('editDraftContent').value.trim();
-  if (!content) { showToast('Content required'); return; }
-  if (state.sb) await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
-  closeEditDraftModal();
-  await refreshFlashcards();
-  showToast('Draft updated');
+window.startInlineEditDraftById = function(id) {
+  const el = document.querySelector(`[data-draft-id="${id}"] .todo-text`);
+  if (el) window.startInlineEditDraft(id, el);
 };
 
 window.deleteDraft = function(id) {
@@ -555,7 +581,7 @@ window.saveNewFlashDeck = function() {
 };
 
 function closeAllFlashModals() {
-  ['addFlashcardModal', 'editFlashcardModal', 'addDraftModal', 'editDraftModal', 'addFlashDeckModal'].forEach(id => {
+  ['addFlashcardModal', 'editFlashcardModal', 'addDraftModal', 'addFlashDeckModal'].forEach(id => {
     const m = document.getElementById(id); if (m) m.remove();
   });
 }
