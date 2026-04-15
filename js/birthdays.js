@@ -115,13 +115,27 @@ function renderBirthdays() {
     </div>`;
   }
 
+  // Group "later" by month
   if (later.length > 0) {
-    html += `<div class="birthday-section">
-      <h3 class="birthday-section-title">${lucideIcon('calendar', 18)} Later This Year</h3>
-      <div class="birthday-list">
-        ${later.map(b => renderBirthdayCard(b, false)).join('')}
-      </div>
-    </div>`;
+    const monthGroups = {};
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    for (const b of later) {
+      const next = getNextBirthday(b.birthday);
+      const key = `${next.getFullYear()}-${String(next.getMonth()).padStart(2,'0')}`;
+      const label = `${monthNames[next.getMonth()]} ${next.getFullYear()}`;
+      if (!monthGroups[key]) monthGroups[key] = { label, items: [] };
+      monthGroups[key].items.push(b);
+    }
+    const sortedKeys = Object.keys(monthGroups).sort();
+    for (const key of sortedKeys) {
+      const grp = monthGroups[key];
+      html += `<div class="birthday-section">
+        <h3 class="birthday-section-title">${lucideIcon('calendar', 18)} ${grp.label}</h3>
+        <div class="birthday-list">
+          ${grp.items.map(b => renderBirthdayCard(b, false)).join('')}
+        </div>
+      </div>`;
+    }
   }
 
   grid.innerHTML = html;
