@@ -225,7 +225,7 @@ function renderDraftItem(d) {
 
   return `<div class="todo-item" data-draft-id="${d.id}">
     <div class="todo-row">
-      <span class="todo-text">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
+      <span class="todo-text" ondblclick="openEditDraftModal('${d.id}')">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
       ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">⏳ Generating…</span>` : ''}
       <div class="todo-actions">
         ${!hasProposal && !isPending ? `<button onclick="requestProposal('${d.id}')" title="Generate flashcard">${lucideIcon('sparkles', 16)}</button>` : ''}

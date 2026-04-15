@@ -25,9 +25,91 @@ function renderMd(text) {
   // Bare URLs (not already in an <a> tag)
   html = html.replace(/(?<!href="|">)(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   html = html.replace(/(?<!href="|"|\/)(www\.[^\s<&]+)/g, '<a href="https://$1" target="_blank" rel="noopener">$1</a>');
-  // Line breaks
+  // Markdown tables — detect pipe-delimited rows and convert to <table>
+  html = renderMdTables(html);
+  // Line breaks (only on remaining text, not inside <table> blocks)
   html = html.replace(/\n/g, '<br>');
   return html;
+}
+
+/** Parse pipe-delimited markdown tables within already-escaped HTML */
+function renderMdTables(html) {
+  // Split by newlines, identify contiguous table blocks, convert them
+  const lines = html.split('\n');
+  const result = [];
+  let i = 0;
+  while (i < lines.length) {
+    // A table needs at least: header row, separator row (with ---), and optionally data rows
+    // Check if current line looks like a table row: starts/contains pipes
+    if (isTableRow(lines[i]) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      // Collect all contiguous table rows
+      const tableLines = [lines[i], lines[i + 1]];
+      let j = i + 2;
+      while (j < lines.length && isTableRow(lines[j])) {
+        tableLines.push(lines[j]);
+        j++;
+      }
+      result.push(buildTable(tableLines));
+      i = j;
+    } else {
+      result.push(lines[i]);
+      i++;
+    }
+  }
+  return result.join('\n');
+}
+
+function isTableRow(line) {
+  if (!line) return false;
+  const trimmed = line.trim();
+  return trimmed.includes('|') && trimmed.split('|').length >= 2;
+}
+
+function isTableSeparator(line) {
+  if (!line) return false;
+  const trimmed = line.trim();
+  // Separator row: cells contain only dashes, colons, spaces, and pipes
+  const cells = splitTableRow(trimmed);
+  return cells.length >= 1 && cells.every(c => /^[\s:]*-{1,}[\s:]*$/.test(c));
+}
+
+function splitTableRow(line) {
+  let trimmed = line.trim();
+  if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
+  if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1);
+  return trimmed.split('|').map(c => c.trim());
+}
+
+function buildTable(tableLines) {
+  const headerCells = splitTableRow(tableLines[0]);
+  // Parse alignment from separator row
+  const sepCells = splitTableRow(tableLines[1]);
+  const aligns = sepCells.map(c => {
+    const t = c.trim();
+    if (t.startsWith(':') && t.endsWith(':')) return 'center';
+    if (t.endsWith(':')) return 'right';
+    return 'left';
+  });
+
+  let tableHtml = '<table class="md-table"><thead><tr>';
+  headerCells.forEach((cell, idx) => {
+    const align = aligns[idx] || 'left';
+    tableHtml += `<th style="text-align:${align}">${cell}</th>`;
+  });
+  tableHtml += '</tr></thead><tbody>';
+
+  for (let r = 2; r < tableLines.length; r++) {
+    const cells = splitTableRow(tableLines[r]);
+    tableHtml += '<tr>';
+    headerCells.forEach((_, idx) => {
+      const align = aligns[idx] || 'left';
+      tableHtml += `<td style="text-align:${align}">${cells[idx] || ''}</td>`;
+    });
+    tableHtml += '</tr>';
+  }
+
+  tableHtml += '</tbody></table>';
+  return tableHtml;
 }
 
 function showToast(msg, type = 'info') {

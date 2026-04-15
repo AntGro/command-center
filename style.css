@@ -294,6 +294,11 @@ input,select,button{font-family:inherit;}
 .md-inline-code{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:0.82em;}
 .md-code-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin:6px 0;overflow-x:auto;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:0.82em;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
 .md-code-block code{background:none;border:none;padding:0;font-size:inherit;}
+.md-table{border-collapse:collapse;margin:6px 0;font-size:0.88em;width:100%;overflow-x:auto;display:block;}
+.md-table th,.md-table td{border:1px solid var(--border);padding:4px 8px;}
+.md-table th{background:var(--surface2);font-weight:600;white-space:nowrap;}
+.md-table td{background:var(--surface);}
+.md-table tr:hover td{background:var(--surface2);}
 .task-text a,.task-meta-item a{color:var(--accent);text-decoration:underline;word-break:break-all;}
 
 /* ===== CHORES VIEW ===== */
@@ -611,6 +616,7 @@ input,select,button{font-family:inherit;}
 .todo-checkbox-label:hover .todo-checkmark{border-color:var(--accent);}
 
 .todo-text{flex:1;font-size:0.86rem;line-height:1.35;cursor:default;}
+.todo-text[ondblclick]{cursor:text;}
 .todo-actions{display:none;gap:2px;}
 .todo-actions.visible{display:inline-flex;}
 .todo-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
