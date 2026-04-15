@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { ARCHIVED_PROJECTS_KEY, SHOW_ARCHIVED_KEY, MAX_TEXT_LEN, MAX_META_DISPLAY, TODO_MAX_LEN } from './supabase.js';
 import { esc, linkify, renderMd, showToast, showDeleteConfirm,
-         updateStats, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
+         updateStats, updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore } from './utils.js';
 
 // ===================================================================
 // state.PROJECTS (loaded from Supabase)
@@ -192,16 +192,6 @@ function updateCharCounter(input) {
   counter.className = 'char-counter' + (len > MAX_TEXT_LEN * 0.9 ? ' danger' : len > MAX_TEXT_LEN * 0.7 ? ' warn' : '');
 }
 
-function updateTodoCharCounter(input) {
-  const catId = input.closest('.todo-category-card')?.id;
-  if (!catId) return;
-  const counter = document.getElementById(`todo-counter-${catId}`);
-  if (!counter) return;
-  const len = input.value.length;
-  if (len === 0) { counter.textContent = ''; return; }
-  counter.textContent = `${len}/${TODO_MAX_LEN}`;
-  counter.className = 'char-counter' + (len > TODO_MAX_LEN * 0.9 ? ' danger' : len > TODO_MAX_LEN * 0.7 ? ' warn' : '');
-}
 
 
 // ===================================================================
@@ -285,23 +275,6 @@ async function deleteAllArchivedTasks(projectId) {
   );
 }
 
-function truncateWithShowMore(text, maxLen, id, field) {
-  if (!text) return '';
-  const firstLine = text.split('\n')[0].slice(0, 120);
-  const renderedFirstLine = renderMd(firstLine + (text.length > firstLine.length ? '…' : ''));
-  const renderedFull = renderMd(text);
-  if (text.length <= 120 && !text.includes('\n')) return renderedFull;
-  return `<span id="meta-${id}-${field}-short">${renderedFirstLine} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')" title="Show more">▼</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderedFull} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')" title="Show less">▲</button></span>`;
-}
-
-function expandMeta(id, field) {
-  document.getElementById(`meta-${id}-${field}-short`).style.display = 'none';
-  document.getElementById(`meta-${id}-${field}-full`).style.display = 'inline';
-}
-function collapseMeta(id, field) {
-  document.getElementById(`meta-${id}-${field}-short`).style.display = 'inline';
-  document.getElementById(`meta-${id}-${field}-full`).style.display = 'none';
-}
 
 function renderTask(t, isArchived = false) {
   const isDraft = t.status === 'draft';
@@ -975,8 +948,7 @@ window.promptEditTask = promptEditTask;
 window.deleteTask = deleteTask;
 window.toggleArchivedTasks = toggleArchivedTasks;
 window.deleteAllArchivedTasks = deleteAllArchivedTasks;
-window.expandMeta = expandMeta;
-window.collapseMeta = collapseMeta;
+
 window.archiveProject = archiveProject;
 window.unarchiveProject = unarchiveProject;
 window.deleteProject = deleteProject;

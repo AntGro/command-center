@@ -1,6 +1,6 @@
 import { lucideIcon } from './icons.js';
 import state, { TODO_MAX_LEN } from './supabase.js';
-import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate } from './utils.js';
+import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
 
 // ===================================================================
 // TODOS — DATA & CRUD (Category Card Layout)
@@ -8,6 +8,7 @@ import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate } from 
 // ===================================================================
 let allTodos = [];
 let todoFilter = 'pending';
+let isDragging = false;
 const CATEGORIES_KEY = 'todo_categories';
 const CATEGORY_COLORS_KEY = 'todo_category_colors';
 const DEFAULT_CATEGORY_PALETTE = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
@@ -211,6 +212,17 @@ function navigateToCategory(category) {
 function categoryToDomId(cat) {
   if (!cat) return 'todo-cat-general';
   return 'todo-cat-' + cat.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+}
+
+function updateTodoCharCounter(input) {
+  const catId = input.closest('.todo-category-card')?.id;
+  if (!catId) return;
+  const counter = document.getElementById(`todo-counter-${catId}`);
+  if (!counter) return;
+  const len = input.value.length;
+  if (len === 0) { counter.textContent = ''; return; }
+  counter.textContent = `${len}/${TODO_MAX_LEN}`;
+  counter.className = 'char-counter' + (len > TODO_MAX_LEN * 0.9 ? ' danger' : len > TODO_MAX_LEN * 0.7 ? ' warn' : '');
 }
 
 function renderCategoryCard(category) {
@@ -926,3 +938,4 @@ window.closeAddCategoryModal = closeAddCategoryModal;
 window.saveNewCategory = saveNewCategory;
 window.deleteCategory = deleteCategory;
 window.navigateToCategory = navigateToCategory;
+window.updateTodoCharCounter = updateTodoCharCounter;

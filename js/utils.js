@@ -173,12 +173,35 @@ function formatRelativeDate(d) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
 }
 
+// ===================================================================
+// TRUNCATE WITH SHOW MORE (shared between projects & todos)
+// ===================================================================
+function truncateWithShowMore(text, maxLen, id, field) {
+  if (!text) return '';
+  const firstLine = text.split('\n')[0].slice(0, 120);
+  const renderedFirstLine = renderMd(firstLine + (text.length > firstLine.length ? '…' : ''));
+  const renderedFull = renderMd(text);
+  if (text.length <= 120 && !text.includes('\n')) return renderedFull;
+  return `<span id="meta-${id}-${field}-short">${renderedFirstLine} <button class="show-more-btn" onclick="expandMeta('${id}','${field}')" title="Show more">▼</button></span><span id="meta-${id}-${field}-full" style="display:none;">${renderedFull} <button class="show-more-btn" onclick="collapseMeta('${id}','${field}')" title="Show less">▲</button></span>`;
+}
+
+function expandMeta(id, field) {
+  document.getElementById(`meta-${id}-${field}-short`).style.display = 'none';
+  document.getElementById(`meta-${id}-${field}-full`).style.display = 'inline';
+}
+function collapseMeta(id, field) {
+  document.getElementById(`meta-${id}-${field}-short`).style.display = 'inline';
+  document.getElementById(`meta-${id}-${field}-full`).style.display = 'none';
+}
+
 // Exports
 export {
   esc, linkify, renderMd, showToast, formatRelativeDate,
   updateStats, showDeleteConfirm, closeDeleteConfirm, executeDeleteConfirm,
-  updateFooterStats, updateTaskListMaxHeight,
+  updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore,
 };
 
 window.closeDeleteConfirm = closeDeleteConfirm;
 window.executeDeleteConfirm = executeDeleteConfirm;
+window.expandMeta = expandMeta;
+window.collapseMeta = collapseMeta;
