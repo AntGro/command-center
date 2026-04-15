@@ -212,12 +212,18 @@ function renderDraftItem(d) {
 
   let proposalHtml = '';
   if (hasProposal) {
+    const suggestedDeck = d.proposed_deck || 'Général';
+    const deckOptions = [...new Set([...allCards.map(c => c.deck), suggestedDeck])].sort().map(dk =>
+      `<option value="${esc(dk)}"${dk === suggestedDeck ? ' selected' : ''}>${esc(dk)}</option>`
+    ).join('');
     proposalHtml = `<div class="fc-proposal">
       <div class="fc-proposal-label">${lucideIcon('sparkles', 14, '#22c55e')} Proposed card:</div>
       <div class="fc-proposal-qa"><strong>Q:</strong> ${esc(d.proposed_front)}</div>
       <div class="fc-proposal-qa"><strong>A:</strong> ${esc(d.proposed_back)}</div>
+      <div class="fc-proposal-deck"><strong>Deck:</strong> <select onchange="updateProposedDeck('${d.id}', this.value)">${deckOptions}</select></div>
       <div class="fc-proposal-actions">
         <button class="fc-proposal-accept" onclick="acceptProposal('${d.id}')">${lucideIcon('check', 14, '#fff')} Accept</button>
+        <button class="fc-proposal-edit" onclick="editProposal('${d.id}')">${lucideIcon('pencil', 14)} Edit</button>
         <button class="fc-proposal-reject" onclick="rejectProposal('${d.id}')">${lucideIcon('x', 14)} Reject</button>
       </div>
     </div>`;
@@ -438,12 +444,13 @@ window.requestProposal = async function(id) {
 window.acceptProposal = async function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft || !draft.proposed_front || !draft.proposed_back) return;
+  const deck = draft.proposed_deck || 'Général';
   if (state.sb) {
-    await state.sb.from('flashcards').insert({ deck: 'Général', front: draft.proposed_front, back: draft.proposed_back });
+    await state.sb.from('flashcards').insert({ deck, front: draft.proposed_front, back: draft.proposed_back });
     await state.sb.from('flashcard_notes').delete().eq('id', id);
   }
   await refreshFlashcards();
-  showToast('Card added to Général');
+  showToast(`Card added to ${deck}`);
 };
 
 window.rejectProposal = async function(id) {
@@ -455,6 +462,59 @@ window.rejectProposal = async function(id) {
   if (draft) { draft.proposal_status = null; draft.proposed_front = null; draft.proposed_back = null; }
   renderAllBuckets();
   showToast('Proposal rejected');
+};
+
+window.editProposal = function(id) {
+  const draft = allDrafts.find(d => d.id === id);
+  if (!draft) return;
+  closeAllFlashModals();
+  const currentDeck = draft.proposed_deck || 'Général';
+  const deckOptions = [...new Set([...allCards.map(c => c.deck), currentDeck])].sort().map(dk =>
+    `<option value="${esc(dk)}"${dk === currentDeck ? ' selected' : ''}>${esc(dk)}</option>`
+  ).join('');
+  const html = `<div class="modal-overlay" id="editProposalModal" style="display:flex;" onclick="if(event.target===this)closeEditProposalModal()">
+    <div class="modal">
+      <h2>${lucideIcon('pencil', 18, '#8b5cf6')} Edit Proposal</h2>
+      <label>Front (Question)</label>
+      <textarea id="editProposalFront" rows="3">${esc(draft.proposed_front || '')}</textarea>
+      <label>Back (Answer)</label>
+      <textarea id="editProposalBack" rows="4">${esc(draft.proposed_back || '')}</textarea>
+      <label>Deck</label>
+      <select id="editProposalDeck">${deckOptions}</select>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeEditProposalModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditedProposal('${draft.id}')">Save</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.closeEditProposalModal = function() {
+  document.getElementById('editProposalModal')?.remove();
+};
+
+window.saveEditedProposal = async function(id) {
+  const front = document.getElementById('editProposalFront').value.trim();
+  const back = document.getElementById('editProposalBack').value.trim();
+  const deck = document.getElementById('editProposalDeck').value;
+  if (!front || !back) { showToast('Both fields are required'); return; }
+  if (state.sb) {
+    await state.sb.from('flashcard_notes').update({ proposed_front: front, proposed_back: back, proposed_deck: deck }).eq('id', id);
+  }
+  const draft = allDrafts.find(d => d.id === id);
+  if (draft) { draft.proposed_front = front; draft.proposed_back = back; draft.proposed_deck = deck; }
+  closeEditProposalModal();
+  renderAllBuckets();
+  showToast('Proposal updated');
+};
+
+window.updateProposedDeck = async function(id, deck) {
+  if (state.sb) {
+    await state.sb.from('flashcard_notes').update({ proposed_deck: deck }).eq('id', id);
+  }
+  const draft = allDrafts.find(d => d.id === id);
+  if (draft) draft.proposed_deck = deck;
 };
 
 // ── Flashcard CRUD ──

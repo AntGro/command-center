@@ -799,6 +799,10 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .fc-proposal-accept:hover { background:#16a34a; }
 .fc-proposal-reject { border:1px solid var(--border); background:none; color:var(--muted); padding:4px 14px; border-radius:6px; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
 .fc-proposal-reject:hover { color:var(--red); border-color:var(--red); }
+.fc-proposal-edit { border:1px solid var(--border); background:none; color:var(--muted); padding:4px 14px; border-radius:6px; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.fc-proposal-edit:hover { color:var(--primary); border-color:var(--primary); }
+.fc-proposal-deck { margin:6px 0 4px 0; font-size:0.82rem; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.fc-proposal-deck select { font-size:0.82rem; padding:2px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); }
 
 /* ═══════ Practice Overlay ═══════ */
 .practice-overlay {
