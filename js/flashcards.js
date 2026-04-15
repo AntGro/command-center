@@ -194,17 +194,14 @@ function renderDraftsBucket(q) {
           <span class="tech">${drafts.length} items ${chips.join(' ')}</span>
         </div>
       </div>
-      <div class="project-header-actions" style="opacity:1;">
-        <button class="archive-project-btn" onclick="openAddDraftModal()" title="Add draft">${lucideIcon('plus', 16)}</button>
-      </div>
-    </div>
-    <div class="task-list">
-      ${drafts.length === 0 ? '<p class="empty-msg">Jot down topics to learn — generate flashcard proposals from them.</p>' : ''}
-      ${drafts.map(d => renderDraftItem(d)).join('')}
     </div>
     <div class="add-task">
       <textarea placeholder="Add draft…" id="draftQuickInput" onkeydown="handleDraftInput(event)" rows="1" style="resize:none;overflow:hidden;"></textarea>
       <button onclick="quickAddDraft()">+</button>
+    </div>
+    <div class="task-list">
+      ${drafts.length === 0 ? '<p class="empty-msg">Jot down topics to learn — generate flashcard proposals from them.</p>' : ''}
+      ${drafts.map(d => renderDraftItem(d)).join('')}
     </div>
   </div>`;
 }
