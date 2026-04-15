@@ -418,7 +418,7 @@ window.startInlineEditDraftById = function(id) {
 window.deleteDraft = function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
-  showDeleteConfirm('Delete Draft', 'Are you sure?', draft.content.slice(0, 80), async () => {
+  showDeleteConfirm('Delete Draft', 'Are you sure?', async () => {
     if (state.sb) await state.sb.from('flashcard_notes').delete().eq('id', id);
     await refreshFlashcards();
     showToast('Draft deleted');
@@ -537,7 +537,7 @@ window.saveEditFlashcard = async function() {
 window.deleteFlashcard = function(id) {
   const card = allCards.find(c => c.id === id);
   if (!card) return;
-  showDeleteConfirm('Delete Flashcard', 'Are you sure?', card.front.slice(0, 80), async () => {
+  showDeleteConfirm('Delete Flashcard', 'Are you sure?', async () => {
     if (state.sb) await state.sb.from('flashcards').delete().eq('id', id);
     await refreshFlashcards();
     showToast('Card deleted');
