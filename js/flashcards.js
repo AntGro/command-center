@@ -364,57 +364,50 @@ window.quickAddDraft = async function() {
   showToast('Draft added');
 };
 
-// ── Inline Draft Editing ──
+// ── Inline Draft Editing (matches Project page promptEditTask pattern) ──
 window.startInlineEditDraft = function(id, spanEl) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
-  // Prevent double-activation
-  if (spanEl.querySelector('textarea')) return;
+  if (spanEl.dataset.editing) return;
 
-  const textarea = document.createElement('textarea');
-  textarea.className = 'inline-edit-textarea';
-  textarea.value = draft.content;
-  textarea.rows = Math.max(2, Math.ceil(draft.content.length / 60));
-  textarea.style.cssText = 'width:100%;font:inherit;resize:vertical;padding:4px 6px;border:1px solid #8b5cf6;border-radius:4px;background:var(--bg-card,#1a1a2e);color:inherit;box-sizing:border-box;';
+  const originalContent = draft.content;
+  spanEl.dataset.editing = 'true';
 
-  const originalText = spanEl.textContent;
-  spanEl.textContent = '';
-  spanEl.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
+  const input = document.createElement('textarea');
+  input.className = 'task-edit-input';
+  input.value = originalContent;
+  input.rows = Math.max(2, originalContent.split('\n').length);
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+  input.style.minHeight = '2.4em';
 
-  let saved = false;
-  const save = async () => {
-    if (saved) return;
-    saved = true;
-    const content = textarea.value.trim();
-    if (!content) {
-      // Restore original if empty
-      spanEl.textContent = originalText;
+  function autoSize() {
+    input.style.height = 'auto';
+    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
+  }
+
+  const finishEdit = async (save) => {
+    if (save && input.value.trim() && input.value.trim() !== originalContent) {
+      const content = input.value.trim();
+      if (state.sb) {
+        await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
+        showToast('Draft updated');
+      }
+    } else if (save && !input.value.trim()) {
       showToast('Content required');
-      return;
     }
-    if (content !== draft.content && state.sb) {
-      await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
-      await refreshFlashcards();
-      showToast('Draft updated');
-    } else {
-      // No change — just restore display
-      spanEl.textContent = content.length > 120 ? content.slice(0, 120) + '…' : content;
-    }
+    await refreshFlashcards();
   };
 
-  const cancel = () => {
-    if (saved) return;
-    saved = true;
-    spanEl.textContent = originalText;
-  };
-
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
-    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
   });
-  textarea.addEventListener('blur', () => { if (!saved) save(); });
+  input.addEventListener('input', autoSize);
+  input.addEventListener('blur', () => finishEdit(true));
+
+  spanEl.replaceWith(input);
+  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 };
 
 window.startInlineEditDraftById = function(id) {
