@@ -105,7 +105,7 @@ input,select,button{font-family:inherit;}
 
 /* ===== PROJECT GRID ===== */
 .project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
-.project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:all 0.25s ease;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);max-height:calc(min(100vh, max(1000px, 50vh)) / 2);}
+.project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:all 0.25s ease;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);max-height:min(100vh, max(1000px, 50vh));}
 .project-card[draggable="true"]{cursor:default;}
 .project-card.dragging{opacity:0.4;border:2px dashed var(--accent);}
 .project-card.drag-over{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
@@ -698,9 +698,9 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .birthday-section-title{font-size:0.88rem;font-weight:600;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 .birthday-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;}
 
-.birthday-card{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;transition:all 0.2s;}
+.birthday-card{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:all 0.2s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .birthday-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,0,0,0.08);}
-.birthday-card.birthday-today{border-color:#f97316;background:linear-gradient(135deg,rgba(249,115,22,0.08),rgba(236,72,153,0.06));box-shadow:0 0 20px rgba(249,115,22,0.12);}
+.birthday-card.birthday-today{border-color:#f97316;background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(236,72,153,0.08)),var(--surface);box-shadow:0 0 20px rgba(249,115,22,0.12);}
 .birthday-card.birthday-upcoming{border-left:3px solid #f97316;}
 
 .birthday-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;flex-shrink:0;}
