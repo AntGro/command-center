@@ -138,7 +138,7 @@ function renderCategoryCard(cat, items) {
         <span style="font-size:0.78rem;color:var(--muted);">(${count})</span>
       </div>
       <div class="project-header-actions" style="opacity:1;">
-            <button class="todo-cat-shortname-btn" onclick="promptVestShortname('${esc(category).replace(/'/g, &quot;\\\'&quot;)}')" title="${getVestShortname(category) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
+        <button class="todo-cat-shortname-btn" onclick="promptVestShortname('${esc(cat).replace(/'/g, "\\\\'")}')" title="${getVestShortname(cat) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
         <button onclick="openAddVestiaireModal('${escapedCat}')" title="Add to ${escapedCat}" style="background:none;border:none;cursor:pointer;color:${color};padding:2px 6px;border-radius:4px;transition:all 0.2s;">
           ${lucideIcon('plus', 16)}
         </button>
