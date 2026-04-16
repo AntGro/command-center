@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { ARCHIVED_PROJECTS_KEY, SHOW_ARCHIVED_KEY, MAX_TEXT_LEN, MAX_META_DISPLAY, TODO_MAX_LEN } from './supabase.js';
 import { esc, linkify, renderMd, showToast, showDeleteConfirm,
-         updateStats, updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore } from './utils.js';
+         updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore } from './utils.js';
 
 // ===================================================================
 // state.PROJECTS (loaded from Supabase)
@@ -206,7 +206,6 @@ async function refreshAll() {
   const all = data || [];
   state.allTasks = all;
   renderAllTasks();
-  updateStats();
   updateFooterStats();
 }
 

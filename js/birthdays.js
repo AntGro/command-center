@@ -89,7 +89,6 @@ function renderBirthdays() {
     return dA - dB;
   });
 
-  updateBirthdayStats(birthdays);
 
   if (birthdays.length === 0) {
     grid.innerHTML = `<div class="birthday-empty">
@@ -177,20 +176,6 @@ function renderBirthdayCard(b, isUpcoming) {
     </div>
   </div>`;
 }
-
-function updateBirthdayStats(birthdays) {
-  const total = birthdays ? birthdays.length : state.allBirthdays.length;
-  const todayCount = (birthdays || state.allBirthdays).filter(b => daysUntilBirthday(b.birthday) === 0).length;
-  const thisWeek = (birthdays || state.allBirthdays).filter(b => { const d = daysUntilBirthday(b.birthday); return d > 0 && d <= 7; }).length;
-  const thisMonth = (birthdays || state.allBirthdays).filter(b => { const d = daysUntilBirthday(b.birthday); return d > 0 && d <= 30; }).length;
-
-  const el = id => document.getElementById(id);
-  if (el('statBirthdaysTotal')) el('statBirthdaysTotal').textContent = total;
-  if (el('statBirthdaysToday')) el('statBirthdaysToday').textContent = todayCount;
-  if (el('statBirthdaysWeek')) el('statBirthdaysWeek').textContent = thisWeek;
-  if (el('statBirthdaysMonth')) el('statBirthdaysMonth').textContent = thisMonth;
-}
-
 
 // ===================================================================
 // MODALS — ADD / EDIT

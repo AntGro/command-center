@@ -118,13 +118,12 @@ async function refreshTodos() {
   syncCategoriesFromTodos();
   if (state.currentView === 'todos') {
     renderTodos();
-    updateTodoStats();
   }
 }
 
 function setTodoFilter(filter) {
   todoFilter = filter;
-  document.querySelectorAll('.todo-filters .filter-btn').forEach(btn => {
+  document.querySelectorAll('#todoFilters .filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   renderTodos();
@@ -182,7 +181,6 @@ function renderTodos() {
   }
 
   grid.innerHTML = html;
-  updateTodoStats();
 
   // Init drag-and-drop for each card (individual TODO items)
   categoryList.forEach(cat => {
@@ -201,19 +199,8 @@ function renderTodos() {
 }
 
 function renderCategoryToolbarButtons(categoryList) {
-  let container = document.getElementById('categoryNavButtons');
-  if (!container) {
-    // Create the container in the toolbar
-    const toolbar = document.querySelector('.todos-toolbar');
-    if (!toolbar) return;
-    container = document.createElement('div');
-    container.id = 'categoryNavButtons';
-    container.className = 'category-nav-buttons';
-    // Insert after the filters
-    const filters = toolbar.querySelector('.todo-filters');
-    if (filters) filters.after(container);
-    else toolbar.prepend(container);
-  }
+  const container = document.getElementById('todoNavButtons');
+  if (!container) return;
   container.innerHTML = categoryList.map(cat => {
     const name = cat || 'General';
     const shortname = getCategoryShortname(cat);
@@ -244,7 +231,7 @@ function categoryToDomId(cat) {
 }
 
 function updateTodoCharCounter(input) {
-  const catId = input.closest('.todo-category-card')?.id;
+  const catId = input.closest('.project-card')?.id;
   if (!catId) return;
   const counter = document.getElementById(`todo-counter-${catId}`);
   if (!counter) return;
@@ -323,7 +310,7 @@ function renderCategoryCard(category) {
     ? `<span class="todo-cat-shortname-label">${esc(shortname)}</span>`
     : '';
 
-  return `<div class="todo-category-card" id="${catId}" data-category="${esc(category)}">
+  return `<div class="project-card" id="${catId}" data-category="${esc(category)}">
     <div class="todo-cat-accent" style="background:${catColor}"></div>
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
@@ -600,25 +587,6 @@ async function editTodoInline(id) {
   requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }
 
-function updateTodoStats() {
-  const now = new Date();
-  const total = allTodos.length;
-  const done = allTodos.filter(t => t.done).length;
-  const pending = allTodos.filter(t => !t.done).length;
-  const overdue = allTodos.filter(t => !t.done && t.due_date && new Date(t.due_date) < now).length;
-  const flagged = allTodos.filter(t => !t.done && t.priority && t.priority !== 'normal').length;
-  const outdated = allTodos.filter(t => isTodoOutdated(t)).length;
-
-  const el = id => document.getElementById(id);
-  if (el('statTodosTotal')) el('statTodosTotal').textContent = total;
-  if (el('statTodosPending')) el('statTodosPending').textContent = pending;
-  if (el('statTodosDone')) el('statTodosDone').textContent = done;
-  if (el('statTodosOverdue')) el('statTodosOverdue').textContent = overdue;
-  if (el('statTodosFlagged')) el('statTodosFlagged').textContent = flagged;
-  if (el('statTodosOutdated')) el('statTodosOutdated').textContent = outdated;
-}
-
-
 // ===================================================================
 // CATEGORY MANAGEMENT
 // ===================================================================
@@ -829,7 +797,7 @@ async function reorderTodosInCategory(draggedId, targetId, category) {
 function initCategoryDragDrop() {
   const grid = document.getElementById('todoCategoryGrid');
   if (!grid) return;
-  const cards = grid.querySelectorAll('.todo-category-card');
+  const cards = grid.querySelectorAll('.project-card');
   let dragState = null;
 
   cards.forEach(card => {
@@ -857,7 +825,7 @@ function initCategoryDragDrop() {
       dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
       dragState.clone.style.left = (e.clientX - dragState.offsetX) + 'px';
       // Highlight drop target
-      grid.querySelectorAll('.todo-category-card:not(.dragging)').forEach(el => {
+      grid.querySelectorAll('.project-card:not(.dragging)').forEach(el => {
         el.classList.remove('drag-over');
         const r = el.getBoundingClientRect();
         if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
@@ -871,7 +839,7 @@ function initCategoryDragDrop() {
       if (dragState.clone) dragState.clone.remove();
       card.classList.remove('dragging');
       let targetCategory = null;
-      grid.querySelectorAll('.todo-category-card').forEach(el => {
+      grid.querySelectorAll('.project-card').forEach(el => {
         if (el.classList.contains('drag-over')) {
           targetCategory = el.dataset.category || '';
           el.classList.remove('drag-over');
@@ -892,7 +860,7 @@ function initCategoryDragDrop() {
       if (dragState && dragState.el === card) {
         if (dragState.clone) dragState.clone.remove();
         card.classList.remove('dragging');
-        grid.querySelectorAll('.todo-category-card').forEach(el => el.classList.remove('drag-over'));
+        grid.querySelectorAll('.project-card').forEach(el => el.classList.remove('drag-over'));
         dragState = null;
         isDragging = false;
       }

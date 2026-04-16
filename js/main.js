@@ -1,6 +1,6 @@
 import { lucideIcon } from './icons.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
-import { updateStats, showToast, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
+import { showToast, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
 import { refreshTodos, renderTodos } from './todos.js';
@@ -237,7 +237,6 @@ function switchView(view) {
   const tabBirthdays = document.getElementById('tabBirthdays');
   const tabVestiaire = document.getElementById('tabVestiaire');
   const tabFlashcards = document.getElementById('tabFlashcards');
-  const addProjectBtn = document.querySelector('.header-actions .btn[onclick="openAddProjectModal()"]');
 
   // Hide all
   projectsView.style.display = 'none';
@@ -256,31 +255,25 @@ function switchView(view) {
   if (view === 'projects') {
     projectsView.style.display = '';
     tabProjects.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = '';
   } else if (view === 'todos') {
     todosView.style.display = '';
     tabTodos.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderTodos();
   } else if (view === 'chores') {
     if (choresView) choresView.style.display = '';
     if (tabChores) tabChores.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderChores();
   } else if (view === 'birthdays') {
     if (birthdaysView) birthdaysView.style.display = '';
     if (tabBirthdays) tabBirthdays.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderBirthdays();
   } else if (view === 'vestiaire') {
     if (vestiaireView) vestiaireView.style.display = '';
     if (tabVestiaire) tabVestiaire.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderVestiaire();
   } else if (view === 'flashcards') {
     if (flashcardsView) flashcardsView.style.display = '';
     if (tabFlashcards) tabFlashcards.classList.add('active');
-    if (addProjectBtn) addProjectBtn.style.display = 'none';
     renderFlashcards();
   }
 

@@ -47,7 +47,6 @@
       <button class="view-tab" id="tabFlashcards" onclick="switchView('flashcards')"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Flashcards</button>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="openAddProjectModal()" title="Add project"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
       <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></button>
       <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg></button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme"></button>
@@ -58,145 +57,117 @@
 
   <!-- ===== PROJECTS VIEW ===== -->
   <div id="projectsView">
-  <div class="legend">
-    <div class="legend-item"><span class="status-dot todo"></span>Todo <span class="legend-count" id="legendTodo"></span></div>
-    <div class="legend-item"><span class="status-dot in-progress"></span>In Progress <span class="legend-count" id="legendInProgress"></span></div>
-    <div class="legend-item"><span class="status-dot review"></span>Review <span class="legend-count" id="legendReview"></span></div>
-    <div class="legend-item"><span class="status-dot approved"></span>Approved <span class="legend-count" id="legendApproved"></span></div>
-    <div class="legend-item"><span class="status-dot revision"></span>Revision <span class="legend-count" id="legendRevision"></span></div>
-    <div class="legend-item"><span class="status-dot draft"></span>Draft <span class="legend-count" id="legendDraft"></span></div>
-  </div>
-
-  <div class="main-content">
-    <!-- Project Nav Buttons -->
-    <div class="category-nav-buttons" id="projectNavButtons"></div>
-    <!-- Project Grid -->
-    <div class="project-grid" id="projectGrid"></div>
-
-    <!-- Archived Projects Section -->
-    <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
-      <div class="section-title"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg> Archived Projects</div>
-      <div id="archivedProjectsList"></div>
+    <div class="page-toolbar">
+      <div class="page-toolbar-left">
+        <div class="category-nav-buttons" id="projectNavButtons"></div>
+      </div>
+      <div class="page-toolbar-right">
+        <button class="btn" onclick="openAddProjectModal()" title="Add project"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+      </div>
     </div>
-  </div>
+    <div class="main-content">
+      <div class="project-grid" id="projectGrid"></div>
+      <div class="archived-projects-section" id="archivedProjectsSection" style="display:none;">
+        <div class="section-title"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.29 7 8.71 5 8.71-5"/><path d="m7.5 4.27 9 5.15"/></svg> Archived Projects</div>
+        <div id="archivedProjectsList"></div>
+      </div>
+    </div>
   </div><!-- end projectsView -->
 
   <!-- ===== TODOS VIEW ===== -->
   <div id="todosView" style="display:none;">
-    <div class="stats-bar" id="todosStatsBar">
-      <div class="stat"><span class="stat-value blue" id="statTodosTotal">0</span><span class="stat-label">Total</span></div>
-      <div class="stat"><span class="stat-value yellow" id="statTodosPending">0</span><span class="stat-label">Pending</span></div>
-      <div class="stat"><span class="stat-value green" id="statTodosDone">0</span><span class="stat-label">Done</span></div>
-      <div class="stat"><span class="stat-value red" id="statTodosOverdue">0</span><span class="stat-label">Overdue</span></div>
-      <div class="stat"><span class="stat-value red" id="statTodosFlagged">0</span><span class="stat-label">Flagged</span></div>
-      <div class="stat"><span class="stat-value amber" id="statTodosOutdated">0</span><span class="stat-label">Outdated</span></div>
-    </div>
-
-    <div class="todos-toolbar">
-      <div class="todo-filters">
-        <button class="filter-btn active" data-filter="pending" onclick="setTodoFilter('pending')">Pending</button>
-        <button class="filter-btn" data-filter="done" onclick="setTodoFilter('done')">Done</button>
-        <button class="filter-btn" data-filter="all" onclick="setTodoFilter('all')">All</button>
-        <button class="filter-btn" data-filter="flagged" onclick="setTodoFilter('flagged')">🚩 Flagged</button>
-        <button class="filter-btn" data-filter="outdated" onclick="setTodoFilter('outdated')">🕰️ Outdated</button>
-      </div>
-      <div class="todo-toolbar-right">
-        <div class="todo-sort">
-          <select id="todoSortBy" onchange="renderTodos()">
-            <option value="manual">Manual order</option>
-            <option value="due">Due date</option>
-            <option value="priority">Priority</option>
-            <option value="created">Created</option>
-          </select>
+    <div class="page-toolbar">
+      <div class="page-toolbar-left">
+        <div class="category-nav-buttons" id="todoNavButtons"></div>
+        <div class="page-filters" id="todoFilters">
+          <button class="filter-btn active" data-filter="pending" onclick="setTodoFilter('pending')">Pending</button>
+          <button class="filter-btn" data-filter="done" onclick="setTodoFilter('done')">Done</button>
+          <button class="filter-btn" data-filter="all" onclick="setTodoFilter('all')">All</button>
+          <button class="filter-btn" data-filter="flagged" onclick="setTodoFilter('flagged')">🚩 Flagged</button>
+          <button class="filter-btn" data-filter="outdated" onclick="setTodoFilter('outdated')">🕰️ Outdated</button>
         </div>
-        <button class="btn todo-add-category-btn" onclick="openAddCategoryModal()" title="Add category"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></button>
+        <select id="todoSortBy" class="page-sort" onchange="renderTodos()">
+          <option value="manual">Manual order</option>
+          <option value="due">Due date</option>
+          <option value="priority">Priority</option>
+          <option value="created">Created</option>
+        </select>
+      </div>
+      <div class="page-toolbar-right">
+        <button class="btn" onclick="openAddCategoryModal()" title="Add category"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></button>
       </div>
     </div>
-
-    <div class="todo-category-grid" id="todoCategoryGrid"></div>
+    <div class="main-content">
+      <div class="project-grid" id="todoCategoryGrid"></div>
+    </div>
   </div>
 
   <!-- ===== CHORES VIEW ===== -->
   <div id="choresView" style="display:none;">
-    <div class="stats-bar" id="choresStatsBar">
-      <div class="stat"><span class="stat-value blue" id="statChoresTotal">0</span><span class="stat-label">Chores</span></div>
-      <div class="stat"><span class="stat-value red" id="statChoresOverdue">0</span><span class="stat-label">Overdue</span></div>
-      <div class="stat"><span class="stat-value yellow" id="statChoresDueSoon">0</span><span class="stat-label">Due This Week</span></div>
-      <div class="stat"><span class="stat-value green" id="statChoresOnTrack">0</span><span class="stat-label">On Track</span></div>
-    </div>
-
-    <div class="chores-toolbar">
-      <div class="chore-filters">
-        <button class="filter-btn active" data-filter="all" onclick="setChoreFilter('all')">All</button>
-        <button class="filter-btn" data-filter="overdue" onclick="setChoreFilter('overdue')">Overdue</button>
-        <button class="filter-btn" data-filter="due-soon" onclick="setChoreFilter('due-soon')">Due Soon</button>
-      </div>
-      <div class="chore-toolbar-right">
-        <div class="chore-sort">
-          <select id="choreSortBy" onchange="renderChores()">
-            <option value="due">Next due</option>
-            <option value="name">Name</option>
-            <option value="last-done">Last done</option>
-          </select>
+    <div class="page-toolbar">
+      <div class="page-toolbar-left">
+        <div class="page-filters" id="choreFilters">
+          <button class="filter-btn active" data-filter="all" onclick="setChoreFilter('all')">All</button>
+          <button class="filter-btn" data-filter="overdue" onclick="setChoreFilter('overdue')">Overdue</button>
+          <button class="filter-btn" data-filter="due-soon" onclick="setChoreFilter('due-soon')">Due Soon</button>
         </div>
+        <select id="choreSortBy" class="page-sort" onchange="renderChores()">
+          <option value="due">Next due</option>
+          <option value="name">Name</option>
+          <option value="last-done">Last done</option>
+        </select>
+      </div>
+      <div class="page-toolbar-right">
         <button class="btn" onclick="openAddChoreModal()" title="Add chore"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
         <button class="btn" onclick="openAddChoreCategoryModal()" title="Add category"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></button>
       </div>
     </div>
-
-    <div class="chore-category-grid" id="choreCategoryGrid"></div>
+    <div class="main-content">
+      <div class="project-grid" id="choreCategoryGrid"></div>
+    </div>
   </div>
 
   <!-- ===== BIRTHDAYS VIEW ===== -->
   <div id="birthdaysView" style="display:none;">
-    <div class="stats-bar" id="birthdaysStatsBar">
-      <div class="stat"><span class="stat-value blue" id="statBirthdaysTotal">0</span><span class="stat-label">Tracked</span></div>
-      <div class="stat"><span class="stat-value red" id="statBirthdaysToday">0</span><span class="stat-label">Today 🎂</span></div>
-      <div class="stat"><span class="stat-value yellow" id="statBirthdaysWeek">0</span><span class="stat-label">This Week</span></div>
-      <div class="stat"><span class="stat-value green" id="statBirthdaysMonth">0</span><span class="stat-label">This Month</span></div>
-    </div>
-
-    <div class="birthdays-toolbar">
-      <div class="birthday-toolbar-left"></div>
-      <div class="birthday-toolbar-right">
+    <div class="page-toolbar">
+      <div class="page-toolbar-left"></div>
+      <div class="page-toolbar-right">
         <button class="btn" onclick="openAddBirthdayModal()" title="Add birthday"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
       </div>
     </div>
-
-    <div class="birthday-grid" id="birthdayGrid"></div>
+    <div class="main-content">
+      <div class="project-grid" id="birthdayGrid"></div>
+    </div>
   </div>
 
   <!-- ===== VESTIAIRE VIEW ===== -->
   <div id="vestiaireView" style="display:none;">
-    <div class="stats-bar" id="vestiaireStatsBar">
-      <div class="stat"><span class="stat-value blue" id="statVestiaireTotal">0</span><span class="stat-label">Items</span></div>
-      <div class="stat"><span class="stat-value purple" id="statVestiaireCategories">0</span><span class="stat-label">Categories</span></div>
-      <div class="stat"><span class="stat-value yellow" id="statVestiaireBrands">0</span><span class="stat-label">Brands</span></div>
-      <div class="stat"><span class="stat-value green" id="statVestiaireSized">0</span><span class="stat-label">With Size</span></div>
+    <div class="page-toolbar">
+      <div class="page-toolbar-left">
+        <div class="category-nav-buttons" id="vestiaireNavButtons"></div>
+      </div>
+      <div class="page-toolbar-right">
+        <button class="btn" onclick="openAddVestiaireModal()" title="Add item"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+      </div>
     </div>
-
     <div class="main-content">
-      <div class="category-nav-buttons" id="vestiaireNavButtons"></div>
       <div class="project-grid" id="vestiaireGrid"></div>
     </div>
   </div>
 
   <!-- ===== FLASHCARDS VIEW ===== -->
   <div id="flashcardsView" style="display:none;">
-    <div class="stats-bar" id="flashcardStatsBar">
-      <div class="stat"><span class="stat-value yellow" id="statFlashDue">0</span><span class="stat-label">Due</span></div>
-      <div class="stat"><span class="stat-value blue" id="statFlashLearning">0</span><span class="stat-label">Learning</span></div>
-      <div class="stat"><span class="stat-value green" id="statFlashMastered">0</span><span class="stat-label">Mastered</span></div>
-      <div class="stat"><span class="stat-value purple" id="statFlashTotal">0</span><span class="stat-label">Total</span></div>
-    </div>
-
-    <div class="main-content">
-      <div class="category-nav-buttons" id="flashcardNavButtons"></div>
-      <div class="fc-action-bar">
-        <button class="btn btn-primary" onclick="startPractice('__all')">▶ Practice All</button>
-        <button class="btn" onclick="openAddFlashDeckModal()">+ New Deck</button>
-        <input type="text" class="fc-search" placeholder="Search cards…" oninput="filterFlashcards(event)">
+    <div class="page-toolbar">
+      <div class="page-toolbar-left">
+        <div class="category-nav-buttons" id="flashcardNavButtons"></div>
       </div>
+      <div class="page-toolbar-right">
+        <button class="btn btn-primary" onclick="startPractice('__all')">▶ Practice</button>
+        <button class="btn" onclick="openAddFlashDeckModal()" title="New deck"><svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+        <input type="text" class="page-search" placeholder="Search cards…" oninput="filterFlashcards(event)">
+      </div>
+    </div>
+    <div class="main-content">
       <div id="flashcardGrid" class="project-grid"></div>
     </div>
   </div>

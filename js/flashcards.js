@@ -85,6 +85,29 @@ const DECK_COLORS = [
   '#ef4444', '#ec4899', '#06b6d4', '#f97316',
   '#6366f1', '#14b8a6',
 ];
+
+// ── Shortnames ──
+const FLASH_SHORTNAMES_KEY = 'claw_flash_shortnames';
+function getFlashShortnames() {
+  try { return JSON.parse(localStorage.getItem(FLASH_SHORTNAMES_KEY) || '{}'); } catch { return {}; }
+}
+function saveFlashShortnames(map) { localStorage.setItem(FLASH_SHORTNAMES_KEY, JSON.stringify(map)); }
+function getFlashShortname(deckName) {
+  if (!deckName) return '';
+  return getFlashShortnames()[deckName] || '';
+}
+function setFlashShortname(deckName, shortname) {
+  const map = getFlashShortnames();
+  if (shortname) { map[deckName] = shortname; } else { delete map[deckName]; }
+  saveFlashShortnames(map);
+}
+function promptFlashShortname(deckName) {
+  const current = getFlashShortname(deckName) || '';
+  const result = prompt('Short name for "' + deckName + '" (leave empty to remove):', current);
+  if (result === null) return;
+  setFlashShortname(deckName, result.trim());
+  refreshFlashcards();
+}
 const DRAFT_COLOR = '#6b7280';
 
 function getDeckColor(deck) {
@@ -103,19 +126,6 @@ async function refreshFlashcards() {
   if (state.currentView === 'flashcards') renderFlashcards();
 }
 
-// ── Stats ──
-function renderFlashcardStats() {
-  const now = new Date();
-  const due = allCards.filter(c => !c.next_review || new Date(c.next_review) <= now).length;
-  const learning = allCards.filter(c => c.stability > 0 && c.stability <= 21).length;
-  const mastered = allCards.filter(c => c.stability > 21).length;
-  const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  el('statFlashDue', due);
-  el('statFlashLearning', learning);
-  el('statFlashMastered', mastered);
-  el('statFlashTotal', allCards.length);
-}
-
 // ── Deck Nav Buttons ──
 function renderDeckNavButtons() {
   const container = document.getElementById('flashcardNavButtons');
@@ -127,7 +137,9 @@ function renderDeckNavButtons() {
 
   html += decks.map(deck => {
     const color = getDeckColor(deck);
-    return `<button class="category-nav-btn" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="navigateToFlashDeck('${esc(deck)}')">${esc(deck)} (${allCards.filter(c => c.deck === deck).length})</button>`;
+    const sn = getFlashShortname(deck);
+    const display = sn || deck;
+    return `<button class="category-nav-btn" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="navigateToFlashDeck('${esc(deck)}')" title="${esc(deck)}">${esc(display)} (${allCards.filter(c => c.deck === deck).length})</button>`;
   }).join('');
 
   container.innerHTML = html;
@@ -143,7 +155,6 @@ let searchQuery = '';
 
 // ── Main Render ──
 function renderFlashcards() {
-  renderFlashcardStats();
   renderDeckNavButtons();
   renderAllBuckets();
 }
@@ -266,11 +277,12 @@ function renderDeckBucket(deck, q) {
     <div class="project-card-header">
       <div style="display:flex;align-items:flex-start;gap:6px;">
         <div class="project-info">
-          <h3><span style="color:${color};">${esc(deck)}</span></h3>
+          <h3><span style="color:${color};">${esc(deck)}</span>${getFlashShortname(deck) ? '<span class="todo-cat-shortname-label">' + esc(getFlashShortname(deck)) + '</span>' : ''}</h3>
           <span class="tech">${allDeckCards.length} cards ${chips.join(' ')}</span>
         </div>
       </div>
       <div class="project-header-actions" style="opacity:1;">
+        <button class="todo-cat-shortname-btn" onclick="promptFlashShortname('${esc(deck).replace(/'/g, "\\\\'")}')" title="${getFlashShortname(deck) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
         ${practiceCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="Practice">${lucideIcon('play', 14, '#fff')} ${practiceCount}</button>` : `<span class="fc-all-done">${lucideIcon('circle-check', 14, '#22c55e')} Caught up</span>`}
         <button class="archive-project-btn" onclick="openAddFlashcardModal('${esc(deck)}')" title="Add card">${lucideIcon('plus', 16)}</button>
       </div>
@@ -794,3 +806,5 @@ function initFlashcardModals() {}
 export { refreshFlashcards, renderFlashcards, initFlashcardModals };
 window.renderFlashcards = renderFlashcards;
 window.refreshFlashcards = refreshFlashcards;
+
+window.promptFlashShortname = promptFlashShortname;

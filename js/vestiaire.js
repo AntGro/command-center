@@ -89,7 +89,6 @@ function renderVestiaire() {
   const items = state.allVestiaire || [];
   const cats = getVestiaireCategories();
 
-  updateVestiaireStats(items);
   renderVestiaireNavButtons(cats, items);
 
   // Group items by category
@@ -139,6 +138,7 @@ function renderCategoryCard(cat, items) {
         <span style="font-size:0.78rem;color:var(--muted);">(${count})</span>
       </div>
       <div class="project-header-actions" style="opacity:1;">
+            <button class="todo-cat-shortname-btn" onclick="promptVestShortname('${esc(category).replace(/'/g, &quot;\\\'&quot;)}')" title="${getVestShortname(category) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
         <button onclick="openAddVestiaireModal('${escapedCat}')" title="Add to ${escapedCat}" style="background:none;border:none;cursor:pointer;color:${color};padding:2px 6px;border-radius:4px;transition:all 0.2s;">
           ${lucideIcon('plus', 16)}
         </button>
@@ -193,7 +193,9 @@ function renderVestiaireNavButtons(cats, items) {
   container.innerHTML = cats.map(cat => {
     const count = items.filter(v => v.category === cat).length;
     const color = getCategoryColor(cat);
-    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToVestiaireCat('${esc(cat)}')" title="${esc(cat)} (${count})">${esc(cat)} (${count})</button>`;
+    const sn = getVestShortname(cat);
+    const display = sn || cat;
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToVestiaireCat('${esc(cat)}')" title="${esc(cat)} (${count})">${esc(display)} (${count})</button>`;
   }).join('');
 }
 
@@ -223,21 +225,6 @@ function getCategoryIcon(cat) {
     return lucideIcon('layers', 18);
   return lucideIcon('tag', 18);
 }
-
-function updateVestiaireStats(items) {
-  const all = items || state.allVestiaire || [];
-  const total = all.length;
-  const categories = [...new Set(all.map(v => v.category).filter(Boolean))].length;
-  const brands = [...new Set(all.map(v => v.brand).filter(Boolean))].length;
-  const withSize = all.filter(v => v.size).length;
-
-  const el = id => document.getElementById(id);
-  if (el('statVestiaireTotal')) el('statVestiaireTotal').textContent = total;
-  if (el('statVestiaireCategories')) el('statVestiaireCategories').textContent = categories;
-  if (el('statVestiaireBrands')) el('statVestiaireBrands').textContent = brands;
-  if (el('statVestiaireSized')) el('statVestiaireSized').textContent = withSize;
-}
-
 
 // ===================================================================
 // MODALS
@@ -505,3 +492,5 @@ window.saveNewVestiaireCategory = saveNewVestiaireCategory;
 window.deleteVestiaireCategory = deleteVestiaireCategory;
 window.navigateToVestiaireCat = navigateToVestiaireCat;
 window.renderVestiaire = renderVestiaire;
+
+window.promptVestShortname = promptVestShortname;

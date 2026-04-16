@@ -120,21 +120,6 @@ function showToast(msg, type = 'info') {
 }
 
 
-// ===================================================================
-// STATS (Project legend counts)
-// ===================================================================
-function updateStats() {
-  const tasks = state.allTasks;
-  const counts = { todo: 0, 'in-progress': 0, review: 0, approved: 0, revision: 0, draft: 0 };
-  tasks.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
-  const setCount = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = `(${n || 0})`; };
-  setCount('legendTodo', counts.todo);
-  setCount('legendInProgress', counts['in-progress']);
-  setCount('legendReview', counts.review);
-  setCount('legendApproved', counts.approved);
-  setCount('legendRevision', counts.revision);
-  setCount('legendDraft', counts.draft);
-}
 
 
 // ===================================================================
@@ -221,12 +206,11 @@ function updateTaskListMaxHeight() {
   const app = document.getElementById('app');
   if (!app || !app.classList.contains('active')) return;
   const header = document.querySelector('.app-header');
-  const legend = document.querySelector('.legend');
   const footer = document.querySelector('.footer-stats');
   
-  // Calculate occupied height (header + legend + footer + padding)
+  // Calculate occupied height (header + footer + padding)
   const occupiedHeight = (header?.offsetHeight || 0) + 
-    (legend?.offsetHeight || 0) + (footer?.offsetHeight || 0) + 80; // 80px for padding/margins
+(footer?.offsetHeight || 0) + 80; // 80px for padding/margins
   
   const availableHeight = window.innerHeight - occupiedHeight;
   // Each card has ~80px overhead (header, add-task, archive toggle, padding)
@@ -279,7 +263,7 @@ function collapseMeta(id, field) {
 // Exports
 export {
   esc, linkify, renderMd, showToast, formatRelativeDate,
-  updateStats, showDeleteConfirm, closeDeleteConfirm, executeDeleteConfirm,
+  showDeleteConfirm, closeDeleteConfirm, executeDeleteConfirm,
   updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore,
 };
 

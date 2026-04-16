@@ -9,6 +9,29 @@ import { getCategoryColor } from './todos.js';
 // (state managed in supabase.js)
 // (state managed in supabase.js)
 let choreFilter = 'all';
+// ── Shortnames ──
+const CHORE_SHORTNAMES_KEY = 'claw_chore_shortnames';
+function getChoreShortnames() {
+  try { return JSON.parse(localStorage.getItem(CHORE_SHORTNAMES_KEY) || '{}'); } catch { return {}; }
+}
+function saveChoreShortnames(map) { localStorage.setItem(CHORE_SHORTNAMES_KEY, JSON.stringify(map)); }
+function getChoreShortname(catName) {
+  if (!catName) return '';
+  return getChoreShortnames()[catName] || '';
+}
+function setChoreShortname(catName, shortname) {
+  const map = getChoreShortnames();
+  if (shortname) { map[catName] = shortname; } else { delete map[catName]; }
+  saveChoreShortnames(map);
+}
+function promptChoreShortname(catName) {
+  const current = getChoreShortname(catName) || '';
+  const result = prompt('Short name for "' + catName + '" (leave empty to remove):', current);
+  if (result === null) return;
+  setChoreShortname(catName, result.trim());
+  renderChores();
+}
+
 
 // ===================================================================
 // NEXT_DUE — delegated to heartbeat cron job
@@ -55,7 +78,6 @@ async function refreshChores() {
   syncChoreCategoriesFromData();
   if (state.currentView === 'chores') {
     renderChores();
-    updateChoreStats();
   }
 }
 
@@ -134,7 +156,7 @@ function getFilteredChoresForCategory(category) {
 
 function setChoreFilter(filter) {
   choreFilter = filter;
-  document.querySelectorAll('.chore-filters .filter-btn').forEach(btn => {
+  document.querySelectorAll('#choreFilters .filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   renderChores();
@@ -152,7 +174,6 @@ function renderChores() {
     html += renderChoreCategoryCard(cat);
   }
   grid.innerHTML = html;
-  updateChoreStats();
 }
 
 function renderChoreCategoryCard(category) {
@@ -175,16 +196,17 @@ function renderChoreCategoryCard(category) {
     ? '<p class="empty-msg">No chores here</p>'
     : choresInCat.map(c => renderChoreItem(c)).join('');
 
-  return `<div class="todo-category-card chore-category-card" data-category="${esc(catName)}">
+  return `<div class="project-card" data-category="${esc(catName)}">
     <div class="todo-cat-accent" style="background:${catColor}"></div>
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
         <div class="todo-cat-info">
-          <h3 class="todo-cat-name">${esc(catName)}</h3>
+          <h3 class="todo-cat-name">${esc(catName)}${getChoreShortname(catName) ? '<span class="todo-cat-shortname-label">' + esc(getChoreShortname(catName)) + '</span>' : ''}</h3>
           <span class="todo-cat-stats">${statsText}</span>
         </div>
       </div>
       <div class="todo-cat-header-actions">
+        <button class="todo-cat-shortname-btn" onclick="promptChoreShortname('${escapedCat}')" title="${getChoreShortname(catName) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
         ${deleteBtn}
       </div>
     </div>
@@ -242,20 +264,6 @@ function formatChoreRelative(d) {
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
   return `${Math.floor(diffDays / 30)}mo ago`;
 }
-
-function updateChoreStats() {
-  const total = state.allChores.length;
-  const overdue = state.allChores.filter(c => choreDueStatus(c) === 'overdue').length;
-  const dueSoon = state.allChores.filter(c => ['due-today', 'due-tomorrow', 'due-soon'].includes(choreDueStatus(c))).length;
-  const onTrack = state.allChores.filter(c => choreDueStatus(c) === 'on-track').length;
-
-  const el = id => document.getElementById(id);
-  if (el('statChoresTotal')) el('statChoresTotal').textContent = total;
-  if (el('statChoresOverdue')) el('statChoresOverdue').textContent = overdue;
-  if (el('statChoresDueSoon')) el('statChoresDueSoon').textContent = dueSoon;
-  if (el('statChoresOnTrack')) el('statChoresOnTrack').textContent = onTrack;
-}
-
 
 // ===================================================================
 // CHORE CRUD
@@ -632,3 +640,5 @@ window.saveNewChoreCategory = saveNewChoreCategory;
 window.deleteChoreCategory = deleteChoreCategory;
 window.addChoreFromInput = addChoreFromInput;
 window.renderChores = renderChores;
+
+window.promptChoreShortname = promptChoreShortname;
