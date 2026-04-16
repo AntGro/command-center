@@ -176,7 +176,7 @@
   <div class="modal-overlay" id="snoozeModal">
     <div class="modal snooze-modal">
       <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Snooze TODO</h2>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Pick when to be reminded about this item.</p>
+      <p class="modal-hint">Pick when to be reminded about this item.</p>
       <div class="snooze-options">
         <button onclick="snoozeFor(1,'h')">1 hour</button>
         <button onclick="snoozeFor(3,'h')">3 hours</button>
@@ -185,8 +185,8 @@
         <button onclick="snoozeFor(7,'d')">1 week</button>
         <button onclick="snoozeFor(1,'M')">1 month</button>
       </div>
-      <label style="margin-top:12px;">Or pick a date & time:</label>
-      <input type="datetime-local" id="snoozeCustomDate" style="width:100%;margin-top:4px;">
+      <label>Or pick a date & time:</label>
+      <input type="datetime-local" id="snoozeCustomDate">
       <input type="hidden" id="snoozeTaskId">
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeSnoozeModal()">Cancel</button>
@@ -216,7 +216,7 @@
       <label>Short Name (optional, for nav buttons)</label>
       <input type="text" id="newProjectShortname" placeholder="e.g. CC, Tarot, F2P" maxlength="20">
       <label>Color</label>
-      <input type="color" id="newProjectColor" value="#646cff" style="height:36px;padding:2px;">
+      <input type="color" id="newProjectColor" value="#646cff">
       <label>Tech Stack</label>
       <input type="text" id="newProjectTech" placeholder="e.g. React · Node · Vercel">
       <label>GitHub URL (optional)</label>
@@ -234,7 +234,7 @@
   <div class="modal-overlay" id="revisionModal">
     <div class="modal revision-modal">
       <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg> Request Revision</h2>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Explain what needs to change — Claw will see this when picking up the revision.</p>
+      <p class="modal-hint">Explain what needs to change — Claw will see this when picking up the revision.</p>
       <textarea id="revisionFeedback" placeholder="What needs to change... (Enter to submit, Shift+Enter for new line)"></textarea>
       <input type="hidden" id="revisionTaskId">
       <div class="modal-actions">
@@ -281,7 +281,7 @@
       <label>Short Name (optional, for nav buttons)</label>
       <input type="text" id="editProjectShortname" maxlength="20">
       <label>Color</label>
-      <input type="color" id="editProjectColor" style="height:36px;padding:2px;">
+      <input type="color" id="editProjectColor">
       <label>Tech Stack</label>
       <input type="text" id="editProjectTech">
       <label>GitHub URL</label>
@@ -377,7 +377,7 @@
   <div class="modal-overlay" id="choreDoneModal">
     <div class="modal chore-done-modal">
       <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Mark Chore Done</h2>
-      <p id="choreDoneName" style="font-size:0.88rem;margin-bottom:12px;"></p>
+      <p id="choreDoneName" class="modal-hint"></p>
       <label>Note (optional)</label>
       <input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}">
       <input type="hidden" id="choreDoneId">
@@ -392,7 +392,7 @@
   <div class="modal-overlay" id="choreHistoryModal">
     <div class="modal chore-history-modal">
       <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Chore History</h2>
-      <p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p>
+      <p id="choreHistoryName" class="modal-hint"></p>
       <div id="choreHistoryList"></div>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeChoreHistoryModal()">Close</button>
