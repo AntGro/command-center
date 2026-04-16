@@ -8,6 +8,31 @@ import { esc, showToast, showDeleteConfirm } from './utils.js';
 
 const DEFAULT_CATEGORIES = ['Haut', 'Bas', 'Chaussures', 'Manteau'];
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
+const VEST_SHORTNAMES_KEY = 'claw_cc_vest_shortnames';
+
+// ── Category shortnames (localStorage) ──
+function getVestShortnames() {
+  try { const raw = localStorage.getItem(VEST_SHORTNAMES_KEY); return raw ? JSON.parse(raw) : {}; }
+  catch { return {}; }
+}
+function saveVestShortnames(map) { localStorage.setItem(VEST_SHORTNAMES_KEY, JSON.stringify(map)); }
+
+function getVestShortname(catName) {
+  const map = getVestShortnames();
+  return map[catName] || '';
+}
+function setVestShortname(catName, shortname) {
+  const map = getVestShortnames();
+  if (shortname) map[catName] = shortname; else delete map[catName];
+  saveVestShortnames(map);
+}
+function promptVestShortname(catName) {
+  const current = getVestShortname(catName) || '';
+  const result = prompt(`Short name for "${catName}" (leave empty to clear):`, current);
+  if (result === null) return;
+  setVestShortname(catName, result.trim());
+  renderVestiaire();
+}
 
 // Distinct colors per category (cycles if more categories are added)
 const CATEGORY_COLORS = [
