@@ -390,7 +390,7 @@ input,select,button{font-family:inherit;}
   .app-header{padding:10px 8px 8px;gap:6px;}
   .app-header h1{font-size:1.05rem;gap:5px;}
   .header-actions{gap:4px;flex-wrap:wrap;justify-content:flex-end;}
-  .header-actions .btn{padding:6px 10px;font-size:0.78rem;min-height:36px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;}
+  .header-actions .btn{padding:6px;width:36px;height:36px;}
 
   /* View switcher — horizontal scroll on mobile */
   .view-switcher{gap:4px;padding:4px 0 0;scroll-snap-type:x mandatory;margin-top:2px;}
