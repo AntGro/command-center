@@ -28,7 +28,7 @@ function renderProjectNavButtons(projects) {
   const container = document.getElementById('projectNavButtons');
   if (!container) return;
   container.innerHTML = projects.map(p =>
-    `<button class="category-nav-btn" style="--cat-color:${p.color};border-color:${p.color};color:${p.color}" onclick="navigateToProject('${p.id}')" title="Go to ${esc(p.name)}">${esc(p.name)}</button>`
+    `<button class="category-nav-btn" style="--cat-color:${p.color};border-color:${p.color};color:${p.color}" onclick="navigateToProject('${p.id}')" title="Go to ${esc(p.name)}">${esc(p.shortname || p.name)}</button>`
   ).join('');
 }
 
@@ -587,6 +587,7 @@ function openAddProjectModal() {
   document.getElementById('addProjectModal').classList.add('visible');
   document.getElementById('newProjectId').value = '';
   document.getElementById('newProjectName').value = '';
+  document.getElementById('newProjectShortname').value = '';
   document.getElementById('newProjectColor').value = '#646cff';
   document.getElementById('newProjectTech').value = '';
   document.getElementById('newProjectGithub').value = '';
@@ -606,6 +607,7 @@ document.addEventListener('click', e => {
 async function saveNewProject() {
   const id = document.getElementById('newProjectId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
   const name = document.getElementById('newProjectName').value.trim();
+  const shortname = document.getElementById('newProjectShortname').value.trim() || null;
   const color = document.getElementById('newProjectColor').value;
   const tech = document.getElementById('newProjectTech').value.trim();
   const github = document.getElementById('newProjectGithub').value.trim();
@@ -620,7 +622,7 @@ async function saveNewProject() {
 
   const maxOrder = state.PROJECTS.length > 0 ? Math.max(...state.PROJECTS.map(p => p.sort_order || 0)) + 1 : 0;
 
-  const { error } = await state.sb.from('projects').insert({ id, name, color, tech, links, sort_order: maxOrder });
+  const { error } = await state.sb.from('projects').insert({ id, name, shortname, color, tech, links, sort_order: maxOrder });
   if (error) { showToast('Failed to create project: ' + (error.message || ''), 'error'); return; }
 
   closeAddProjectModal();
@@ -701,6 +703,7 @@ function openEditProjectModal(id) {
   if (!p) return;
   document.getElementById('editProjectId').value = p.id;
   document.getElementById('editProjectName').value = p.name;
+  document.getElementById('editProjectShortname').value = p.shortname || '';
   document.getElementById('editProjectColor').value = p.color;
   document.getElementById('editProjectTech').value = p.tech || '';
   const github = (p.links || []).find(l => l.label === 'GitHub');
@@ -717,6 +720,7 @@ function closeEditProjectModal() {
 async function saveEditProject() {
   const id = document.getElementById('editProjectId').value;
   const name = document.getElementById('editProjectName').value.trim();
+  const shortname = document.getElementById('editProjectShortname').value.trim() || null;
   const color = document.getElementById('editProjectColor').value;
   const tech = document.getElementById('editProjectTech').value.trim();
   const github = document.getElementById('editProjectGithub').value.trim();
@@ -725,7 +729,7 @@ async function saveEditProject() {
   const links = [];
   if (github) links.push({ label: 'GitHub', url: github });
   if (live) links.push({ label: 'Live', url: live });
-  const { error } = await state.sb.from('projects').update({ name, color, tech, links }).eq('id', id);
+  const { error } = await state.sb.from('projects').update({ name, shortname, color, tech, links }).eq('id', id);
   if (error) { showToast('Update failed: ' + (error.message || ''), 'error'); return; }
   closeEditProjectModal();
   await loadProjects();
