@@ -145,11 +145,10 @@ function buildProjectCards() {
   const visibleProjects = state.PROJECTS.filter(p => !archivedIds.includes(p.id));
 
   grid.innerHTML = visibleProjects.map(p => `
-    <div class="project-card" data-project="${p.id}" draggable="true">
+    <div class="project-card" data-project="${p.id}">
       <div class="project-accent" style="background:${p.color}"></div>
       <div class="project-card-header">
         <div style="display:flex;align-items:flex-start;gap:6px;">
-          <span class="project-drag-handle" title="Drag to reorder" >⠿</span>
           <div class="project-info">
             <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
             <span class="tech">${esc(p.tech || '')}</span>
@@ -296,12 +295,10 @@ function renderTask(t, isArchived = false) {
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>`;
 
-  const dragHandle = !isArchived ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : '';
   const draftClass = isDraft ? ' task-draft' : '';
 
   return `<div class="task-item${draftClass}" data-task-id="${t.id}">
     <div class="task-row">
-      ${dragHandle}
       <span class="status-dot ${t.status}"></span>
       <span class="task-text" ondblclick="promptEditTask('${t.id}')">${renderMd(t.text)}</span>
       ${promoteBtn}
@@ -364,89 +361,96 @@ function initTaskHoverDelay(container) {
 // DRAG & DROP REORDER
 // ===================================================================
 let isDragging = false;
+const LONG_PRESS_MS = 250;
+const DRAG_THRESHOLD = 5;
 
 function initDragDrop(container, projectId) {
   let dragState = null;
 
   container.querySelectorAll('.task-item').forEach(item => {
-    const handle = item.querySelector('.drag-handle');
-    if (!handle) return;
-    handle.style.touchAction = 'none';
+    // Skip archived items (inside .archived-tasks)
+    if (item.closest('.archived-tasks')) return;
+    item.style.touchAction = 'pan-y';
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    let activated = false;
 
-    handle.addEventListener('pointerdown', e => {
+    item.addEventListener('pointerdown', e => {
+      // Don't initiate drag from interactive elements
+      if (e.target.closest('button, a, input, textarea, select, .task-actions, .promote-btn, .status-dot')) return;
       if (dragState) return;
-      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      activated = false;
 
-      const rect = item.getBoundingClientRect();
-      isDragging = true;
-      dragState = {
-        el: item,
-        id: item.dataset.taskId,
-        offsetY: e.clientY - rect.top,
-        clone: null
-      };
+      pressTimer = setTimeout(() => {
+        activated = true;
+        e.preventDefault();
+        const rect = item.getBoundingClientRect();
+        isDragging = true;
+        dragState = { el: item, id: item.dataset.taskId, offsetY: e.clientY - rect.top, clone: null, pointerId: e.pointerId };
 
-      // Visual clone
-      const clone = item.cloneNode(true);
-      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);`;
-      document.body.appendChild(clone);
-      dragState.clone = clone;
-
-      item.classList.add('dragging');
-      handle.setPointerCapture(e.pointerId);
+        const clone = item.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);transition:none;`;
+        document.body.appendChild(clone);
+        dragState.clone = clone;
+        item.classList.add('dragging');
+        item.setPointerCapture(e.pointerId);
+      }, LONG_PRESS_MS);
     });
 
-    handle.addEventListener('pointermove', e => {
+    item.addEventListener('pointermove', e => {
+      // Cancel long-press if moved too far before activation
+      if (pressTimer && !activated) {
+        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+        return;
+      }
       if (!dragState || dragState.el !== item) return;
       e.preventDefault();
-
       dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
 
-      // Auto-scroll the task list when near edges
+      // Auto-scroll
       const cRect = container.getBoundingClientRect();
       const edge = 40;
-      if (e.clientY < cRect.top + edge && container.scrollTop > 0) {
-        container.scrollTop -= 5;
-      } else if (e.clientY > cRect.bottom - edge && container.scrollTop < container.scrollHeight - container.clientHeight) {
-        container.scrollTop += 5;
-      }
+      if (e.clientY < cRect.top + edge && container.scrollTop > 0) container.scrollTop -= 5;
+      else if (e.clientY > cRect.bottom - edge && container.scrollTop < container.scrollHeight - container.clientHeight) container.scrollTop += 5;
 
-      // Highlight drop target
       container.querySelectorAll('.task-item:not(.dragging)').forEach(el => {
         el.classList.remove('drag-over');
         const r = el.getBoundingClientRect();
-        if (e.clientY >= r.top && e.clientY <= r.bottom) {
-          el.classList.add('drag-over');
-        }
+        if (e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
       });
     });
 
     const finishDrag = async () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (!dragState || dragState.el !== item) return;
-
       if (dragState.clone) dragState.clone.remove();
       item.classList.remove('dragging');
 
       let targetId = null;
       container.querySelectorAll('.task-item').forEach(el => {
-        if (el.classList.contains('drag-over')) {
-          targetId = el.dataset.taskId;
-          el.classList.remove('drag-over');
-        }
+        if (el.classList.contains('drag-over')) { targetId = el.dataset.taskId; el.classList.remove('drag-over'); }
       });
-
       const draggedId = dragState.id;
       dragState = null;
       isDragging = false;
-
-      if (targetId && targetId !== draggedId) {
-        await reorderTasks(projectId, draggedId, targetId);
-      }
+      if (targetId && targetId !== draggedId) await reorderTasks(container, projectId, draggedId, targetId);
     };
 
-    handle.addEventListener('pointerup', finishDrag);
-    handle.addEventListener('pointercancel', finishDrag);
-    handle.addEventListener('lostpointercapture', () => {
+    item.addEventListener('pointerup', e => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      finishDrag();
+    });
+    item.addEventListener('pointercancel', () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      finishDrag();
+    });
+    item.addEventListener('lostpointercapture', () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (dragState && dragState.el === item) {
         if (dragState.clone) dragState.clone.remove();
         item.classList.remove('dragging');
@@ -458,7 +462,7 @@ function initDragDrop(container, projectId) {
   });
 }
 
-async function reorderTasks(projectId, draggedId, targetId) {
+async function reorderTasks(container, projectId, draggedId, targetId) {
   const projectTasks = state.allTasks.filter(t => t.project === projectId && t.status !== 'approved');
   const draggedIdx = projectTasks.findIndex(t => t.id === draggedId);
   const targetIdx = projectTasks.findIndex(t => t.id === targetId);
@@ -468,15 +472,29 @@ async function reorderTasks(projectId, draggedId, targetId) {
   const [dragged] = projectTasks.splice(draggedIdx, 1);
   projectTasks.splice(targetIdx, 0, dragged);
 
-  // Update sort_order for all tasks in this project
-  const updates = projectTasks.map((t, i) => ({ id: t.id, sort_order: i }));
+  // Update sort_order in memory
+  projectTasks.forEach((t, i) => { t.sort_order = i; });
+  // Also update in state.allTasks
+  projectTasks.forEach(t => {
+    const st = state.allTasks.find(x => x.id === t.id);
+    if (st) st.sort_order = t.sort_order;
+  });
 
-  // Batch update (individual calls since Supabase JS doesn't support batch upsert easily)
-  for (const u of updates) {
-    await state.sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id);
-  }
-  await refreshAll();
+  // Move DOM elements to match new order
+  const items = Array.from(container.querySelectorAll('.task-item'));
+  const ordered = projectTasks.map(t => items.find(el => el.dataset.taskId === t.id)).filter(Boolean);
+  ordered.forEach(el => container.appendChild(el));
+
+  // Re-init drag for this container
+  initDragDrop(container, projectId);
+
   showToast('Reordered', 'success');
+
+  // Background Supabase sync
+  const updates = projectTasks.map((t, i) => ({ id: t.id, sort_order: i }));
+  for (const u of updates) {
+    state.sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id);
+  }
 }
 
 async function addTask(projectId) {
@@ -638,44 +656,88 @@ async function saveNewProject() {
 function initProjectDragDrop() {
   const grid = document.getElementById('projectGrid');
   const cards = grid.querySelectorAll('.project-card');
+  let dragState = null;
+
   cards.forEach(card => {
-    // Only make draggable when mousedown on drag handle
-    card.setAttribute('draggable', 'false');
-    const handle = card.querySelector('.project-drag-handle');
-    if (handle) {
-      handle.addEventListener('mousedown', () => card.setAttribute('draggable', 'true'));
-      handle.addEventListener('mouseup', () => card.setAttribute('draggable', 'false'));
-    }
-    card.addEventListener('dragstart', e => {
-      if (card.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
-      card.classList.add('dragging');
-      e.dataTransfer.setData('text/plain', card.dataset.project);
-      e.dataTransfer.effectAllowed = 'move';
+    const header = card.querySelector('.project-card-header');
+    if (!header) return;
+
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    let activated = false;
+
+    header.addEventListener('pointerdown', e => {
+      if (e.target.closest('button, a, input, textarea, select, .project-header-actions')) return;
+      if (dragState) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      activated = false;
+
+      pressTimer = setTimeout(() => {
+        activated = true;
+        const rect = card.getBoundingClientRect();
+        isDragging = true;
+        dragState = { el: card, id: card.dataset.project, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null, pointerId: e.pointerId };
+
+        const clone = card.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;border:2px solid var(--accent);transition:none;`;
+        document.body.appendChild(clone);
+        dragState.clone = clone;
+        card.classList.add('dragging');
+        header.setPointerCapture(e.pointerId);
+      }, LONG_PRESS_MS);
     });
-    card.addEventListener('dragend', () => {
+
+    header.addEventListener('pointermove', e => {
+      if (pressTimer && !activated) {
+        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
+          clearTimeout(pressTimer); pressTimer = null;
+        }
+        return;
+      }
+      if (!dragState || dragState.el !== card) return;
+      e.preventDefault();
+      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
+      dragState.clone.style.left = (e.clientX - dragState.offsetX) + 'px';
+      grid.querySelectorAll('.project-card:not(.dragging)').forEach(el => {
+        el.classList.remove('drag-over');
+        const r = el.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
+      });
+    });
+
+    const finishDrag = async () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      if (!dragState || dragState.el !== card) return;
+      if (dragState.clone) dragState.clone.remove();
       card.classList.remove('dragging');
-      card.setAttribute('draggable', 'false');
-      grid.querySelectorAll('.project-card').forEach(c => c.classList.remove('drag-over'));
-    });
-    card.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      const dragging = grid.querySelector('.dragging');
-      if (dragging && card !== dragging) card.classList.add('drag-over');
-    });
-    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-    card.addEventListener('drop', async e => {
-      e.preventDefault();
-      card.classList.remove('drag-over');
-      const draggedId = e.dataTransfer.getData('text/plain');
-      const targetId = card.dataset.project;
-      if (draggedId === targetId) return;
-      await reorderProjects(draggedId, targetId);
+      let targetId = null;
+      grid.querySelectorAll('.project-card').forEach(el => {
+        if (el.classList.contains('drag-over')) { targetId = el.dataset.project; el.classList.remove('drag-over'); }
+      });
+      const draggedId = dragState.id;
+      dragState = null;
+      isDragging = false;
+      if (targetId && targetId !== draggedId) await reorderProjects(draggedId, targetId);
+    };
+
+    header.addEventListener('pointerup', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    header.addEventListener('pointercancel', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    header.addEventListener('lostpointercapture', () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      if (dragState && dragState.el === card) {
+        if (dragState.clone) dragState.clone.remove();
+        card.classList.remove('dragging');
+        grid.querySelectorAll('.project-card').forEach(el => el.classList.remove('drag-over'));
+        dragState = null;
+        isDragging = false;
+      }
     });
   });
 }
 
 async function reorderProjects(draggedId, targetId) {
+  const grid = document.getElementById('projectGrid');
   const archivedIds = getArchivedProjectIds();
   const visible = state.PROJECTS.filter(p => !archivedIds.includes(p.id));
   const draggedIdx = visible.findIndex(p => p.id === draggedId);
@@ -683,14 +745,30 @@ async function reorderProjects(draggedId, targetId) {
   if (draggedIdx === -1 || targetIdx === -1) return;
   const [dragged] = visible.splice(draggedIdx, 1);
   visible.splice(targetIdx, 0, dragged);
-  for (let i = 0; i < visible.length; i++) {
-    await state.sb.from('projects').update({ sort_order: i }).eq('id', visible[i].id);
-  }
-  await loadProjects();
-  buildProjectCards();
+
+  // Update sort_order in memory
+  visible.forEach((p, i) => { p.sort_order = i; });
+  visible.forEach(p => {
+    const sp = state.PROJECTS.find(x => x.id === p.id);
+    if (sp) sp.sort_order = p.sort_order;
+  });
+  state.PROJECTS.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+  // Move DOM elements
+  const cards = Array.from(grid.querySelectorAll('.project-card'));
+  visible.forEach(p => {
+    const card = cards.find(c => c.dataset.project === p.id);
+    if (card) grid.appendChild(card);
+  });
+
+  // Re-init drag
   initProjectDragDrop();
-  await refreshAll();
   showToast('Projects reordered', 'success');
+
+  // Background Supabase sync
+  for (let i = 0; i < visible.length; i++) {
+    state.sb.from('projects').update({ sort_order: i }).eq('id', visible[i].id);
+  }
 }
 
 

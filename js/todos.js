@@ -281,7 +281,7 @@ function renderCategoryCard(category) {
 
   const catColor = getCategoryColor(category);
 
-  const catDragHandle = !isGeneral ? `<span class="todo-cat-drag-handle" title="Drag to reorder">⠿</span>` : '';
+  const catDragHandle = '';
 
   // Done toggle (collapsible, like archived tasks in projects)
   let doneToggle = '';
@@ -387,8 +387,6 @@ function renderTodoItem(t) {
     outdatedInfo = `<span class="todo-outdated-badge">🕰️ ${daysAgo}d old</span>`;
   }
 
-  const dragHandle = !t.done ? '<span class="todo-drag-handle" title="Drag to reorder">⠿</span>' : '';
-
   const classes = [
     'todo-item',
     t.done ? 'todo-done' : '',
@@ -399,7 +397,6 @@ function renderTodoItem(t) {
 
   return `<div class="${classes}" data-todo-id="${t.id}">
     <div class="todo-row">
-      ${dragHandle}
       ${flagBtn}
       <label class="todo-checkbox-label">
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
@@ -710,6 +707,9 @@ async function doSnooze(snoozeUntil) {
 // ===================================================================
 // TODO DRAG & DROP REORDER (per category card)
 // ===================================================================
+const LONG_PRESS_MS = 250;
+const DRAG_THRESHOLD = 5;
+
 function initTodoDragDropForCard(catId) {
   const card = document.getElementById(catId);
   if (!card) return;
@@ -717,26 +717,40 @@ function initTodoDragDropForCard(catId) {
   if (!container) return;
   let dragState = null;
 
-  container.querySelectorAll('.todo-item').forEach(item => {
-    const handle = item.querySelector('.todo-drag-handle');
-    if (!handle) return;
-    handle.style.touchAction = 'none';
+  container.querySelectorAll('.todo-item:not(.todo-done)').forEach(item => {
+    item.style.touchAction = 'pan-y';
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    let activated = false;
 
-    handle.addEventListener('pointerdown', e => {
+    item.addEventListener('pointerdown', e => {
+      if (e.target.closest('button, a, input, textarea, select, .todo-actions, .todo-checkbox-label')) return;
       if (dragState) return;
-      e.preventDefault();
-      const rect = item.getBoundingClientRect();
-      isDragging = true;
-      dragState = { el: item, id: item.dataset.todoId, offsetY: e.clientY - rect.top, clone: null };
-      const clone = item.cloneNode(true);
-      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);`;
-      document.body.appendChild(clone);
-      dragState.clone = clone;
-      item.classList.add('dragging');
-      handle.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startY = e.clientY;
+      activated = false;
+
+      pressTimer = setTimeout(() => {
+        activated = true;
+        const rect = item.getBoundingClientRect();
+        isDragging = true;
+        dragState = { el: item, id: item.dataset.todoId, offsetY: e.clientY - rect.top, clone: null };
+        const clone = item.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);transition:none;`;
+        document.body.appendChild(clone);
+        dragState.clone = clone;
+        item.classList.add('dragging');
+        item.setPointerCapture(e.pointerId);
+      }, LONG_PRESS_MS);
     });
 
-    handle.addEventListener('pointermove', e => {
+    item.addEventListener('pointermove', e => {
+      if (pressTimer && !activated) {
+        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
+          clearTimeout(pressTimer); pressTimer = null;
+        }
+        return;
+      }
       if (!dragState || dragState.el !== item) return;
       e.preventDefault();
       dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
@@ -748,6 +762,7 @@ function initTodoDragDropForCard(catId) {
     });
 
     const finishDrag = async () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (!dragState || dragState.el !== item) return;
       if (dragState.clone) dragState.clone.remove();
       item.classList.remove('dragging');
@@ -759,12 +774,13 @@ function initTodoDragDropForCard(catId) {
       const catKey = container.dataset.category || '';
       dragState = null;
       isDragging = false;
-      if (targetId && targetId !== draggedId) await reorderTodosInCategory(draggedId, targetId, catKey);
+      if (targetId && targetId !== draggedId) await reorderTodosInCategory(container, catId, draggedId, targetId, catKey);
     };
 
-    handle.addEventListener('pointerup', finishDrag);
-    handle.addEventListener('pointercancel', finishDrag);
-    handle.addEventListener('lostpointercapture', () => {
+    item.addEventListener('pointerup', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    item.addEventListener('pointercancel', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    item.addEventListener('lostpointercapture', () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (dragState && dragState.el === item) {
         if (dragState.clone) dragState.clone.remove();
         item.classList.remove('dragging');
@@ -776,18 +792,34 @@ function initTodoDragDropForCard(catId) {
   });
 }
 
-async function reorderTodosInCategory(draggedId, targetId, category) {
+async function reorderTodosInCategory(container, catId, draggedId, targetId, category) {
   const filtered = getFilteredTodosForCategory(category);
   const draggedIdx = filtered.findIndex(t => t.id === draggedId);
   const targetIdx = filtered.findIndex(t => t.id === targetId);
   if (draggedIdx === -1 || targetIdx === -1) return;
   const [dragged] = filtered.splice(draggedIdx, 1);
   filtered.splice(targetIdx, 0, dragged);
-  for (let i = 0; i < filtered.length; i++) {
-    await state.sb.from('todos').update({ sort_order: i }).eq('id', filtered[i].id);
-  }
-  await refreshTodos();
+
+  // Update sort_order in memory
+  filtered.forEach((t, i) => { t.sort_order = i; });
+  filtered.forEach(t => {
+    const st = allTodos.find(x => x.id === t.id);
+    if (st) st.sort_order = t.sort_order;
+  });
+
+  // Move DOM elements
+  const items = Array.from(container.querySelectorAll('.todo-item'));
+  const ordered = filtered.map(t => items.find(el => el.dataset.todoId === t.id)).filter(Boolean);
+  ordered.forEach(el => container.appendChild(el));
+
+  // Re-init drag
+  initTodoDragDropForCard(catId);
   showToast('Reordered', 'success');
+
+  // Background Supabase sync
+  for (let i = 0; i < filtered.length; i++) {
+    state.sb.from('todos').update({ sort_order: i }).eq('id', filtered[i].id);
+  }
 }
 
 
@@ -801,62 +833,76 @@ function initCategoryDragDrop() {
   let dragState = null;
 
   cards.forEach(card => {
-    const handle = card.querySelector('.todo-cat-drag-handle');
-    if (!handle) return; // General category has no handle
-    handle.style.touchAction = 'none';
+    const category = card.dataset.category;
+    // General category (empty string) is not draggable
+    if (category === '' || category === undefined) return;
+    const header = card.querySelector('.todo-cat-header');
+    if (!header) return;
 
-    handle.addEventListener('pointerdown', e => {
+    let pressTimer = null;
+    let startX = 0, startY = 0;
+    let activated = false;
+
+    header.addEventListener('pointerdown', e => {
+      if (e.target.closest('button, a, input, textarea, select, .todo-cat-header-actions')) return;
       if (dragState) return;
-      e.preventDefault();
-      const rect = card.getBoundingClientRect();
-      isDragging = true;
-      dragState = { el: card, category: card.dataset.category, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null };
-      const clone = card.cloneNode(true);
-      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;border:2px solid var(--accent);`;
-      document.body.appendChild(clone);
-      dragState.clone = clone;
-      card.classList.add('dragging');
-      handle.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startY = e.clientY;
+      activated = false;
+
+      pressTimer = setTimeout(() => {
+        activated = true;
+        const rect = card.getBoundingClientRect();
+        isDragging = true;
+        dragState = { el: card, category, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null };
+        const clone = card.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;border:2px solid var(--accent);transition:none;`;
+        document.body.appendChild(clone);
+        dragState.clone = clone;
+        card.classList.add('dragging');
+        header.setPointerCapture(e.pointerId);
+      }, LONG_PRESS_MS);
     });
 
-    handle.addEventListener('pointermove', e => {
+    header.addEventListener('pointermove', e => {
+      if (pressTimer && !activated) {
+        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
+          clearTimeout(pressTimer); pressTimer = null;
+        }
+        return;
+      }
       if (!dragState || dragState.el !== card) return;
       e.preventDefault();
       dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
       dragState.clone.style.left = (e.clientX - dragState.offsetX) + 'px';
-      // Highlight drop target
       grid.querySelectorAll('.project-card:not(.dragging)').forEach(el => {
         el.classList.remove('drag-over');
         const r = el.getBoundingClientRect();
-        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-          el.classList.add('drag-over');
-        }
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
       });
     });
 
     const finishDrag = async () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (!dragState || dragState.el !== card) return;
       if (dragState.clone) dragState.clone.remove();
       card.classList.remove('dragging');
       let targetCategory = null;
       grid.querySelectorAll('.project-card').forEach(el => {
-        if (el.classList.contains('drag-over')) {
-          targetCategory = el.dataset.category || '';
-          el.classList.remove('drag-over');
-        }
+        if (el.classList.contains('drag-over')) { targetCategory = el.dataset.category || ''; el.classList.remove('drag-over'); }
       });
       const draggedCategory = dragState.category;
       dragState = null;
       isDragging = false;
-      // Only reorder non-General categories (General is always first)
       if (targetCategory !== null && targetCategory !== draggedCategory && draggedCategory !== '' && targetCategory !== '') {
         await reorderCategories(draggedCategory, targetCategory);
       }
     };
 
-    handle.addEventListener('pointerup', finishDrag);
-    handle.addEventListener('pointercancel', finishDrag);
-    handle.addEventListener('lostpointercapture', () => {
+    header.addEventListener('pointerup', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    header.addEventListener('pointercancel', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
+    header.addEventListener('lostpointercapture', () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
       if (dragState && dragState.el === card) {
         if (dragState.clone) dragState.clone.remove();
         card.classList.remove('dragging');
@@ -869,6 +915,7 @@ function initCategoryDragDrop() {
 }
 
 async function reorderCategories(draggedName, targetName) {
+  const grid = document.getElementById('todoCategoryGrid');
   const categories = getCategories();
   const draggedIdx = categories.findIndex(c => c === draggedName);
   const targetIdx = categories.findIndex(c => c === targetName);
@@ -876,7 +923,18 @@ async function reorderCategories(draggedName, targetName) {
   const [dragged] = categories.splice(draggedIdx, 1);
   categories.splice(targetIdx, 0, dragged);
   saveCategories(categories);
-  renderTodos();
+
+  // Move DOM elements instead of full re-render
+  const cards = Array.from(grid.querySelectorAll('.project-card'));
+  // General card (empty category) stays first
+  const generalCard = cards.find(c => (c.dataset.category || '') === '');
+  // Reorder non-general cards to match categories order
+  categories.forEach(catName => {
+    const card = cards.find(c => c.dataset.category === catName);
+    if (card) grid.appendChild(card);
+  });
+
+  initCategoryDragDrop();
   showToast('Categories reordered', 'success');
 }
 
