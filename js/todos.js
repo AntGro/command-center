@@ -12,6 +12,7 @@ let isDragging = false;
 const CATEGORIES_KEY = 'todo_categories';
 const CATEGORY_COLORS_KEY = 'todo_category_colors';
 const DEFAULT_CATEGORY_PALETTE = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
+const CATEGORY_SHORTNAMES_KEY = 'todo_category_shortnames';
 const GENERAL_CATEGORY_COLOR = '#6c6f7e';
 
 function getCategoryColors() {
@@ -35,6 +36,32 @@ function setCategoryColor(catName, color) {
   const map = getCategoryColors();
   map[catName] = color;
   saveCategoryColors(map);
+}
+
+function getCategoryShortnames() {
+  try { return JSON.parse(localStorage.getItem(CATEGORY_SHORTNAMES_KEY) || '{}'); } catch { return {}; }
+}
+function saveCategoryShortnames(map) { localStorage.setItem(CATEGORY_SHORTNAMES_KEY, JSON.stringify(map)); }
+
+function getCategoryShortname(catName) {
+  if (!catName) return null;
+  const map = getCategoryShortnames();
+  return map[catName] || null;
+}
+
+function setCategoryShortname(catName, shortname) {
+  const map = getCategoryShortnames();
+  if (shortname) { map[catName] = shortname; }
+  else { delete map[catName]; }
+  saveCategoryShortnames(map);
+}
+
+function promptCategoryShortname(catName) {
+  const current = getCategoryShortname(catName) || '';
+  const result = prompt(`Short name for "${catName}" (leave empty to clear):`, current);
+  if (result === null) return; // cancelled
+  setCategoryShortname(catName, result.trim());
+  renderTodos();
 }
 
 function getCategories() {
@@ -189,8 +216,10 @@ function renderCategoryToolbarButtons(categoryList) {
   }
   container.innerHTML = categoryList.map(cat => {
     const name = cat || 'General';
+    const shortname = getCategoryShortname(cat);
+    const displayName = shortname || name;
     const color = getCategoryColor(cat);
-    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToCategory('${esc(cat).replace(/'/g, "\\'")}')" title="Go to ${esc(name)}">${esc(name)}</button>`;
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToCategory('${esc(cat).replace(/'/g, "\\'")}')" title="Go to ${esc(name)}">${esc(displayName)}</button>`;
   }).join('');
 }
 
@@ -229,6 +258,7 @@ function renderCategoryCard(category) {
   const catId = categoryToDomId(category);
   const catName = category || 'General';
   const isGeneral = !category;
+  const shortname = getCategoryShortname(category);
   const allInCat = allTodos.filter(t => (t.category || '') === category);
   const pending = allInCat.filter(t => !t.done).length;
   const doneCount = allInCat.filter(t => t.done).length;
@@ -285,18 +315,26 @@ function renderCategoryCard(category) {
     ? (displayDone.length === 0 ? '<p class="empty-msg">No completed items</p>' : displayDone.map(t => renderTodoItem(t)).join(''))
     : (activeEmptyMsg || displayActive.map(t => renderTodoItem(t)).join(''));
 
+  const shortnameBtn = !isGeneral
+    ? `<button class="todo-cat-shortname-btn" onclick="promptCategoryShortname('${esc(category).replace(/'/g, "\\'")}')" title="${shortname ? 'Edit short name: ' + esc(shortname) : 'Set short name'}">${lucideIcon("pencil",14)}</button>`
+    : '';
+
+  const shortnameLabel = shortname
+    ? `<span class="todo-cat-shortname-label">${esc(shortname)}</span>`
+    : '';
+
   return `<div class="todo-category-card" id="${catId}" data-category="${esc(category)}">
     <div class="todo-cat-accent" style="background:${catColor}"></div>
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
         ${catDragHandle}
         <div class="todo-cat-info">
-          <h3 class="todo-cat-name">${esc(catName)}</h3>
+          <h3 class="todo-cat-name">${esc(catName)}${shortnameLabel}</h3>
           <span class="todo-cat-stats">${statsText}</span>
         </div>
       </div>
       <div class="todo-cat-header-actions">
-        ${deleteBtn}
+        ${shortnameBtn}${deleteBtn}
       </div>
     </div>
     <div class="todo-cat-add">
@@ -939,3 +977,4 @@ window.saveNewCategory = saveNewCategory;
 window.deleteCategory = deleteCategory;
 window.navigateToCategory = navigateToCategory;
 window.updateTodoCharCounter = updateTodoCharCounter;
+window.promptCategoryShortname = promptCategoryShortname;

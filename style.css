@@ -589,6 +589,9 @@ input,select,button{font-family:inherit;}
 .todo-category-card:hover .todo-cat-header-actions{opacity:1;}
 .todo-cat-delete-btn{background:none;border:none;cursor:pointer;font-size:0.72rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
 .todo-cat-delete-btn:hover{color:var(--red);background:var(--surface2);}
+.todo-cat-shortname-btn{background:none;border:none;cursor:pointer;font-size:0.72rem;color:var(--muted);padding:2px 6px;border-radius:4px;transition:all 0.2s;}
+.todo-cat-shortname-btn:hover{color:var(--accent);background:var(--surface2);}
+.todo-cat-shortname-label{font-size:0.7rem;color:var(--muted);margin-left:6px;font-weight:400;opacity:0.7;}
 
 /* Add TODO input inside each card */
 .todo-cat-add{display:flex;gap:6px;padding:0 16px 10px;align-items:center;}
