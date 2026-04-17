@@ -10,6 +10,19 @@ import { refreshVestiaire, renderVestiaire, initVestiaireModals } from './vestia
 import { refreshFlashcards, renderFlashcards, initFlashcardModals, getFlashcardCounts } from './flashcards.js';
 
 // ===================================================================
+// ICON HYDRATION — replace <span data-icon="..."> with SVGs from icons.js
+// ===================================================================
+function hydrateIcons() {
+  document.querySelectorAll('[data-icon]').forEach(span => {
+    const name = span.dataset.icon;
+    const size = parseInt(span.dataset.size || '16');
+    const color = span.dataset.color || undefined;
+    span.outerHTML = lucideIcon(name, size, color);
+  });
+}
+hydrateIcons();
+
+// ===================================================================
 // GATE LOGIC
 // ===================================================================
 function initGate() {
