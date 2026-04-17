@@ -110,7 +110,7 @@ input,select,button{font-family:inherit;}
 .project-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:all 0.25s ease;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);max-height:min(100vh, max(1000px, 50vh));}
 .project-card.dragging{opacity:0.4;border:2px dashed var(--accent);}
 .project-card.drag-over{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
-.project-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,0.15),0 0 0 1px var(--accent-dim);}
+.project-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.15),0 0 0 1px var(--accent-dim);}
 .project-accent{height:3px;width:100%;}
 .project-card-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .project-info h3{font-size:0.95rem;font-weight:600;margin-bottom:2px;letter-spacing:-0.2px;}
