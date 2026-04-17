@@ -174,6 +174,26 @@ function renderChores() {
     html += renderChoreCategoryCard(cat);
   }
   grid.innerHTML = html;
+  renderChoreNavButtons(categoryList);
+}
+
+function renderChoreNavButtons(categoryList) {
+  const container = document.getElementById('choreNavButtons');
+  if (!container) return;
+  container.innerHTML = categoryList.map(cat => {
+    const color = getCategoryColor(cat);
+    const count = state.allChores.filter(c => (c.category || 'General') === cat).length;
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToChoreCategory('${esc(cat).replace(/'/g, "\\'")}')" title="${esc(cat)}">${esc(cat)} (${count})</button>`;
+  }).join('');
+}
+
+function navigateToChoreCategory(cat) {
+  const card = document.querySelector(`.project-card[data-category="${CSS.escape(cat)}"]`);
+  if (!card) return;
+  const color = getCategoryColor(cat);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.style.boxShadow = `0 0 0 2px ${color}`;
+  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
 }
 
 function renderChoreCategoryCard(category) {
@@ -640,5 +660,6 @@ window.saveNewChoreCategory = saveNewChoreCategory;
 window.deleteChoreCategory = deleteChoreCategory;
 window.addChoreFromInput = addChoreFromInput;
 window.renderChores = renderChores;
+window.navigateToChoreCategory = navigateToChoreCategory;
 
 window.promptChoreShortname = promptChoreShortname;

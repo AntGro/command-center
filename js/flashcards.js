@@ -133,13 +133,13 @@ function renderDeckNavButtons() {
   const decks = [...new Set(allCards.map(c => c.deck))].sort();
 
   // Draft nav button first
-  let html = `<button class="category-nav-btn" style="background:${DRAFT_COLOR}22;color:${DRAFT_COLOR};border:1px solid ${DRAFT_COLOR}44;" onclick="navigateToFlashDeck('__drafts')">${lucideIcon('file-edit', 14, DRAFT_COLOR)} Drafts (${allDrafts.length})</button>`;
+  let html = `<button class="category-nav-btn" style="--cat-color:${DRAFT_COLOR};border-color:${DRAFT_COLOR};color:${DRAFT_COLOR}" onclick="navigateToFlashDeck('__drafts')">${lucideIcon('file-edit', 14, DRAFT_COLOR)} Drafts (${allDrafts.length})</button>`;
 
   html += decks.map(deck => {
     const color = getDeckColor(deck);
     const sn = getFlashShortname(deck);
     const display = sn || deck;
-    return `<button class="category-nav-btn" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="navigateToFlashDeck('${esc(deck)}')" title="${esc(deck)}">${esc(display)} (${allCards.filter(c => c.deck === deck).length})</button>`;
+    return `<button class="category-nav-btn" style="--cat-color:${color};border-color:${color};color:${color}" onclick="navigateToFlashDeck('${esc(deck)}')" title="${esc(deck)}">${esc(display)} (${allCards.filter(c => c.deck === deck).length})</button>`;
   }).join('');
 
   container.innerHTML = html;
