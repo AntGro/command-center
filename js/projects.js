@@ -145,8 +145,7 @@ function buildProjectCards() {
   const visibleProjects = state.PROJECTS.filter(p => !archivedIds.includes(p.id));
 
   grid.innerHTML = visibleProjects.map(p => `
-    <div class="project-card" data-project="${p.id}">
-      <div class="project-accent" style="background:${p.color}"></div>
+    <div class="project-card" data-project="${p.id}" style="--cat-color:${p.color}">
       <div class="project-card-header">
         <div style="display:flex;align-items:flex-start;gap:6px;">
           <div class="project-info">

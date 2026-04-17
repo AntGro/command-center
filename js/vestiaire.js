@@ -154,8 +154,7 @@ function renderCategoryCard(cat, items) {
     itemsHtml = items.map(v => renderVestiaireItem(v)).join('');
   }
 
-  return `<div class="project-card vestiaire-bucket" data-category="${escapedCat}">
-    <div class="project-accent" style="background:${color}"></div>
+  return `<div class="project-card vestiaire-bucket" data-category="${escapedCat}" style="--cat-color:${color}">
     <div class="project-card-header">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="color:${color}">${icon}</span>

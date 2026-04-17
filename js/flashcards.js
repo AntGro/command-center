@@ -196,8 +196,7 @@ function renderDraftsBucket(q) {
   if (pendingCount > 0) chips.push(`<span class="fc-chip" style="background:rgba(245,158,11,0.15);color:#f59e0b;">${pendingCount} generating…</span>`);
   if (readyCount > 0) chips.push(`<span class="fc-chip" style="background:rgba(34,197,94,0.15);color:#22c55e;">${readyCount} ready</span>`);
 
-  return `<div class="project-card" id="flashDraftsDeck">
-    <div class="project-accent" style="background:${DRAFT_COLOR}"></div>
+  return `<div class="project-card" id="flashDraftsDeck" style="--cat-color:${DRAFT_COLOR}">
     <div class="project-card-header">
       <div style="display:flex;align-items:flex-start;gap:6px;">
         <div class="project-info">
@@ -272,8 +271,7 @@ function renderDeckBucket(deck, q) {
 
   const practiceCount = dueCount + newCount;
 
-  return `<div class="project-card" id="flashDeck-${esc(deck)}">
-    <div class="project-accent" style="background:${color}"></div>
+  return `<div class="project-card" id="flashDeck-${esc(deck)}" style="--cat-color:${color}">
     <div class="project-card-header">
       <div style="display:flex;align-items:flex-start;gap:6px;">
         <div class="project-info">
