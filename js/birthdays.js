@@ -96,6 +96,7 @@ function renderBirthdays() {
       <p>No birthdays tracked yet</p>
       <button class="btn-primary" onclick="openAddBirthdayModal()">Add first birthday</button>
     </div>`;
+    document.getElementById('birthdayNavButtons').innerHTML = '';
     return;
   }
 
@@ -103,21 +104,12 @@ function renderBirthdays() {
   const upcoming = birthdays.filter(b => daysUntilBirthday(b.birthday) <= 30);
   const later = birthdays.filter(b => daysUntilBirthday(b.birthday) > 30);
 
-  let html = '';
-
+  // Build ordered sections: "Coming Up" + month groups
+  const sections = [];
   if (upcoming.length > 0) {
-    html += `<div class="project-card" style="--cat-color:#f97316">
-      <div class="project-card-header">
-        <div class="project-title">${lucideIcon('party-popper', 18)} Coming Up</div>
-        <span class="birthday-bucket-count">${upcoming.length}</span>
-      </div>
-      <div class="task-list birthday-bucket-list">
-        ${upcoming.map(b => renderBirthdayCard(b, true)).join('')}
-      </div>
-    </div>`;
+    sections.push({ key: 'upcoming', label: 'Coming Up', icon: 'party-popper', items: upcoming, isUpcoming: true });
   }
 
-  // Group "later" by month
   if (later.length > 0) {
     const monthGroups = {};
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -125,25 +117,54 @@ function renderBirthdays() {
       const next = getNextBirthday(b.birthday);
       const key = `${next.getFullYear()}-${String(next.getMonth()).padStart(2,'0')}`;
       const label = `${monthNames[next.getMonth()]} ${next.getFullYear()}`;
-      if (!monthGroups[key]) monthGroups[key] = { label, items: [] };
+      const shortLabel = `${monthNames[next.getMonth()].slice(0,3)} ${String(next.getFullYear()).slice(2)}`;
+      if (!monthGroups[key]) monthGroups[key] = { label, shortLabel, items: [] };
       monthGroups[key].items.push(b);
     }
     const sortedKeys = Object.keys(monthGroups).sort();
     for (const key of sortedKeys) {
       const grp = monthGroups[key];
-      html += `<div class="project-card">
-        <div class="project-card-header">
-          <div class="project-title">${lucideIcon('calendar', 18)} ${grp.label}</div>
-          <span class="birthday-bucket-count">${grp.items.length}</span>
-        </div>
-        <div class="task-list birthday-bucket-list">
-          ${grp.items.map(b => renderBirthdayCard(b, false)).join('')}
-        </div>
-      </div>`;
+      sections.push({ key, label: grp.label, shortLabel: grp.shortLabel, icon: 'calendar', items: grp.items, isUpcoming: false });
     }
   }
 
+  // Generate gradient colors — rotate hue across sections for continuity
+  // Start at warm orange (25°), end at cool blue-purple (260°)
+  const totalSections = sections.length;
+  const hueStart = 25;
+  const hueEnd = 260;
+  for (let i = 0; i < totalSections; i++) {
+    const hue = totalSections === 1 ? hueStart : Math.round(hueStart + (hueEnd - hueStart) * (i / (totalSections - 1)));
+    sections[i].color = `hsl(${hue}, 70%, 55%)`;
+  }
+
+  // Render nav buttons
+  const navContainer = document.getElementById('birthdayNavButtons');
+  navContainer.innerHTML = sections.map(s => {
+    const display = s.isUpcoming ? '🎉 Soon' : (s.shortLabel || s.label);
+    return `<button class="category-nav-btn" style="--cat-color:${s.color};border-color:${s.color};color:${s.color}" onclick="navigateToBirthdaySection('${s.key}')" title="${s.label}">${display}</button>`;
+  }).join('');
+
+  // Render grid
+  let html = '';
+  for (const s of sections) {
+    html += `<div class="project-card" style="--cat-color:${s.color}" data-birthday-section="${s.key}">
+      <div class="project-card-header">
+        <div class="project-title">${lucideIcon(s.icon, 18)} ${s.label}</div>
+        <span class="birthday-bucket-count">${s.items.length}</span>
+      </div>
+      <div class="task-list birthday-bucket-list">
+        ${s.items.map(b => renderBirthdayCard(b, s.isUpcoming)).join('')}
+      </div>
+    </div>`;
+  }
+
   grid.innerHTML = html;
+}
+
+function navigateToBirthdaySection(key) {
+  const card = document.querySelector(`[data-birthday-section="${key}"]`);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderBirthdayCard(b, isUpcoming) {
@@ -327,3 +348,4 @@ window.closeEditBirthdayModal = closeEditBirthdayModal;
 window.saveEditBirthday = saveEditBirthday;
 window.deleteBirthday = deleteBirthday;
 window.renderBirthdays = renderBirthdays;
+window.navigateToBirthdaySection = navigateToBirthdaySection;
