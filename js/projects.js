@@ -297,9 +297,8 @@ function renderTask(t, isArchived = false) {
 
   const draftClass = isDraft ? ' task-draft' : '';
 
-  return `<div class="task-item${draftClass}" data-task-id="${t.id}">
+  return `<div class="task-item${draftClass} task-status-${t.status}" data-task-id="${t.id}">
     <div class="task-row">
-      <span class="status-dot ${t.status}"></span>
       <span class="task-text" ondblclick="promptEditTask('${t.id}')">${renderMd(t.text)}</span>
       ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
@@ -377,7 +376,7 @@ function initDragDrop(container, projectId) {
 
     item.addEventListener('pointerdown', e => {
       // Don't initiate drag from interactive elements
-      if (e.target.closest('button, a, input, textarea, select, .task-actions, .promote-btn, .status-dot')) return;
+      if (e.target.closest('button, a, input, textarea, select, .task-actions, .promote-btn')) return;
       if (dragState) return;
       startX = e.clientX;
       startY = e.clientY;

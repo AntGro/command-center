@@ -120,9 +120,14 @@ input,select,button{font-family:inherit;}
 
 /* ===== TASK LIST ===== */
 .task-list{padding:4px 16px;flex:1;min-height:50px;max-height:var(--task-list-max-height, 400px);overflow-y:auto;transition:max-height 0.3s ease;}
-.task-item{padding:9px 0;border-bottom:1px solid var(--border);}
+.task-item{padding:9px 0;border-bottom:1px solid var(--border);border-left:3px solid transparent;padding-left:10px;margin-left:-1px;}
 .task-item:last-child{border-bottom:none;}
-.task-item.task-draft{opacity:0.55;border-bottom:1px dashed var(--border);}
+.task-item.task-status-todo{border-left-color:var(--muted);}
+.task-item.task-status-in-progress{border-left-color:var(--blue);}
+.task-item.task-status-review{border-left-color:var(--yellow);}
+.task-item.task-status-approved{border-left-color:var(--green);}
+.task-item.task-status-revision{border-left-color:var(--red);}
+.task-item.task-draft{opacity:0.55;border-bottom:1px dashed var(--border);border-left:3px dashed var(--muted);}
 .task-item.task-draft .task-text{font-style:italic;}
 .task-row{display:flex;align-items:center;gap:9px;}
 .task-text{flex:1;font-size:0.88rem;line-height:1.35;cursor:default;}
