@@ -106,9 +106,12 @@ function renderBirthdays() {
   let html = '';
 
   if (upcoming.length > 0) {
-    html += `<div class="birthday-section">
-      <h3 class="birthday-section-title">${lucideIcon('party-popper', 18)} Coming Up</h3>
-      <div class="birthday-list">
+    html += `<div class="project-card" style="--cat-color:#f97316">
+      <div class="project-card-header">
+        <div class="project-title">${lucideIcon('party-popper', 18)} Coming Up</div>
+        <span class="birthday-bucket-count">${upcoming.length}</span>
+      </div>
+      <div class="task-list birthday-bucket-list">
         ${upcoming.map(b => renderBirthdayCard(b, true)).join('')}
       </div>
     </div>`;
@@ -128,9 +131,12 @@ function renderBirthdays() {
     const sortedKeys = Object.keys(monthGroups).sort();
     for (const key of sortedKeys) {
       const grp = monthGroups[key];
-      html += `<div class="birthday-section">
-        <h3 class="birthday-section-title">${lucideIcon('calendar', 18)} ${grp.label}</h3>
-        <div class="birthday-list">
+      html += `<div class="project-card">
+        <div class="project-card-header">
+          <div class="project-title">${lucideIcon('calendar', 18)} ${grp.label}</div>
+          <span class="birthday-bucket-count">${grp.items.length}</span>
+        </div>
+        <div class="task-list birthday-bucket-list">
           ${grp.items.map(b => renderBirthdayCard(b, false)).join('')}
         </div>
       </div>`;

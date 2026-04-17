@@ -474,7 +474,6 @@ input,select,button{font-family:inherit;}
   .chore-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 
   /* ===== BIRTHDAYS VIEW — MOBILE ===== */
-  .birthday-list{grid-template-columns:1fr;gap:8px;}
   .birthday-card{gap:10px;}
   .birthday-avatar{width:36px;height:36px;font-size:0.95rem;}
   .birthday-actions{opacity:1;}
@@ -642,9 +641,8 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 
 /* ===== BIRTHDAYS ===== */
 
-.birthday-section{margin-bottom:28px;}
-.birthday-section-title{font-size:0.88rem;font-weight:600;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-.birthday-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
+.birthday-bucket-count{font-size:0.75rem;font-weight:600;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:12px;}
+.birthday-bucket-list{max-height:none;overflow-y:visible;}
 
 .birthday-card{display:flex;align-items:center;gap:14px;}
 .birthday-card.birthday-today{border-color:#f97316;background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(236,72,153,0.08)),var(--surface);box-shadow:0 0 20px rgba(249,115,22,0.12);}
