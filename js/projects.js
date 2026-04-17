@@ -325,6 +325,7 @@ function initTaskHoverDelay(container) {
     // Only trigger on task-row hover (task text), not on plan/Claw response meta
     taskRow.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
+        if (item.querySelector('.task-edit-input')) return;
         actions.classList.add('visible');
       }, 2000);
     });
@@ -340,6 +341,7 @@ function initTaskHoverDelay(container) {
     if (taskText) {
       taskText.addEventListener('click', () => {
         if (taskText.dataset.editing) return;
+        if (item.querySelector('.task-edit-input')) return;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
           actions.classList.add('visible');
@@ -530,6 +532,9 @@ async function promptEditTask(id) {
 
   const originalText = task.text;
   textSpan.dataset.editing = 'true';
+  // Hide action buttons while editing
+  const actionsEl = taskEl.querySelector('.task-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;

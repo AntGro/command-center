@@ -537,6 +537,9 @@ async function editTodoInline(id) {
   if (!textEl || textEl.dataset.editing) return;
 
   textEl.dataset.editing = 'true';
+  // Hide action buttons while editing
+  const actionsEl = itemEl.querySelector('.todo-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
 
   // Create a wrapper for text + deadline editing
   const wrapper = document.createElement('div');
@@ -996,6 +999,7 @@ function initTodoHoverDelay(container) {
 
     todoRow.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
+        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
         actions.classList.add('visible');
       }, 2000);
     });
@@ -1011,6 +1015,7 @@ function initTodoHoverDelay(container) {
     if (todoText) {
       todoText.addEventListener('click', () => {
         if (todoText.dataset.editing) return;
+        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
           actions.classList.add('visible');

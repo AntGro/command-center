@@ -570,6 +570,7 @@ function initTaskHoverDelay(container) {
     // Only trigger on task-row hover (task text), not on plan/Claw response meta
     taskRow.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
+        if (item.querySelector('.task-edit-input')) return;
         actions.classList.add('visible');
       }, 2000);
     });
@@ -585,6 +586,7 @@ function initTaskHoverDelay(container) {
     if (taskText) {
       taskText.addEventListener('click', () => {
         if (taskText.dataset.editing) return;
+        if (item.querySelector('.task-edit-input')) return;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
           actions.classList.add('visible');
@@ -613,6 +615,7 @@ function initTodoHoverDelay(container) {
 
     todoRow.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
+        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
         actions.classList.add('visible');
       }, 2000);
     });
@@ -628,6 +631,7 @@ function initTodoHoverDelay(container) {
     if (todoText) {
       todoText.addEventListener('click', () => {
         if (todoText.dataset.editing) return;
+        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
           actions.classList.add('visible');
@@ -796,6 +800,9 @@ async function promptEditTask(id) {
 
   const originalText = task.text;
   textSpan.dataset.editing = 'true';
+  // Hide action buttons while editing
+  const actionsEl = taskEl.querySelector('.task-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;
@@ -1921,6 +1928,9 @@ async function editTodoInline(id) {
   if (!textEl || textEl.dataset.editing) return;
 
   textEl.dataset.editing = 'true';
+  // Hide action buttons while editing
+  const actionsEl = itemEl.querySelector('.todo-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
 
   // Create a wrapper for text + deadline editing
   const wrapper = document.createElement('div');
