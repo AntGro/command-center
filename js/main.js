@@ -340,7 +340,7 @@ function markLastUpdated() {
   renderLastUpdated();
   updateViewFooterStats();
   if (!_lastUpdatedTimer) {
-    _lastUpdatedTimer = setInterval(renderLastUpdated, 15000);
+    _lastUpdatedTimer = setInterval(renderLastUpdated, 60000);
   }
 }
 
