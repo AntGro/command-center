@@ -398,7 +398,7 @@ function renderTodoItem(t) {
     ? `<span class="todo-priority-badge priority-${t.priority}">${t.priority}</span>` : '';
 
   // Flag button: cycles normal → high → urgent → normal
-  const flagIcon = t.priority === 'urgent' ? '🚩' : t.priority === 'high' ? '🚩' : '⚑';
+  const flagIcon = t.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : t.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : lucideIcon('flag', 14);
   const flagTitle = t.priority === 'urgent' ? 'Unflag (urgent → normal)' : t.priority === 'high' ? 'Flag urgent' : 'Flag high';
   const flagBtn = !t.done ? `<button class="todo-flag-btn ${isFlagged ? 'flagged' : ''}" onclick="cycleTodoPriority('${t.id}')" title="${flagTitle}">${flagIcon}</button>` : '';
 
@@ -463,7 +463,7 @@ async function cycleTodoPriority(id) {
   const next = cycle[todo.priority] || 'high';
   const { error } = await state.sb.from('todos').update({ priority: next }).eq('id', id);
   if (error) { showToast('Failed to update priority', 'error'); return; }
-  const labels = { high: '🚩 Flagged high', urgent: '🚩 Flagged urgent', normal: 'Flag removed' };
+  const labels = { high: 'Flagged high', urgent: 'Flagged urgent', normal: 'Flag removed' };
   showToast(labels[next] || `Priority: ${next}`, 'success');
   await refreshTodos();
 }
