@@ -1,6 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { TODO_MAX_LEN } from './supabase.js';
 import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
+import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
 
 // ===================================================================
 // TODOS — DATA & CRUD (Category Card Layout)
@@ -8,7 +9,6 @@ import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, trunca
 // ===================================================================
 let allTodos = [];
 let todoFilter = 'pending';
-let isDragging = false;
 const CATEGORIES_KEY = 'todo_categories';
 const CATEGORY_COLORS_KEY = 'todo_category_colors';
 const DEFAULT_CATEGORY_PALETTE = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
@@ -256,10 +256,7 @@ function navigateToCategory(category) {
   const catId = categoryToDomId(category);
   const card = document.getElementById(catId);
   if (!card) return;
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  // Briefly highlight the card
-  card.style.boxShadow = `0 0 0 2px ${getCategoryColor(category)}`;
-  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+  scrollToAndHighlight(card, getCategoryColor(category));
   // Focus the input for adding a new TODO
   setTimeout(() => {
     const input = card.querySelector('.todo-cat-input');
@@ -747,121 +744,36 @@ async function doSnooze(snoozeUntil) {
 
 
 // ===================================================================
-// TODO DRAG & DROP REORDER (per category card)
+// TODO DRAG & DROP REORDER (delegates to shared item-utils)
 // ===================================================================
-const LONG_PRESS_MS = 250;
-const DRAG_THRESHOLD = 5;
 
 function initTodoDragDropForCard(catId) {
   const card = document.getElementById(catId);
   if (!card) return;
   const container = card.querySelector('.todo-cat-list');
   if (!container) return;
-  let dragState = null;
 
-  container.querySelectorAll('.todo-item:not(.todo-done)').forEach(item => {
-    item.style.touchAction = 'pan-y';
-    let pressTimer = null;
-    let startX = 0, startY = 0;
-    let activated = false;
-
-    item.addEventListener('pointerdown', e => {
-      if (e.target.closest('button, a, input, textarea, select, .todo-actions')) return;
-      if (dragState) return;
-      startX = e.clientX;
-      startY = e.clientY;
-      activated = false;
-
-      pressTimer = setTimeout(() => {
-        activated = true;
-        const rect = item.getBoundingClientRect();
-        isDragging = true;
-        dragState = { el: item, id: item.dataset.todoId, offsetY: e.clientY - rect.top, clone: null };
-        const clone = item.cloneNode(true);
-        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);transition:none;`;
-        document.body.appendChild(clone);
-        dragState.clone = clone;
-        item.classList.add('dragging');
-        item.setPointerCapture(e.pointerId);
-      }, LONG_PRESS_MS);
-    });
-
-    item.addEventListener('pointermove', e => {
-      if (pressTimer && !activated) {
-        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
-          clearTimeout(pressTimer); pressTimer = null;
-        }
-        return;
-      }
-      if (!dragState || dragState.el !== item) return;
-      e.preventDefault();
-      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
-      container.querySelectorAll('.todo-item:not(.dragging)').forEach(el => {
-        el.classList.remove('drag-over');
-        const r = el.getBoundingClientRect();
-        if (e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
-      });
-    });
-
-    const finishDrag = async () => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      if (!dragState || dragState.el !== item) return;
-      if (dragState.clone) dragState.clone.remove();
-      item.classList.remove('dragging');
-      let targetId = null;
-      container.querySelectorAll('.todo-item').forEach(el => {
-        if (el.classList.contains('drag-over')) { targetId = el.dataset.todoId; el.classList.remove('drag-over'); }
-      });
-      const draggedId = dragState.id;
+  initItemDragDrop(container, {
+    itemSelector: '.todo-item:not(.todo-done)',
+    excludeSelector: 'button, a, input, textarea, select, .todo-actions',
+    idAttr: 'todoId',
+    onReorder: async (draggedId, targetId) => {
       const catKey = container.dataset.category || '';
-      dragState = null;
-      isDragging = false;
-      if (targetId && targetId !== draggedId) await reorderTodosInCategory(container, catId, draggedId, targetId, catKey);
-    };
-
-    item.addEventListener('pointerup', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
-    item.addEventListener('pointercancel', () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } finishDrag(); });
-    item.addEventListener('lostpointercapture', () => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      if (dragState && dragState.el === item) {
-        if (dragState.clone) dragState.clone.remove();
-        item.classList.remove('dragging');
-        container.querySelectorAll('.todo-item').forEach(el => el.classList.remove('drag-over'));
-        dragState = null;
-        isDragging = false;
-      }
-    });
+      const filtered = getFilteredTodosForCategory(catKey);
+      await reorderItems({
+        items: filtered,
+        allItems: allTodos,
+        draggedId,
+        targetId,
+        container,
+        itemSelector: '.todo-item',
+        idAttr: 'todoId',
+        tableName: 'todos',
+        sb: state.sb,
+        reinitFn: () => initTodoDragDropForCard(catId),
+      });
+    },
   });
-}
-
-async function reorderTodosInCategory(container, catId, draggedId, targetId, category) {
-  const filtered = getFilteredTodosForCategory(category);
-  const draggedIdx = filtered.findIndex(t => t.id === draggedId);
-  const targetIdx = filtered.findIndex(t => t.id === targetId);
-  if (draggedIdx === -1 || targetIdx === -1) return;
-  const [dragged] = filtered.splice(draggedIdx, 1);
-  filtered.splice(targetIdx, 0, dragged);
-
-  // Update sort_order in memory
-  filtered.forEach((t, i) => { t.sort_order = i; });
-  filtered.forEach(t => {
-    const st = allTodos.find(x => x.id === t.id);
-    if (st) st.sort_order = t.sort_order;
-  });
-
-  // Move DOM elements
-  const items = Array.from(container.querySelectorAll('.todo-item'));
-  const ordered = filtered.map(t => items.find(el => el.dataset.todoId === t.id)).filter(Boolean);
-  ordered.forEach(el => container.appendChild(el));
-
-  // Re-init drag
-  initTodoDragDropForCard(catId);
-  showToast('Reordered', 'success');
-
-  // Background Supabase sync
-  Promise.all(filtered.map((t, i) =>
-    state.sb.from('todos').update({ sort_order: i }).eq('id', t.id)
-  )).catch(e => console.error('Todo reorder sync failed:', e));
 }
 
 
@@ -895,7 +807,7 @@ function initCategoryDragDrop() {
       pressTimer = setTimeout(() => {
         activated = true;
         const rect = card.getBoundingClientRect();
-        isDragging = true;
+        setDragging(true);
         dragState = { el: card, category, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null };
         const clone = card.cloneNode(true);
         clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-radius:12px;border:2px solid var(--accent);transition:none;`;
@@ -935,7 +847,7 @@ function initCategoryDragDrop() {
       });
       const draggedCategory = dragState.category;
       dragState = null;
-      isDragging = false;
+      setDragging(false);
       if (targetCategory !== null && targetCategory !== draggedCategory && draggedCategory !== '' && targetCategory !== '') {
         await reorderCategories(draggedCategory, targetCategory);
       }
@@ -950,7 +862,7 @@ function initCategoryDragDrop() {
         card.classList.remove('dragging');
         grid.querySelectorAll('.project-card').forEach(el => el.classList.remove('drag-over'));
         dragState = null;
-        isDragging = false;
+        setDragging(false);
       }
     });
   });
@@ -983,47 +895,12 @@ async function reorderCategories(draggedName, targetName) {
 
 
 function initTodoHoverDelay(container) {
-  const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
-  if (isTouchDevice) return;
-
-  container.querySelectorAll('.todo-item').forEach(item => {
-    let hoverTimer = null;
-    let clickTimer = null;
-    const actions = item.querySelector('.todo-actions');
-    const todoRow = item.querySelector('.todo-row');
-    const todoText = item.querySelector('.todo-text');
-    if (!actions || !todoRow) return;
-
-    todoRow.addEventListener('mouseenter', () => {
-      hoverTimer = setTimeout(() => {
-        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
-        actions.classList.add('visible');
-      }, 2000);
-    });
-
-    todoRow.addEventListener('mouseleave', () => {
-      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-      actions.classList.remove('visible');
-    });
-
-    // Single click on todo text shows actions immediately (with short delay to avoid
-    // triggering on double-click which should still open the inline editor)
-    if (todoText) {
-      todoText.addEventListener('click', () => {
-        if (todoText.dataset.editing) return;
-        if (item.querySelector('.task-edit-input, .todo-edit-wrapper')) return;
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          actions.classList.add('visible');
-          // Clear the hover timer since actions are already visible
-          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-        }, 250);
-      });
-      todoText.addEventListener('dblclick', () => {
-        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-      });
-    }
+  initItemHoverDelay(container, {
+    itemSelector: '.todo-item',
+    actionsSelector: '.todo-actions',
+    rowSelector: '.todo-row',
+    textSelector: '.todo-text',
+    editingSelector: '.task-edit-input, .todo-edit-wrapper',
   });
 }
 

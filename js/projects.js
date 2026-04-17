@@ -2,6 +2,7 @@ import { lucideIcon } from './icons.js';
 import state, { ARCHIVED_PROJECTS_KEY, SHOW_ARCHIVED_KEY, MAX_TEXT_LEN, MAX_META_DISPLAY, TODO_MAX_LEN } from './supabase.js';
 import { esc, linkify, renderMd, showToast, showDeleteConfirm,
          updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore } from './utils.js';
+import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
 
 // ===================================================================
 // state.PROJECTS (loaded from Supabase)
@@ -37,9 +38,7 @@ function navigateToProject(projectId) {
   if (!card) return;
   const project = state.PROJECTS.find(p => p.id === projectId);
   const color = project ? project.color : 'var(--accent)';
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  card.style.boxShadow = `0 0 0 2px ${color}`;
-  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+  scrollToAndHighlight(card, color);
 }
 
 function updateArchiveToggleBtn() {
@@ -307,193 +306,46 @@ function renderTask(t, isArchived = false) {
 
 
 // ===================================================================
-// TASK HOVER DELAY
+// ===================================================================
+// TASK HOVER DELAY (delegates to shared item-utils)
 // ===================================================================
 function initTaskHoverDelay(container) {
-  const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
-  if (isTouchDevice) return; // on touch devices, CSS shows actions immediately
-
-  container.querySelectorAll('.task-item').forEach(item => {
-    let hoverTimer = null;
-    let clickTimer = null;
-    const actions = item.querySelector('.task-actions');
-    const taskRow = item.querySelector('.task-row');
-    const taskText = item.querySelector('.task-text');
-    if (!actions || !taskRow) return;
-
-    // Only trigger on task-row hover (task text), not on plan/Claw response meta
-    taskRow.addEventListener('mouseenter', () => {
-      hoverTimer = setTimeout(() => {
-        if (item.querySelector('.task-edit-input')) return;
-        actions.classList.add('visible');
-      }, 2000);
-    });
-
-    taskRow.addEventListener('mouseleave', () => {
-      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-      actions.classList.remove('visible');
-    });
-
-    // Single click on task text shows actions immediately (with short delay to avoid
-    // triggering on double-click which should still open the inline editor)
-    if (taskText) {
-      taskText.addEventListener('click', () => {
-        if (taskText.dataset.editing) return;
-        if (item.querySelector('.task-edit-input')) return;
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          actions.classList.add('visible');
-          // Clear the hover timer since actions are already visible
-          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-        }, 250);
-      });
-      taskText.addEventListener('dblclick', () => {
-        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-      });
-    }
+  initItemHoverDelay(container, {
+    itemSelector: '.task-item',
+    actionsSelector: '.task-actions',
+    rowSelector: '.task-row',
+    textSelector: '.task-text',
+    editingSelector: '.task-edit-input',
   });
 }
 
 
 // ===================================================================
-// DRAG & DROP REORDER
+// DRAG & DROP REORDER (delegates to shared item-utils)
 // ===================================================================
-let isDragging = false;
-const LONG_PRESS_MS = 250;
-const DRAG_THRESHOLD = 5;
 
 function initDragDrop(container, projectId) {
-  let dragState = null;
-
-  container.querySelectorAll('.task-item').forEach(item => {
-    // Skip archived items (inside .archived-tasks)
-    if (item.closest('.archived-tasks')) return;
-    item.style.touchAction = 'pan-y';
-    let pressTimer = null;
-    let startX = 0, startY = 0;
-    let activated = false;
-
-    item.addEventListener('pointerdown', e => {
-      // Don't initiate drag from interactive elements
-      if (e.target.closest('button, a, input, textarea, select, .task-actions, .promote-btn')) return;
-      if (dragState) return;
-      startX = e.clientX;
-      startY = e.clientY;
-      activated = false;
-
-      pressTimer = setTimeout(() => {
-        activated = true;
-        e.preventDefault();
-        const rect = item.getBoundingClientRect();
-        isDragging = true;
-        dragState = { el: item, id: item.dataset.taskId, offsetY: e.clientY - rect.top, clone: null, pointerId: e.pointerId };
-
-        const clone = item.cloneNode(true);
-        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);transition:none;`;
-        document.body.appendChild(clone);
-        dragState.clone = clone;
-        item.classList.add('dragging');
-        item.setPointerCapture(e.pointerId);
-      }, LONG_PRESS_MS);
-    });
-
-    item.addEventListener('pointermove', e => {
-      // Cancel long-press if moved too far before activation
-      if (pressTimer && !activated) {
-        if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
-          clearTimeout(pressTimer);
-          pressTimer = null;
-        }
-        return;
-      }
-      if (!dragState || dragState.el !== item) return;
-      e.preventDefault();
-      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
-
-      // Auto-scroll
-      const cRect = container.getBoundingClientRect();
-      const edge = 40;
-      if (e.clientY < cRect.top + edge && container.scrollTop > 0) container.scrollTop -= 5;
-      else if (e.clientY > cRect.bottom - edge && container.scrollTop < container.scrollHeight - container.clientHeight) container.scrollTop += 5;
-
-      container.querySelectorAll('.task-item:not(.dragging)').forEach(el => {
-        el.classList.remove('drag-over');
-        const r = el.getBoundingClientRect();
-        if (e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
+  initItemDragDrop(container, {
+    itemSelector: '.task-item',
+    excludeSelector: 'button, a, input, textarea, select, .task-actions, .promote-btn',
+    skipInsideSelector: '.archived-tasks',
+    idAttr: 'taskId',
+    onReorder: async (draggedId, targetId) => {
+      const projectTasks = state.allTasks.filter(t => t.project === projectId && t.status !== 'approved');
+      await reorderItems({
+        items: projectTasks,
+        allItems: state.allTasks,
+        draggedId,
+        targetId,
+        container,
+        itemSelector: '.task-item',
+        idAttr: 'taskId',
+        tableName: 'tasks',
+        sb: state.sb,
+        reinitFn: () => initDragDrop(container, projectId),
       });
-    });
-
-    const finishDrag = async () => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      if (!dragState || dragState.el !== item) return;
-      if (dragState.clone) dragState.clone.remove();
-      item.classList.remove('dragging');
-
-      let targetId = null;
-      container.querySelectorAll('.task-item').forEach(el => {
-        if (el.classList.contains('drag-over')) { targetId = el.dataset.taskId; el.classList.remove('drag-over'); }
-      });
-      const draggedId = dragState.id;
-      dragState = null;
-      isDragging = false;
-      if (targetId && targetId !== draggedId) await reorderTasks(container, projectId, draggedId, targetId);
-    };
-
-    item.addEventListener('pointerup', e => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      finishDrag();
-    });
-    item.addEventListener('pointercancel', () => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      finishDrag();
-    });
-    item.addEventListener('lostpointercapture', () => {
-      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      if (dragState && dragState.el === item) {
-        if (dragState.clone) dragState.clone.remove();
-        item.classList.remove('dragging');
-        container.querySelectorAll('.task-item').forEach(el => el.classList.remove('drag-over'));
-        dragState = null;
-        isDragging = false;
-      }
-    });
+    },
   });
-}
-
-async function reorderTasks(container, projectId, draggedId, targetId) {
-  const projectTasks = state.allTasks.filter(t => t.project === projectId && t.status !== 'approved');
-  const draggedIdx = projectTasks.findIndex(t => t.id === draggedId);
-  const targetIdx = projectTasks.findIndex(t => t.id === targetId);
-  if (draggedIdx === -1 || targetIdx === -1) return;
-
-  // Reorder in array
-  const [dragged] = projectTasks.splice(draggedIdx, 1);
-  projectTasks.splice(targetIdx, 0, dragged);
-
-  // Update sort_order in memory
-  projectTasks.forEach((t, i) => { t.sort_order = i; });
-  // Also update in state.allTasks
-  projectTasks.forEach(t => {
-    const st = state.allTasks.find(x => x.id === t.id);
-    if (st) st.sort_order = t.sort_order;
-  });
-
-  // Move DOM elements to match new order
-  const items = Array.from(container.querySelectorAll('.task-item'));
-  const ordered = projectTasks.map(t => items.find(el => el.dataset.taskId === t.id)).filter(Boolean);
-  ordered.forEach(el => container.appendChild(el));
-
-  // Re-init drag for this container
-  initDragDrop(container, projectId);
-
-  showToast('Reordered', 'success');
-
-  // Background Supabase sync
-  const updates = projectTasks.map((t, i) => ({ id: t.id, sort_order: i }));
-  Promise.all(updates.map(u =>
-    state.sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id)
-  )).catch(e => console.error('Task reorder sync failed:', e));
 }
 
 async function addTask(projectId) {
@@ -678,7 +530,7 @@ function initProjectDragDrop() {
       pressTimer = setTimeout(() => {
         activated = true;
         const rect = card.getBoundingClientRect();
-        isDragging = true;
+        setDragging(true);
         dragState = { el: card, id: card.dataset.project, offsetY: e.clientY - rect.top, offsetX: e.clientX - rect.left, clone: null, pointerId: e.pointerId };
 
         const clone = card.cloneNode(true);
@@ -719,7 +571,7 @@ function initProjectDragDrop() {
       });
       const draggedId = dragState.id;
       dragState = null;
-      isDragging = false;
+      setDragging(false);
       if (targetId && targetId !== draggedId) await reorderProjects(draggedId, targetId);
     };
 
@@ -732,7 +584,7 @@ function initProjectDragDrop() {
         card.classList.remove('dragging');
         grid.querySelectorAll('.project-card').forEach(el => el.classList.remove('drag-over'));
         dragState = null;
-        isDragging = false;
+        setDragging(false);
       }
     });
   });
