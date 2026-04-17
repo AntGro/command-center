@@ -204,7 +204,6 @@ async function refreshAll() {
   const all = data || [];
   state.allTasks = all;
   renderAllTasks();
-  updateFooterStats();
 }
 
 function renderAllTasks() {

@@ -3,11 +3,11 @@ import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } fro
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
-import { refreshTodos, renderTodos } from './todos.js';
+import { refreshTodos, renderTodos, getTodoCounts } from './todos.js';
 import { refreshChores, renderChores } from './chores.js';
 import { refreshBirthdays, renderBirthdays, initBirthdayModals } from './birthdays.js';
 import { refreshVestiaire, renderVestiaire, initVestiaireModals } from './vestiaire.js';
-import { refreshFlashcards, renderFlashcards, initFlashcardModals } from './flashcards.js';
+import { refreshFlashcards, renderFlashcards, initFlashcardModals, getFlashcardCounts } from './flashcards.js';
 
 // ===================================================================
 // GATE LOGIC
@@ -138,16 +138,16 @@ async function connect(url, key) {
 
   // Realtime subscription
   state.sb.channel('tasks-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => { if (!isEditing()) refreshAll(); })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { if (isEditing()) return; await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => { if (!isEditing()) { refreshAll().then(() => markLastUpdated()); } })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { if (isEditing()) return; await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); markLastUpdated(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => { if (!isEditing()) refreshTodos(); })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'chores' }, () => refreshChores())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'birthdays' }, () => refreshBirthdays())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'vestiaire' }, () => refreshVestiaire())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => refreshFlashcards())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcard_notes' }, () => refreshFlashcards())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => { if (!isEditing()) { refreshTodos().then(() => markLastUpdated()); } })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chores' }, () => refreshChores().then(() => markLastUpdated()))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores().then(() => markLastUpdated()))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'birthdays' }, () => refreshBirthdays().then(() => markLastUpdated()))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vestiaire' }, () => refreshVestiaire().then(() => markLastUpdated()))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcards' }, () => refreshFlashcards().then(() => markLastUpdated()))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'flashcard_notes' }, () => refreshFlashcards().then(() => markLastUpdated()))
     .subscribe();
 
   // Initialize TODOs
@@ -167,6 +167,8 @@ async function connect(url, key) {
   // Initialize Flashcards
   initFlashcardModals();
   await refreshFlashcards();
+
+  markLastUpdated();
 
   // Restore last view — hash takes priority over localStorage
   const validViews = ['projects', 'todos', 'chores', 'birthdays', 'vestiaire', 'flashcards'];
@@ -255,26 +257,27 @@ function switchView(view) {
   if (view === 'projects') {
     projectsView.style.display = '';
     tabProjects.classList.add('active');
+    refreshAll().then(() => markLastUpdated());
   } else if (view === 'todos') {
     todosView.style.display = '';
     tabTodos.classList.add('active');
-    renderTodos();
+    refreshTodos().then(() => { renderTodos(); markLastUpdated(); });
   } else if (view === 'chores') {
     if (choresView) choresView.style.display = '';
     if (tabChores) tabChores.classList.add('active');
-    renderChores();
+    refreshChores().then(() => { renderChores(); markLastUpdated(); });
   } else if (view === 'birthdays') {
     if (birthdaysView) birthdaysView.style.display = '';
     if (tabBirthdays) tabBirthdays.classList.add('active');
-    renderBirthdays();
+    refreshBirthdays().then(() => { renderBirthdays(); markLastUpdated(); });
   } else if (view === 'vestiaire') {
     if (vestiaireView) vestiaireView.style.display = '';
     if (tabVestiaire) tabVestiaire.classList.add('active');
-    renderVestiaire();
+    refreshVestiaire().then(() => { renderVestiaire(); markLastUpdated(); });
   } else if (view === 'flashcards') {
     if (flashcardsView) flashcardsView.style.display = '';
     if (tabFlashcards) tabFlashcards.classList.add('active');
-    renderFlashcards();
+    refreshFlashcards().then(() => { renderFlashcards(); markLastUpdated(); });
   }
 
   // Scroll active tab into view on mobile (horizontal carousel)
@@ -283,6 +286,75 @@ function switchView(view) {
 }
 
 // ===================================================================
+
+// ===================================================================
+// VIEW-AWARE FOOTER STATS
+// ===================================================================
+function updateViewFooterStats() {
+  const view = state.currentView;
+  const icon = (name, sz = 14) => lucideIcon(name, sz);
+  const viewCountsMap = {
+    projects: () => [
+      `${icon('folder')} Projects: ${state.PROJECTS.length}`,
+      `${icon('list-checks')} Tasks: ${state.allTasks.length}`,
+    ],
+    todos: () => {
+      const c = getTodoCounts();
+      return [
+        `${icon('circle-dot')} Pending: ${c.pending}`,
+        `${icon('circle-check')} Done: ${c.done}`,
+      ];
+    },
+    chores: () => {
+      const overdue = state.allChores.filter(c => c.next_due && new Date(c.next_due) < new Date()).length;
+      return [
+        `${icon('repeat')} Chores: ${state.allChores.length}`,
+        `${icon('alert-triangle')} Overdue: ${overdue}`,
+      ];
+    },
+    birthdays: () => [
+      `${icon('cake')} Birthdays: ${state.allBirthdays.length}`,
+    ],
+    vestiaire: () => [
+      `${icon('shirt')} Items: ${state.allVestiaire.length}`,
+    ],
+    flashcards: () => {
+      const c = getFlashcardCounts();
+      return [
+        `${icon('book-open')} Cards: ${c.cards}`,
+        `${icon('file-text')} Drafts: ${c.drafts}`,
+      ];
+    },
+  };
+  updateFooterStats(viewCountsMap[view] || null);
+}
+
+// ===================================================================
+// LAST UPDATED LABEL
+// ===================================================================
+let _lastUpdatedAt = null;
+let _lastUpdatedTimer = null;
+
+function markLastUpdated() {
+  _lastUpdatedAt = Date.now();
+  renderLastUpdated();
+  updateViewFooterStats();
+  if (!_lastUpdatedTimer) {
+    _lastUpdatedTimer = setInterval(renderLastUpdated, 15000);
+  }
+}
+
+function renderLastUpdated() {
+  const el = document.getElementById('lastUpdatedLabel');
+  if (!el || !_lastUpdatedAt) return;
+  const secs = Math.round((Date.now() - _lastUpdatedAt) / 1000);
+  let label;
+  if (secs < 5) label = 'just now';
+  else if (secs < 60) label = `${secs}s ago`;
+  else if (secs < 3600) label = `${Math.floor(secs / 60)}m ago`;
+  else label = `${Math.floor(secs / 3600)}h ago`;
+  el.textContent = `Updated ${label}`;
+}
 
 // ===================================================================
 // SUBTLE MOUSE-FOLLOW AMBIENT GLOW

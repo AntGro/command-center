@@ -180,9 +180,22 @@ document.addEventListener('keydown', e => {
 // FOOTER STATS
 // ===================================================================
 // ===================================================================
-function updateFooterStats() {
-  document.getElementById('dbTaskCount').textContent = state.allTasks.length;
-  document.getElementById('dbProjectCount').textContent = state.PROJECTS.length;
+function updateFooterStats(viewCountsGetter) {
+  const container = document.getElementById('dbStatsContainer');
+  if (!container) return;
+
+  // Get view-specific stats from the getter if provided
+  const counts = viewCountsGetter ? viewCountsGetter() : null;
+  let statsHtml = '';
+
+  if (counts && counts.length) {
+    statsHtml = counts.map(s => `<div class="db-stat">${s}</div>`).join('');
+  }
+
+  // Always add DB size
+  statsHtml += `<div class="db-stat">${lucideIcon('hard-drive', 14)} DB: <span id="dbSizeMb">—</span> / 500 MB</div>`;
+  container.innerHTML = statsHtml;
+
   // Set dashboard link using the connected URL
   const urlInput = document.getElementById('username');
   if (urlInput && urlInput.value) {
@@ -192,7 +205,8 @@ function updateFooterStats() {
   // Fetch DB size via RPC
   if (state.sb) {
     state.sb.rpc('db_size_mb').then(({ data, error }) => {
-      document.getElementById('dbSizeMb').textContent = error ? '?' : `${data} MB`;
+      const el = document.getElementById('dbSizeMb');
+      if (el) el.textContent = error ? '?' : `${data} MB`;
     });
   }
 }

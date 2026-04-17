@@ -1030,7 +1030,7 @@ function initTodoHoverDelay(container) {
   });
 }
 
-export { refreshTodos, renderTodos, getCategoryColor, getCategoryColors, initTodoModals };
+export { refreshTodos, renderTodos, getCategoryColor, getCategoryColors, initTodoModals, getTodoCounts };
 
 window.setTodoFilter = setTodoFilter;
 window.addTodoToCategory = addTodoToCategory;
@@ -1038,6 +1038,10 @@ window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;
 window.editTodoInline = editTodoInline;
 window.toggleDoneTodos = toggleDoneTodos;
+function getTodoCounts() {
+  return { total: allTodos.length, pending: allTodos.filter(t => !t.done).length, done: allTodos.filter(t => t.done).length };
+}
+
 window.deleteAllDoneTodos = deleteAllDoneTodos;
 window.cycleTodoPriority = cycleTodoPriority;
 window.openSnoozeModal = openSnoozeModal;

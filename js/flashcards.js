@@ -801,7 +801,11 @@ document.addEventListener('keydown', (e) => {
 // EXPORTS
 // ===================================================================
 function initFlashcardModals() {}
-export { refreshFlashcards, renderFlashcards, initFlashcardModals };
+function getFlashcardCounts() {
+  return { cards: allCards.length, drafts: allDrafts.length };
+}
+
+export { refreshFlashcards, renderFlashcards, initFlashcardModals, getFlashcardCounts };
 window.renderFlashcards = renderFlashcards;
 window.refreshFlashcards = refreshFlashcards;
 
