@@ -260,11 +260,16 @@ function collapseMeta(id, field) {
   document.getElementById(`meta-${id}-${field}-full`).style.display = 'none';
 }
 
+function isEditing() {
+  return document.querySelector('.task-edit-input, .todo-edit-wrapper, [data-editing="true"]') !== null;
+}
+
 // Exports
 export {
   esc, linkify, renderMd, showToast, formatRelativeDate,
   showDeleteConfirm, closeDeleteConfirm, executeDeleteConfirm,
   updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore,
+  isEditing,
 };
 
 window.closeDeleteConfirm = closeDeleteConfirm;

@@ -315,6 +315,22 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="editCategoryModal">
+    <div class="modal">
+      <h2><svg class="lucide-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg> Edit Category</h2>
+      <input type="hidden" id="editCategoryOldName">
+      <label>Category Name</label>
+      <input type="text" id="editCategoryName" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditCategory();}">
+      <label>Short Name (for nav buttons)</label>
+      <input type="text" id="editCategoryShortname" maxlength="20" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditCategory();}">
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeEditCategoryModal()">Cancel</button>
+        <button class="modal-save" onclick="saveEditCategory()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal delete-confirm-modal">
       <div class="delete-confirm-icon-wrap">

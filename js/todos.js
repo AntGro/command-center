@@ -56,12 +56,54 @@ function setCategoryShortname(catName, shortname) {
   saveCategoryShortnames(map);
 }
 
-function promptCategoryShortname(catName) {
-  const current = getCategoryShortname(catName) || '';
-  const result = prompt(`Short name for "${catName}" (leave empty to clear):`, current);
-  if (result === null) return; // cancelled
-  setCategoryShortname(catName, result.trim());
+function openEditCategoryModal(catName) {
+  document.getElementById('editCategoryOldName').value = catName;
+  document.getElementById('editCategoryName').value = catName;
+  document.getElementById('editCategoryShortname').value = getCategoryShortname(catName) || '';
+  document.getElementById('editCategoryModal').classList.add('visible');
+  setTimeout(() => document.getElementById('editCategoryName').focus(), 50);
+}
+
+function closeEditCategoryModal() {
+  document.getElementById('editCategoryModal').classList.remove('visible');
+}
+
+async function saveEditCategory() {
+  const oldName = document.getElementById('editCategoryOldName').value;
+  const newName = document.getElementById('editCategoryName').value.trim();
+  const shortname = document.getElementById('editCategoryShortname').value.trim();
+  if (!newName) { showToast('Name is required', 'error'); return; }
+
+  // Update shortname
+  setCategoryShortname(newName, shortname);
+
+  // Rename category if changed
+  if (newName !== oldName) {
+    // Update localStorage categories list
+    const cats = getCategories();
+    const idx = cats.indexOf(oldName);
+    if (idx !== -1) { cats[idx] = newName; saveCategories(cats); }
+
+    // Move old shortname to new name if different
+    if (newName !== oldName) {
+      const oldSn = getCategoryShortname(oldName);
+      if (oldSn && !shortname) setCategoryShortname(newName, oldSn);
+      setCategoryShortname(oldName, ''); // clear old
+    }
+
+    // Update all todos in Supabase
+    const todosToUpdate = allTodos.filter(t => (t.category || 'General') === oldName);
+    if (todosToUpdate.length > 0) {
+      await Promise.all(todosToUpdate.map(t =>
+        state.sb.from('todos').update({ category: newName }).eq('id', t.id)
+      ));
+      todosToUpdate.forEach(t => { t.category = newName; });
+    }
+  }
+
+  closeEditCategoryModal();
   renderTodos();
+  showToast('Category updated', 'success');
 }
 
 function getCategories() {
@@ -303,7 +345,7 @@ function renderCategoryCard(category) {
     : (activeEmptyMsg || displayActive.map(t => renderTodoItem(t)).join(''));
 
   const shortnameBtn = !isGeneral
-    ? `<button class="todo-cat-shortname-btn" onclick="promptCategoryShortname('${esc(category).replace(/'/g, "\\'")}')" title="${shortname ? 'Edit short name: ' + esc(shortname) : 'Set short name'}">${lucideIcon("pencil",14)}</button>`
+    ? `<button class="todo-cat-shortname-btn" onclick="openEditCategoryModal('${esc(category).replace(/'/g, "\\'")}')" title="Edit category">${lucideIcon("pencil",14)}</button>`
     : '';
 
   const shortnameLabel = shortname
@@ -1003,4 +1045,6 @@ window.saveNewCategory = saveNewCategory;
 window.deleteCategory = deleteCategory;
 window.navigateToCategory = navigateToCategory;
 window.updateTodoCharCounter = updateTodoCharCounter;
-window.promptCategoryShortname = promptCategoryShortname;
+window.openEditCategoryModal = openEditCategoryModal;
+window.closeEditCategoryModal = closeEditCategoryModal;
+window.saveEditCategory = saveEditCategory;

@@ -1,6 +1,6 @@
 import { lucideIcon } from './icons.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
-import { showToast, updateFooterStats, updateTaskListMaxHeight } from './utils.js';
+import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
 import { refreshTodos, renderTodos } from './todos.js';
@@ -138,10 +138,10 @@ async function connect(url, key) {
 
   // Realtime subscription
   state.sb.channel('tasks-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshAll())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => { if (!isEditing()) refreshAll(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { if (isEditing()) return; await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => refreshTodos())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => { if (!isEditing()) refreshTodos(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chores' }, () => refreshChores())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'chore_completions' }, () => refreshChores())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'birthdays' }, () => refreshBirthdays())
