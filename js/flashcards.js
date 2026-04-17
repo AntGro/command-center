@@ -1,6 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
+import { scrollToAndHighlight, inlineEditText } from './item-utils.js';
 
 // ===================================================================
 // FLASHCARDS — Spaced Repetition (FSRS v5)
@@ -147,7 +148,7 @@ function renderDeckNavButtons() {
 
 window.navigateToFlashDeck = function(deck) {
   const el = document.getElementById(deck === '__drafts' ? 'flashDraftsDeck' : `flashDeck-${CSS.escape(deck)}`);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scrollToAndHighlight(el, null);
 };
 
 // ── Search State ──
@@ -380,50 +381,19 @@ window.quickAddDraft = async function() {
   showToast('Draft added');
 };
 
-// ── Inline Draft Editing (matches Project page promptEditTask pattern) ──
+// ── Inline Draft Editing (uses shared inlineEditText) ──
 window.startInlineEditDraft = function(id, spanEl) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
-  if (spanEl.dataset.editing) return;
-
-  const originalContent = draft.content;
-  spanEl.dataset.editing = 'true';
-
-  const input = document.createElement('textarea');
-  input.className = 'task-edit-input';
-  input.value = originalContent;
-  input.rows = Math.max(2, originalContent.split('\n').length);
-  input.style.resize = 'none';
-  input.style.overflow = 'hidden';
-  input.style.minHeight = '2.4em';
-
-  function autoSize() {
-    input.style.height = 'auto';
-    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
-  }
-
-  const finishEdit = async (save) => {
-    if (save && input.value.trim() && input.value.trim() !== originalContent) {
-      const content = input.value.trim();
+  inlineEditText(spanEl, draft.content, {
+    saveFn: async (content) => {
       if (state.sb) {
         await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
         showToast('Draft updated');
       }
-    } else if (save && !input.value.trim()) {
-      showToast('Content required');
-    }
-    await refreshFlashcards();
-  };
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
-    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+    },
+    refreshFn: refreshFlashcards,
   });
-  input.addEventListener('input', autoSize);
-  input.addEventListener('blur', () => finishEdit(true));
-
-  spanEl.replaceWith(input);
-  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 };
 
 window.startInlineEditDraftById = function(id) {

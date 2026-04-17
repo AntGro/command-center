@@ -1,6 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
+import { scrollToAndHighlight } from './item-utils.js';
 
 // ===================================================================
 // VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
@@ -226,9 +227,7 @@ function renderVestiaireNavButtons(cats, items) {
 function navigateToVestiaireCat(cat) {
   const card = document.querySelector(`.vestiaire-bucket[data-category="${cat}"]`);
   if (!card) return;
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  card.style.boxShadow = '0 0 0 2px var(--accent)';
-  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+  scrollToAndHighlight(card, 'var(--accent)');
 }
 
 function getCategoryIcon(cat) {

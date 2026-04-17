@@ -214,6 +214,50 @@ export async function reorderItems({
 export function scrollToAndHighlight(element, color, durationMs = 1500) {
   if (!element) return;
   element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  element.style.boxShadow = `0 0 0 2px ${color}`;
-  setTimeout(() => { element.style.boxShadow = ''; }, durationMs);
+  if (color) {
+    element.style.boxShadow = `0 0 0 2px ${color}`;
+    setTimeout(() => { element.style.boxShadow = ''; }, durationMs);
+  }
+}
+
+
+// ===================================================================
+// INLINE TEXT EDIT — generic textarea-replace pattern
+// ===================================================================
+export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refreshFn }) {
+  if (spanEl.dataset.editing) return;
+  spanEl.dataset.editing = 'true';
+
+  const input = document.createElement('textarea');
+  input.className = 'task-edit-input';
+  input.value = originalText;
+  input.rows = Math.max(2, originalText.split('\n').length);
+  input.style.resize = 'none';
+  input.style.overflow = 'hidden';
+  input.style.minHeight = '2.4em';
+  if (maxLength) input.maxLength = maxLength;
+
+  function autoSize() {
+    input.style.height = 'auto';
+    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
+  }
+
+  const finishEdit = async (save) => {
+    const trimmed = input.value.trim();
+    if (save && trimmed && trimmed !== originalText) {
+      await saveFn(trimmed);
+    }
+    delete spanEl.dataset.editing;
+    await refreshFn();
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
+    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+  });
+  input.addEventListener('input', autoSize);
+  input.addEventListener('blur', () => finishEdit(true));
+
+  spanEl.replaceWith(input);
+  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }

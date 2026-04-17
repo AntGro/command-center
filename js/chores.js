@@ -1,6 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { CHORE_CATEGORIES_KEY } from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
+import { scrollToAndHighlight } from './item-utils.js';
 import { getCategoryColor } from './todos.js';
 
 // ===================================================================
@@ -191,9 +192,7 @@ function navigateToChoreCategory(cat) {
   const card = document.querySelector(`.project-card[data-category="${CSS.escape(cat)}"]`);
   if (!card) return;
   const color = getCategoryColor(cat);
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  card.style.boxShadow = `0 0 0 2px ${color}`;
-  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+  scrollToAndHighlight(card, color);
 }
 
 function renderChoreCategoryCard(category) {

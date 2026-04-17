@@ -1,6 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
+import { scrollToAndHighlight } from './item-utils.js';
 
 // ===================================================================
 // BIRTHDAYS — DATA, CRUD & RENDERING
@@ -164,7 +165,7 @@ function renderBirthdays() {
 
 function navigateToBirthdaySection(key) {
   const card = document.querySelector(`[data-birthday-section="${key}"]`);
-  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scrollToAndHighlight(card, null);
 }
 
 function renderBirthdayCard(b, isUpcoming) {
