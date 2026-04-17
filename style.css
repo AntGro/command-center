@@ -84,6 +84,8 @@ input,select,button{font-family:inherit;}
 .page-toolbar-right .btn:hover{background:var(--surface2);color:var(--text);transform:none;box-shadow:none;border:none;}
 .page-toolbar-right .btn:active{transform:scale(0.92);}
 .page-toolbar-right .btn.btn-active{background:rgba(100,108,255,0.12);color:var(--accent);}
+.page-toolbar-right .btn-primary{width:auto;height:auto;padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;font-size:0.8rem;font-weight:600;gap:4px;}
+.page-toolbar-right .btn-primary:hover{background:var(--accent);opacity:0.9;color:#fff;}
 .page-filters{display:flex;gap:4px;flex-wrap:wrap;}
 .page-sort{padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;outline:none;font-family:inherit;}
 .page-sort:focus{border-color:var(--accent);}
