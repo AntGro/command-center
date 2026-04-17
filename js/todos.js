@@ -352,8 +352,7 @@ function renderCategoryCard(category) {
     ? `<span class="todo-cat-shortname-label">${esc(shortname)}</span>`
     : '';
 
-  return `<div class="project-card" id="${catId}" data-category="${esc(category)}">
-    <div class="todo-cat-accent" style="background:${catColor}"></div>
+  return `<div class="project-card" id="${catId}" data-category="${esc(category)}" style="border-top:3px solid ${catColor}">
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
         ${catDragHandle}

@@ -216,8 +216,7 @@ function renderChoreCategoryCard(category) {
     ? '<p class="empty-msg">No chores here</p>'
     : choresInCat.map(c => renderChoreItem(c)).join('');
 
-  return `<div class="project-card" data-category="${esc(catName)}">
-    <div class="todo-cat-accent" style="background:${catColor}"></div>
+  return `<div class="project-card" data-category="${esc(catName)}" style="border-top:3px solid ${catColor}">
     <div class="todo-cat-header">
       <div class="todo-cat-header-left">
         <div class="todo-cat-info">

@@ -525,7 +525,6 @@ input,select,button{font-family:inherit;}
 .category-nav-btn:hover{background:color-mix(in srgb,var(--cat-color,var(--accent)) 15%,var(--surface));opacity:0.9;transform:translateY(-1px);}
 
 
-.todo-cat-accent{height:3px;width:100%;}
 .todo-cat-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .todo-cat-header-left{display:flex;align-items:flex-start;gap:6px;}
 .todo-cat-info{display:flex;flex-direction:column;gap:2px;}
