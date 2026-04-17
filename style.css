@@ -464,8 +464,8 @@ input,select,button{font-family:inherit;}
   .todo-checkmark{width:22px;height:22px;border-radius:6px;}
   .todo-checkbox-label input:checked + .todo-checkmark::after{font-size:0.78rem;}
   .todo-priority-badge{font-size:0.7rem;padding:3px 8px;}
-  .todo-actions{display:inline-flex !important;gap:2px;}
-  .todo-actions button{font-size:0.82rem;padding:6px 8px;min-height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;}
+  .todo-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
+  .todo-actions button{font-size:0.78rem;padding:4px 6px;}
   .todo-meta{padding-left:38px;gap:6px;margin-top:6px;}
   .todo-due{font-size:0.78rem;}
   .todo-snoozed{font-size:0.78rem;}
@@ -576,8 +576,8 @@ input,select,button{font-family:inherit;}
 
 .todo-text{flex:1;font-size:0.86rem;line-height:1.35;cursor:default;}
 .todo-text[ondblclick]{cursor:text;}
-.todo-actions{display:none;gap:2px;}
-.todo-actions.visible{display:inline-flex;}
+.todo-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.todo-actions.visible{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 .todo-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .todo-actions button:hover{background:var(--surface2);}
 
@@ -716,7 +716,7 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .page-search:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 2px rgba(139,92,246,0.15); }
 
 /* Show actions on hover for flashcard items (no JS delay like todos) */
-#flashcardGrid .bucket-item .todo-actions { display:inline-flex; visibility:hidden; opacity:0; transition:opacity 0.15s; }
+#flashcardGrid .bucket-item .todo-actions { display:grid; grid-template-columns:auto auto; visibility:hidden; opacity:0; transition:opacity 0.15s; }
 #flashcardGrid .bucket-item:hover .todo-actions { visibility:visible; opacity:1; }
 
 .fc-chip { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:600; display:inline-block; }
