@@ -515,7 +515,7 @@ input,select,button{font-family:inherit;}
 }
 
 /* ===== VIEW SWITCHER (inside header) ===== */
-.view-switcher{display:flex;gap:6px;align-items:center;flex:1;min-width:0;justify-content:center;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.view-switcher{display:flex;gap:6px;align-items:center;flex:1;min-width:0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .view-switcher::-webkit-scrollbar{display:none;}
 .view-tab{padding:7px 18px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s ease;font-family:inherit;white-space:nowrap;}
 .view-tab:hover{background:var(--surface2);color:var(--text);}
