@@ -59,7 +59,7 @@ input,select,button{font-family:inherit;}
 /* ===== APP LAYOUT ===== */
 #app{display:none;min-height:100vh;}
 #app.active{display:flex;flex-direction:column;}
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;background:var(--surface);border-bottom:none;box-shadow:0 1px 0 var(--border),0 4px 24px rgba(0,0,0,0.12);position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);flex-wrap:wrap;gap:8px;}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:none;box-shadow:0 1px 0 var(--border),0 4px 24px rgba(0,0,0,0.12);position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);gap:8px;}
 .app-header h1{font-size:1.2rem;font-weight:700;display:flex;align-items:center;gap:8px;letter-spacing:-0.4px;white-space:nowrap;}
 .header-actions{display:flex;gap:2px;align-items:center;}
 [data-theme="light"] .app-header{box-shadow:0 1px 0 var(--border),0 4px 20px rgba(0,0,0,0.06);}
@@ -79,7 +79,11 @@ input,select,button{font-family:inherit;}
 /* ===== PAGE TOOLBAR (unified across all views) ===== */
 .page-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 1rem;flex-wrap:wrap;}
 .page-toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;}
-.page-toolbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.page-toolbar-right{display:flex;align-items:center;gap:2px;flex-shrink:0;flex-wrap:wrap;}
+.page-toolbar-right .btn{padding:8px;border:none;background:transparent;border-radius:50%;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;}
+.page-toolbar-right .btn:hover{background:var(--surface2);color:var(--text);transform:none;box-shadow:none;border:none;}
+.page-toolbar-right .btn:active{transform:scale(0.92);}
+.page-toolbar-right .btn.btn-active{background:rgba(100,108,255,0.12);color:var(--accent);}
 .page-filters{display:flex;gap:4px;flex-wrap:wrap;}
 .page-sort{padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;outline:none;font-family:inherit;}
 .page-sort:focus{border-color:var(--accent);}
@@ -375,8 +379,7 @@ input,select,button{font-family:inherit;}
 /* Tablet / small desktop */
 @media(max-width:860px){
   .project-grid{grid-template-columns:1fr;}
-  .app-header{padding:12px 12px 10px;gap:8px;}
-  .view-switcher{padding:4px 0 0;}
+  .app-header{padding:12px 12px;gap:8px;}
   .main-content{padding:6px;}
   .bucket-item-actions{opacity:1 !important;}
 }
@@ -395,14 +398,14 @@ input,select,button{font-family:inherit;}
   .gate-box .logo{font-size:2.4rem;}
   .gate-box h1{font-size:1.05rem;}
 
-  /* Header — wrap buttons */
-  .app-header{padding:10px 8px 8px;gap:6px;}
+  /* Header */
+  .app-header{padding:8px;gap:4px;}
   .app-header h1{font-size:1.05rem;gap:5px;}
-  .header-actions{gap:4px;flex-wrap:wrap;justify-content:flex-end;}
-  .header-actions .btn{padding:6px;width:36px;height:36px;}
+  .header-actions{gap:2px;}
+  .header-actions .btn{padding:6px;width:32px;height:32px;}
 
   /* View switcher — horizontal scroll on mobile */
-  .view-switcher{gap:4px;padding:4px 0 0;scroll-snap-type:x mandatory;margin-top:2px;}
+  .view-switcher{gap:4px;scroll-snap-type:x mandatory;}
   .view-tab{flex:0 0 auto;text-align:center;padding:8px 14px;font-size:0.82rem;scroll-snap-align:start;}
 
 
@@ -513,7 +516,7 @@ input,select,button{font-family:inherit;}
 }
 
 /* ===== VIEW SWITCHER (inside header) ===== */
-.view-switcher{display:flex;gap:6px;align-items:center;order:3;flex:1 1 100%;justify-content:center;padding:6px 0 0;border-top:1px solid var(--border);margin-top:4px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.view-switcher{display:flex;gap:6px;align-items:center;flex:1;min-width:0;justify-content:center;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .view-switcher::-webkit-scrollbar{display:none;}
 .view-tab{padding:7px 18px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.2s ease;font-family:inherit;white-space:nowrap;}
 .view-tab:hover{background:var(--surface2);color:var(--text);}
