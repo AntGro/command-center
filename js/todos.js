@@ -440,13 +440,10 @@ function renderTodoItem(t) {
   return `<div class="${classes}" data-todo-id="${t.id}">
     <div class="todo-row">
       ${flagBtn}
-      <label class="todo-checkbox-label">
-        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
-        <span class="todo-checkmark"></span>
-      </label>
       <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${t.text.length > 150 ? truncateWithShowMore(t.text, 150, t.id, 'todo') : renderMd(t.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
+        ${!t.done ? `<button onclick="toggleTodo('${t.id}', true)" title="Done">${lucideIcon("circle-check",16)}</button>` : `<button onclick="toggleTodo('${t.id}', false)" title="Undo">${lucideIcon("refresh-cw",16)}</button>`}
         ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">${lucideIcon("moon",16)}</button>` : ''}
         <button onclick="editTodoInline('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>
         <button onclick="deleteTodo('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>
@@ -769,7 +766,7 @@ function initTodoDragDropForCard(catId) {
     let activated = false;
 
     item.addEventListener('pointerdown', e => {
-      if (e.target.closest('button, a, input, textarea, select, .todo-actions, .todo-checkbox-label')) return;
+      if (e.target.closest('button, a, input, textarea, select, .todo-actions')) return;
       if (dragState) return;
       startX = e.clientX;
       startY = e.clientY;
