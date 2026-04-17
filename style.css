@@ -684,7 +684,7 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 /* ===================================================================
    VESTIAIRE
    =================================================================== */
-/* Vestiaire — bucket cards reuse .project-card / .project-grid */
+/* Wardrobe — bucket cards reuse .project-card / .project-grid */
 .vestiaire-item{display:flex;align-items:flex-start;justify-content:space-between;}
 .vestiaire-item-actions{display:flex;gap:4px;}
 .vestiaire-empty-cat{padding:12px 0;color:var(--muted);font-size:0.82rem;text-align:center;}

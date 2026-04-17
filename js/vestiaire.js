@@ -83,7 +83,7 @@ async function refreshVestiaire() {
     .order('name', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
-    showToast('Failed to load vestiaire', 'error');
+    showToast('Failed to load wardrobe', 'error');
     return;
   }
   state.allVestiaire = data || [];

@@ -173,7 +173,7 @@ async function connect(url, key) {
   initBirthdayModals();
   await refreshBirthdays();
 
-  // Initialize Vestiaire
+  // Initialize Wardrobe
   initVestiaireModals();
   await refreshVestiaire();
 
