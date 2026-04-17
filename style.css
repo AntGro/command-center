@@ -119,9 +119,9 @@ input,select,button{font-family:inherit;}
 .project-link:hover{color:var(--accent);}
 
 /* ===== TASK LIST ===== */
-.task-list{padding:4px 16px;flex:1;min-height:50px;max-height:var(--task-list-max-height, 400px);overflow-y:auto;transition:max-height 0.3s ease;}
-.task-item{padding:9px 0;border-bottom:1px solid var(--border);border-left:3px solid transparent;padding-left:10px;margin-left:-1px;}
-.task-item:last-child{border-bottom:none;}
+.task-list{padding:4px 16px;flex:1;min-height:50px;max-height:var(--task-list-max-height, 400px);overflow-y:auto;transition:max-height 0.3s ease;display:flex;flex-direction:column;gap:4px;}
+.task-item{padding:8px 10px;background:var(--surface);border:1px solid transparent;border-radius:8px;border-left:3px solid transparent;transition:all 0.2s ease;}
+.task-item:hover{border-color:var(--accent-dim);background:var(--surface2);}
 .task-item.task-status-todo{border-left-color:var(--muted);}
 .task-item.task-status-in-progress{border-left-color:var(--blue);}
 .task-item.task-status-review{border-left-color:var(--yellow);}
