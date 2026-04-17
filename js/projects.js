@@ -492,9 +492,9 @@ async function reorderTasks(container, projectId, draggedId, targetId) {
 
   // Background Supabase sync
   const updates = projectTasks.map((t, i) => ({ id: t.id, sort_order: i }));
-  for (const u of updates) {
-    state.sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id);
-  }
+  Promise.all(updates.map(u =>
+    state.sb.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id)
+  )).catch(e => console.error('Task reorder sync failed:', e));
 }
 
 async function addTask(projectId) {
@@ -766,9 +766,9 @@ async function reorderProjects(draggedId, targetId) {
   showToast('Projects reordered', 'success');
 
   // Background Supabase sync
-  for (let i = 0; i < visible.length; i++) {
-    state.sb.from('projects').update({ sort_order: i }).eq('id', visible[i].id);
-  }
+  Promise.all(visible.map((p, i) =>
+    state.sb.from('projects').update({ sort_order: i }).eq('id', p.id)
+  )).catch(e => console.error('Project reorder sync failed:', e));
 }
 
 

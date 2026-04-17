@@ -817,9 +817,9 @@ async function reorderTodosInCategory(container, catId, draggedId, targetId, cat
   showToast('Reordered', 'success');
 
   // Background Supabase sync
-  for (let i = 0; i < filtered.length; i++) {
-    state.sb.from('todos').update({ sort_order: i }).eq('id', filtered[i].id);
-  }
+  Promise.all(filtered.map((t, i) =>
+    state.sb.from('todos').update({ sort_order: i }).eq('id', t.id)
+  )).catch(e => console.error('Todo reorder sync failed:', e));
 }
 
 
