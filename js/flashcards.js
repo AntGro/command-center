@@ -239,7 +239,7 @@ function renderDraftItem(d) {
     </div>`;
   }
 
-  return `<div class="todo-item" data-draft-id="${d.id}">
+  return `<div class="bucket-item todo-item" data-draft-id="${d.id}">
     <div class="todo-row">
       <span class="todo-text" ondblclick="startInlineEditDraft('${d.id}', this)" style="cursor:text;">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
       ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">⏳ Generating…</span>` : ''}
@@ -314,7 +314,7 @@ function renderFlashcardItem(c, color) {
 
   const frontTrunc = c.front.length > 90 ? c.front.slice(0, 90) + '…' : c.front;
 
-  return `<div class="todo-item${isDue ? ' todo-overdue' : ''}" data-card-id="${c.id}">
+  return `<div class="bucket-item todo-item${isDue ? ' todo-overdue' : ''}" data-card-id="${c.id}">
     <div class="todo-row">
       <span class="todo-text">${esc(frontTrunc)}</span>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">

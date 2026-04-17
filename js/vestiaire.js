@@ -195,7 +195,7 @@ function renderVestiaireItem(v) {
     statusBadge = `<span style="font-size:0.65rem;padding:1px 6px;border-radius:4px;background:#f59e0b20;color:#f59e0b;font-weight:600;margin-left:6px;">Essayé</span>`;
   }
 
-  return `<div class="vestiaire-item" style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+  return `<div class="bucket-item vestiaire-item">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;">
         <span style="font-size:0.88rem;font-weight:500;">${esc(v.name)}</span>
@@ -204,7 +204,7 @@ function renderVestiaireItem(v) {
       </div>
       ${metaHtml}
     </div>
-    <div class="vestiaire-item-actions" style="display:flex;gap:4px;opacity:0;transition:opacity 0.2s;">
+    <div class="bucket-item-actions vestiaire-item-actions">
       <button onclick="openEditVestiaireModal('${v.id}')" title="Edit" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('pencil', 14)}</button>
       <button onclick="deleteVestiaire('${v.id}')" title="Delete" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('trash-2', 14)}</button>
     </div>

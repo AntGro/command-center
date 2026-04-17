@@ -296,7 +296,7 @@ function renderTask(t, isArchived = false) {
 
   const draftClass = isDraft ? ' task-draft' : '';
 
-  return `<div class="task-item${draftClass} task-status-${t.status}" data-task-id="${t.id}">
+  return `<div class="bucket-item task-item${draftClass} task-status-${t.status}" data-task-id="${t.id}">
     <div class="task-row">
       <span class="task-text" ondblclick="promptEditTask('${t.id}')">${renderMd(t.text)}</span>
       ${promoteBtn}

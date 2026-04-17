@@ -252,7 +252,7 @@ function renderChoreItem(chore) {
 
   const promoteBtn = isDraft ? `<button onclick="promoteChore('${chore.id}')" title="Promote to active chore" class="chore-promote-btn">▶ Activate</button>` : '';
 
-  return `<div class="chore-item chore-status-${status}" data-chore-id="${chore.id}">
+  return `<div class="bucket-item chore-item chore-status-${status}" data-chore-id="${chore.id}">
     <div class="chore-row">
       <div class="chore-info">
         <span class="chore-name">${esc(chore.name)}</span>

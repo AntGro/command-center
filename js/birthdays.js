@@ -157,7 +157,7 @@ function renderBirthdayCard(b, isUpcoming) {
 
   const initial = (b.name || '?').charAt(0).toUpperCase();
 
-  return `<div class="birthday-card ${days === 0 ? 'birthday-today' : ''} ${isUpcoming ? 'birthday-upcoming' : ''}" data-id="${b.id}">
+  return `<div class="bucket-item birthday-card ${days === 0 ? 'birthday-today' : ''} ${isUpcoming ? 'birthday-upcoming' : ''}" data-id="${b.id}">
     <div class="birthday-avatar">${initial}</div>
     <div class="birthday-info">
       <div class="birthday-name-row">

@@ -429,6 +429,7 @@ function renderTodoItem(t) {
   }
 
   const classes = [
+    'bucket-item',
     'todo-item',
     t.done ? 'todo-done' : '',
     isOverdue ? 'todo-overdue' : '',
