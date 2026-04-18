@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { scrollToAndHighlight } from './item-utils.js';
+import { scrollToAndHighlight, initItemHoverDelay, initItemDragDrop, reorderItems, inlineEditText } from './item-utils.js';
 
 // ===================================================================
 // VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
@@ -80,6 +80,7 @@ async function refreshVestiaire() {
   const { data, error } = await state.sb
     .from('vestiaire')
     .select('*')
+    .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
@@ -140,6 +141,26 @@ function renderVestiaire() {
 
   grid.innerHTML = html;
   grid.className = 'project-grid';
+
+  // Init hover-delay action buttons & drag-drop for each category card
+  cats.forEach(cat => {
+    const card = grid.querySelector(`.vestiaire-bucket[data-category="${esc(cat)}"]`);
+    if (!card) return;
+    const list = card.querySelector('.vestiaire-item-list');
+    if (list) {
+      initVestiaireHoverDelay(list);
+      initVestiaireDragDrop(cat, list);
+    }
+  });
+  // Also handle 'Autre' if present
+  const autreCard = grid.querySelector('.vestiaire-bucket[data-category="Autre"]');
+  if (autreCard) {
+    const list = autreCard.querySelector('.vestiaire-item-list');
+    if (list) {
+      initVestiaireHoverDelay(list);
+      initVestiaireDragDrop('Autre', list);
+    }
+  }
 }
 
 function renderCategoryCard(cat, items) {
@@ -172,42 +193,45 @@ function renderCategoryCard(cat, items) {
         </button>
       </div>
     </div>
-    <div class="task-list" style="padding:4px 16px 12px;">
+    <div class="vestiaire-item-list" data-category="${escapedCat}" style="padding:4px 16px 12px;">
       ${itemsHtml}
     </div>
   </div>`;
 }
 
 function renderVestiaireItem(v) {
-  const brandHtml = v.brand ? `<span style="font-size:0.75rem;color:var(--muted);margin-left:6px;">${esc(v.brand)}</span>` : '';
+  const brandHtml = v.brand ? `<span class="vest-brand">${esc(v.brand)}</span>` : '';
   const metaParts = [];
   if (v.size) metaParts.push(`${lucideIcon('ruler', 12)} ${esc(v.size)}`);
   if (v.color) metaParts.push(`${lucideIcon('palette', 12)} ${esc(v.color)}`);
   if (v.note) metaParts.push(`${esc(v.note)}`);
   const metaHtml = metaParts.length
-    ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${metaParts.join('')}</div>`
+    ? `<div class="vest-meta">${metaParts.join('')}</div>`
     : '';
 
   // Purchase status badge
   let statusBadge = '';
   if (v.purchase_status === 'achete') {
-    statusBadge = `<span style="font-size:0.65rem;padding:1px 6px;border-radius:4px;background:#10b98120;color:#10b981;font-weight:600;margin-left:6px;">Acheté</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-achete">Acheté</span>`;
   } else if (v.purchase_status === 'essaye') {
-    statusBadge = `<span style="font-size:0.65rem;padding:1px 6px;border-radius:4px;background:#f59e0b20;color:#f59e0b;font-weight:600;margin-left:6px;">Essayé</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-essaye">Essayé</span>`;
   }
 
-  return `<div class="bucket-item vestiaire-item">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;">
-        <span style="font-size:0.88rem;font-weight:500;">${esc(v.name)}</span>
-        ${brandHtml}
-        ${statusBadge}
+  return `<div class="bucket-item vestiaire-item" data-vest-id="${v.id}">
+    <div class="vest-row">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;">
+          <span class="vest-text" ondblclick="editVestiaireInline('${v.id}')">${esc(v.name)}</span>
+          ${brandHtml}
+          ${statusBadge}
+        </div>
+        ${metaHtml}
       </div>
-      ${metaHtml}
-    </div>
-    <div class="bucket-item-actions vestiaire-item-actions">
-      <button onclick="openEditVestiaireModal('${v.id}')" title="Edit" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('pencil', 14)}</button>
-      <button onclick="deleteVestiaire('${v.id}')" title="Delete" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;">${lucideIcon('trash-2', 14)}</button>
+      <div class="vest-actions">
+        <button onclick="editVestiaireInline('${v.id}')" title="Edit name">${lucideIcon('pencil', 14)}</button>
+        <button onclick="openEditVestiaireModal('${v.id}')" title="Edit all fields">${lucideIcon('settings', 14)}</button>
+        <button onclick="deleteVestiaire('${v.id}')" title="Delete">${lucideIcon('trash-2', 14)}</button>
+      </div>
     </div>
   </div>`;
 }
@@ -247,6 +271,55 @@ function getCategoryIcon(cat) {
   if (lower.includes('sous-vêtement') || lower.includes('underwear') || lower.includes('chaussett'))
     return lucideIcon('layers', 18);
   return lucideIcon('tag', 18);
+}
+
+// ===================================================================
+// HOVER-DELAY, DRAG & DROP, INLINE EDIT
+// ===================================================================
+
+/** Hover-delay for vest-actions (matches todo / task pattern) */
+function initVestiaireHoverDelay(listEl) {
+  initItemHoverDelay(listEl, {
+    rowSelector: '.vestiaire-item',
+    actionsSelector: '.vest-actions',
+    textSelector: '.vest-text',
+  });
+}
+
+/** Drag-and-drop reorder within a category card */
+function initVestiaireDragDrop(category, listEl) {
+  initItemDragDrop(listEl, {
+    itemSelector: '.vestiaire-item',
+    idAttr: 'data-vest-id',
+    onReorder: async (orderedIds) => {
+      await reorderItems(state.sb, 'vestiaire', orderedIds);
+      // update local state to match new order
+      const catItems = (state.allVestiaire || []).filter(v => v.category === category);
+      orderedIds.forEach((id, i) => {
+        const item = catItems.find(v => v.id === id);
+        if (item) item.sort_order = i;
+      });
+    },
+  });
+}
+
+/** Inline-edit the name field via double-click or pencil button */
+async function editVestiaireInline(id) {
+  const el = document.querySelector(`.vestiaire-item[data-vest-id="${id}"] .vest-text`);
+  if (!el) return;
+  const v = (state.allVestiaire || []).find(x => x.id === id);
+  if (!v) return;
+
+  const newName = await inlineEditText(el, v.name, { maxLength: 200 });
+  if (newName === null || newName === v.name) return;
+
+  const { error } = await state.sb.from('vestiaire').update({
+    name: newName,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id);
+  if (error) { showToast('Rename failed: ' + error.message, 'error'); return; }
+  v.name = newName;
+  showToast('Renamed', 'success');
 }
 
 // ===================================================================
@@ -375,7 +448,10 @@ async function saveNewVestiaire() {
 
   if (!name) { showToast('Enter a name', 'error'); return; }
 
-  const row = { name, category };
+  // Compute sort_order: place new item at end of its category
+  const catItems = (state.allVestiaire || []).filter(v => v.category === category);
+  const maxOrder = catItems.reduce((m, v) => Math.max(m, v.sort_order || 0), 0);
+  const row = { name, category, sort_order: maxOrder + 1 };
   if (brand) row.brand = brand;
   if (size) row.size = size;
   if (color) row.color = color;
@@ -515,5 +591,6 @@ window.saveNewVestiaireCategory = saveNewVestiaireCategory;
 window.deleteVestiaireCategory = deleteVestiaireCategory;
 window.navigateToVestiaireCat = navigateToVestiaireCat;
 window.renderVestiaire = renderVestiaire;
+window.editVestiaireInline = editVestiaireInline;
 
 window.promptVestShortname = promptVestShortname;

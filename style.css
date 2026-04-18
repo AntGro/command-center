@@ -453,6 +453,10 @@ input,select,button{font-family:inherit;}
   .bucket-item{padding:10px 10px;}
   .bucket-item-actions{opacity:1 !important;}
 
+  /* Vestiaire items: always show actions on touch */
+  .vest-actions{display:flex !important;gap:4px;}
+  .vest-actions button{font-size:0.78rem;padding:4px 6px;}
+
   /* Todo items */
   .todo-item.todo-overdue{border-left-width:3px;}
   .todo-item.todo-outdated{border-left-width:3px;}
@@ -683,8 +687,20 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
    VESTIAIRE
    =================================================================== */
 /* Wardrobe — bucket cards reuse .project-card / .project-grid */
-.vestiaire-item{display:flex;align-items:flex-start;justify-content:space-between;}
-.vestiaire-item-actions{display:flex;gap:4px;}
+.vestiaire-item{display:flex;align-items:flex-start;justify-content:space-between;border-left:3px solid var(--cat-color, var(--accent));padding-left:10px;margin-bottom:4px;border-radius:2px;}
+.vest-row{display:flex;align-items:flex-start;justify-content:space-between;width:100%;gap:8px;}
+.vest-text{font-size:0.88rem;font-weight:500;cursor:pointer;}
+.vest-text:hover{text-decoration:underline;text-decoration-color:var(--muted);text-underline-offset:2px;}
+.vest-brand{font-size:0.75rem;color:var(--muted);margin-left:6px;}
+.vest-meta{font-size:0.75rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.vest-status-badge{font-size:0.65rem;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:6px;}
+.vest-status-achete{background:#10b98120;color:#10b981;}
+.vest-status-essaye{background:#f59e0b20;color:#f59e0b;}
+/* Hover-delay action buttons (hidden until JS adds .visible) */
+.vest-actions{display:none;gap:4px;align-items:center;}
+.vest-actions.visible{display:flex;}
+.vest-actions button{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;border-radius:4px;transition:background 0.15s;}
+.vest-actions button:hover{background:var(--bg);}
 .vestiaire-empty-cat{padding:12px 0;color:var(--muted);font-size:0.82rem;text-align:center;}
 
 .vestiaire-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}

@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { CHORE_CATEGORIES_KEY } from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { scrollToAndHighlight } from './item-utils.js';
+import { initItemHoverDelay, scrollToAndHighlight } from './item-utils.js';
 import { getCategoryColor } from './todos.js';
 
 // ===================================================================
@@ -175,7 +175,17 @@ function renderChores() {
     html += renderChoreCategoryCard(cat);
   }
   grid.innerHTML = html;
+  initChoreHoverDelay(grid);
   renderChoreNavButtons(categoryList);
+}
+
+function initChoreHoverDelay(container) {
+  initItemHoverDelay(container, {
+    itemSelector: '.chore-item',
+    actionsSelector: '.chore-actions',
+    rowSelector: '.chore-row',
+    textSelector: '.chore-name',
+  });
 }
 
 function renderChoreNavButtons(categoryList) {
