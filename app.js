@@ -647,6 +647,46 @@ function initTodoHoverDelay(container) {
 }
 
 // ===================================================================
+// CHORE HOVER DELAY — show action buttons after 2 seconds of hover
+// ===================================================================
+function initChoreHoverDelay(container) {
+  const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
+  if (isTouchDevice) return; // on touch devices, CSS shows actions immediately
+
+  container.querySelectorAll('.chore-item').forEach(item => {
+    let hoverTimer = null;
+    let clickTimer = null;
+    const actions = item.querySelector('.chore-actions');
+    const choreRow = item.querySelector('.chore-row');
+    const choreName = item.querySelector('.chore-name');
+    if (!actions || !choreRow) return;
+
+    choreRow.addEventListener('mouseenter', () => {
+      hoverTimer = setTimeout(() => {
+        actions.classList.add('visible');
+      }, 2000);
+    });
+
+    choreRow.addEventListener('mouseleave', () => {
+      if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      actions.classList.remove('visible');
+    });
+
+    // Single click on chore name shows actions immediately
+    if (choreName) {
+      choreName.addEventListener('click', () => {
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          actions.classList.add('visible');
+          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+        }, 250);
+      });
+    }
+  });
+}
+
+// ===================================================================
 // DRAG & DROP REORDER (pointer-event based — works on mouse + touch)
 // ===================================================================
 let isDragging = false;
@@ -2460,6 +2500,9 @@ function renderChores() {
   }
   grid.innerHTML = html;
   updateChoreStats();
+
+  // Init hover delay for chore action buttons (same as project tasks / TODOs)
+  initChoreHoverDelay(grid);
 }
 
 function renderChoreCategoryCard(category) {

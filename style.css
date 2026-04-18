@@ -332,8 +332,8 @@ input,select,button{font-family:inherit;}
 .chore-name{font-size:0.88rem;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chore-frequency{font-size:0.75rem;color:var(--muted);font-style:italic;}
 
-.chore-actions{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;max-width:80px;justify-content:flex-end;opacity:0;transition:opacity 0.15s;pointer-events:none;}
-.chore-item:hover .chore-actions{opacity:1;pointer-events:auto;}
+.chore-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.chore-actions.visible{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 .chore-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
 .chore-actions button:hover{background:var(--surface2);}
 .chore-done-btn{font-size:0.92rem !important;}
@@ -474,7 +474,7 @@ input,select,button{font-family:inherit;}
   .todo-cat-list .empty-msg{padding:12px 8px;font-size:0.82rem;}
 
   /* ===== CHORES VIEW — MOBILE ===== */
-  .chore-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;opacity:1;pointer-events:auto;}
+  .chore-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 
   /* ===== BIRTHDAYS VIEW — MOBILE ===== */
   .birthday-card{gap:10px;}
