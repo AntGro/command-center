@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { scrollToAndHighlight, inlineEditText } from './item-utils.js';
+import { scrollToAndHighlight, inlineEditText, initItemHoverDelay } from './item-utils.js';
 
 // ===================================================================
 // FLASHCARDS — Spaced Repetition (FSRS v5)
@@ -183,6 +183,16 @@ function renderAllBuckets() {
   }
 
   grid.innerHTML = html;
+  initFlashcardHoverDelay(grid);
+}
+
+function initFlashcardHoverDelay(container) {
+  initItemHoverDelay(container, {
+    itemSelector: '.todo-item',
+    actionsSelector: '.todo-actions',
+    rowSelector: '.todo-row',
+    textSelector: '.todo-text',
+  });
 }
 
 // ── Draft Bucket ──

@@ -454,7 +454,7 @@ input,select,button{font-family:inherit;}
   .bucket-item-actions{opacity:1 !important;}
 
   /* Vestiaire items: always show actions on touch */
-  .vest-actions{display:flex !important;gap:4px;}
+  .vest-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
   .vest-actions button{font-size:0.78rem;padding:4px 6px;}
 
   /* Todo items */
@@ -480,7 +480,7 @@ input,select,button{font-family:inherit;}
   /* ===== BIRTHDAYS VIEW — MOBILE ===== */
   .birthday-card{gap:10px;}
   .birthday-avatar{width:36px;height:36px;font-size:0.95rem;}
-  .birthday-actions{opacity:1;}
+  .birthday-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
 
   /* ===== VESTIAIRE VIEW — MOBILE ===== */
 
@@ -651,7 +651,6 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .birthday-card{display:flex;align-items:center;gap:14px;}
 .birthday-card.birthday-today{border-color:#f97316;background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(236,72,153,0.08)),var(--surface);box-shadow:0 0 20px rgba(249,115,22,0.12);}
 .birthday-card.birthday-upcoming{border-left:3px solid #f97316;}
-.birthday-card:hover .birthday-actions{opacity:1;}
 
 .birthday-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;flex-shrink:0;}
 .birthday-today .birthday-avatar{background:linear-gradient(135deg,#f97316,#ec4899);}
@@ -669,10 +668,10 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .birthday-age{font-size:0.78rem;color:var(--muted);opacity:0.75;}
 .birthday-note{font-size:0.78rem;color:var(--muted);font-style:italic;opacity:0.75;}
 
-.birthday-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
-.birthday-card:hover .birthday-actions{opacity:1;}
-.birthday-actions button{background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;transition:background 0.15s;}
-.birthday-actions button:hover{background:var(--bg);}
+.birthday-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.birthday-actions.visible{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
+.birthday-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
+.birthday-actions button:hover{background:var(--surface2);}
 
 .birthday-empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .birthday-empty p{margin:16px 0;font-size:0.92rem;}
@@ -697,10 +696,10 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .vest-status-achete{background:#10b98120;color:#10b981;}
 .vest-status-essaye{background:#f59e0b20;color:#f59e0b;}
 /* Hover-delay action buttons (hidden until JS adds .visible) */
-.vest-actions{display:none;gap:4px;align-items:center;}
-.vest-actions.visible{display:flex;}
-.vest-actions button{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;border-radius:4px;transition:background 0.15s;}
-.vest-actions button:hover{background:var(--bg);}
+.vest-actions{display:none;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:flex-end;}
+.vest-actions.visible{display:grid;grid-template-columns:auto auto;gap:2px;justify-items:center;}
+.vest-actions button{background:none;border:none;cursor:pointer;font-size:0.82rem;padding:3px 5px;border-radius:4px;transition:background 0.15s;}
+.vest-actions button:hover{background:var(--surface2);}
 .vestiaire-empty-cat{padding:12px 0;color:var(--muted);font-size:0.82rem;text-align:center;}
 
 .vestiaire-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
@@ -729,9 +728,7 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .page-search { flex:1; min-width:160px; max-width:280px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.85rem; margin-left:auto; }
 .page-search:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 2px rgba(139,92,246,0.15); }
 
-/* Show actions on hover for flashcard items (no JS delay like todos) */
-#flashcardGrid .bucket-item .todo-actions { display:grid; grid-template-columns:auto auto; visibility:hidden; opacity:0; transition:opacity 0.15s; }
-#flashcardGrid .bucket-item:hover .todo-actions { visibility:visible; opacity:1; }
+/* Flashcard actions — same display:none/.visible pattern as other pages */
 
 .fc-chip { font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:600; display:inline-block; }
 .fc-chip-new { background:rgba(99,102,241,0.15); color:#818cf8; }
@@ -838,5 +835,5 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
   .rating-btn { padding:14px 16px; font-size:0.9rem; min-width:70px; flex:1; }
   .practice-buttons { gap:6px; }
   .page-search { max-width:100%; margin-left:0; }
-  #flashcardGrid .todo-actions { visibility:visible !important; opacity:1 !important; }
+  #flashcardGrid .todo-actions { display:grid !important; grid-template-columns:auto auto; gap:2px; justify-items:center; }
 }

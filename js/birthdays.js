@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { scrollToAndHighlight } from './item-utils.js';
+import { scrollToAndHighlight, initItemHoverDelay } from './item-utils.js';
 
 // ===================================================================
 // BIRTHDAYS — DATA, CRUD & RENDERING
@@ -161,6 +161,16 @@ function renderBirthdays() {
   }
 
   grid.innerHTML = html;
+  initBirthdayHoverDelay(grid);
+}
+
+function initBirthdayHoverDelay(container) {
+  initItemHoverDelay(container, {
+    itemSelector: '.birthday-card',
+    actionsSelector: '.birthday-actions',
+    rowSelector: '.birthday-card',
+    textSelector: '.birthday-name',
+  });
 }
 
 function navigateToBirthdaySection(key) {
