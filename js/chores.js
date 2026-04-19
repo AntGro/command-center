@@ -120,7 +120,7 @@ function formatChoreDue(chore) {
   const status = choreDueStatus(chore);
 
   const dateStr = due.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  if (status === 'overdue') return `<span class="chore-due overdue">Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
+  if (status === 'overdue') return `<span class="chore-due overdue">${lucideIcon('alert-triangle', 14)} Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
   if (status === 'due-today') return `<span class="chore-due due-today">${lucideIcon("bell",16)} Due today</span>`;
   if (status === 'due-tomorrow') return `<span class="chore-due due-today">${lucideIcon("calendar",16)} Tomorrow (${dateStr})</span>`;
   if (status === 'due-soon') return `<span class="chore-due due-soon">${lucideIcon("calendar",16)} ${dateStr} (in ${diffDays}d)</span>`;

@@ -405,7 +405,7 @@ function renderTodoItem(t) {
     const diffMs = d - now;
     const diffH = Math.round(diffMs / (1000 * 60 * 60));
     if (isOverdue) {
-      dueDateStr = `<span class="todo-due overdue">Overdue (${formatRelativeDate(d)})</span>`;
+      dueDateStr = `<span class="todo-due overdue">${lucideIcon('alert-triangle', 14)} Overdue (${formatRelativeDate(d)})</span>`;
     } else if (diffH < 24) {
       dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell",16)} Due ${formatRelativeDate(d)}</span>`;
     } else {
