@@ -211,7 +211,9 @@ function renderCategoryCard(cat, items) {
 }
 
 function renderVestiaireItem(v) {
-  const brandHtml = v.brand ? `<span class="vest-brand">${esc(v.brand)}</span>` : '';
+  const brandHtml = v.brand
+    ? `<span class="vest-brand" onclick="editVestiaireBrandInline('${v.id}')" title="Click to edit brand">${esc(v.brand)}</span>`
+    : `<span class="vest-brand vest-brand-empty" onclick="editVestiaireBrandInline('${v.id}')" title="Click to add brand">+ brand</span>`;
   const metaParts = [];
   if (v.size) metaParts.push(`${lucideIcon('ruler', 12)} ${esc(v.size)}`);
   if (v.color) metaParts.push(`${lucideIcon('palette', 12)} ${esc(v.color)}`);
@@ -220,12 +222,14 @@ function renderVestiaireItem(v) {
     ? `<div class="vest-meta">${metaParts.join('')}</div>`
     : '';
 
-  // Purchase status badge
+  // Purchase status badge (click to cycle: none → Essayé → Acheté → none)
   let statusBadge = '';
   if (v.purchase_status === 'achete') {
-    statusBadge = `<span class="vest-status-badge vest-status-achete">Acheté</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-achete" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Acheté</span>`;
   } else if (v.purchase_status === 'essaye') {
-    statusBadge = `<span class="vest-status-badge vest-status-essaye">Essayé</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-essaye" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Essayé</span>`;
+  } else {
+    statusBadge = `<span class="vest-status-badge vest-status-none" onclick="cycleVestiaireStatus('${v.id}')" title="Click to set status">○</span>`;
   }
 
   const statusCls = v.purchase_status === 'achete' ? ' vest-purchased' : v.purchase_status === 'essaye' ? ' vest-tried' : '';
@@ -323,21 +327,61 @@ async function editVestiaireInline(id) {
   const v = (state.allVestiaire || []).find(x => x.id === id);
   if (!v) return;
 
-  const newName = await inlineEditText(el, v.name, { maxLength: 200 });
-  if (newName === null || newName === v.name) return;
+  inlineEditText(el, v.name, {
+    maxLength: 200,
+    saveFn: async (newName) => {
+      const { error } = await state.sb.from('vestiaire').update({
+        name: newName,
+        updated_at: new Date().toISOString(),
+      }).eq('id', id);
+      if (error) { showToast('Rename failed: ' + error.message, 'error'); return; }
+      v.name = newName;
+      showToast('Renamed', 'success');
+    },
+    refreshFn: renderVestiaire,
+  });
+}
+/** Inline-edit the brand via click on brand badge */
+async function editVestiaireBrandInline(id) {
+  const el = document.querySelector(`.vestiaire-item[data-vest-id="${id}"] .vest-brand`);
+  if (!el) return;
+  const v = (state.allVestiaire || []).find(x => x.id === id);
+  if (!v) return;
 
-  const { error } = await state.sb.from('vestiaire').update({
-    name: newName,
-    updated_at: new Date().toISOString(),
-  }).eq('id', id);
-  if (error) { showToast('Rename failed: ' + error.message, 'error'); return; }
-  v.name = newName;
-  showToast('Renamed', 'success');
+  inlineEditText(el, v.brand || '', {
+    maxLength: 200,
+    saveFn: async (newBrand) => {
+      const { error } = await state.sb.from('vestiaire').update({
+        brand: newBrand || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', id);
+      if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+      v.brand = newBrand || null;
+      showToast('Brand updated', 'success');
+    },
+    refreshFn: renderVestiaire,
+  });
 }
 
-// ===================================================================
-// MODALS
-// ===================================================================
+/** Cycle purchase status inline: click on badge cycles → essaye → achete → (none) */
+async function cycleVestiaireStatus(id) {
+  const v = (state.allVestiaire || []).find(x => x.id === id);
+  if (!v) return;
+  const cycle = [null, 'essaye', 'achete'];
+  const idx = cycle.indexOf(v.purchase_status || null);
+  const next = cycle[(idx + 1) % cycle.length];
+  const { error } = await state.sb.from('vestiaire').update({
+    purchase_status: next,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id);
+  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  v.purchase_status = next;
+  const label = next === 'achete' ? 'Acheté' : next === 'essaye' ? 'Essayé' : 'No status';
+  showToast(label, 'success');
+  renderVestiaire();
+}
+
+
 
 function initVestiaireModals() {
   const app = document.getElementById('app');
@@ -605,6 +649,8 @@ window.deleteVestiaireCategory = deleteVestiaireCategory;
 window.navigateToVestiaireCat = navigateToVestiaireCat;
 window.renderVestiaire = renderVestiaire;
 window.editVestiaireInline = editVestiaireInline;
+window.editVestiaireBrandInline = editVestiaireBrandInline;
+window.cycleVestiaireStatus = cycleVestiaireStatus;
 
 window.promptVestShortname = promptVestShortname;
 window.filterVestiaire = function(e) { vestSearchQuery = e.target.value; renderVestiaire(); };
