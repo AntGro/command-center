@@ -326,21 +326,19 @@ function renderFlashcardItem(c, color) {
     badge = `<span class="fc-status-badge fc-status-ok">${daysLeft}d</span>`;
   }
 
-  let strengthEl = '';
+  // Left border color from retrievability: green (strong) → amber → red (weak), grey for new
+  let borderColor = 'var(--muted)';
   if (R !== null) {
-    const pct = Math.round(R * 100);
-    const barColor = R > 0.8 ? '#22c55e' : R > 0.5 ? '#f59e0b' : '#ef4444';
-    strengthEl = `<div class="fc-strength-bar" title="${pct}% recall"><div class="fc-strength" style="width:${pct}%;background:${barColor};"></div></div>`;
+    borderColor = R > 0.8 ? '#22c55e' : R > 0.5 ? '#f59e0b' : '#ef4444';
   }
 
   const frontTrunc = c.front.length > 90 ? c.front.slice(0, 90) + '…' : c.front;
 
-  return `<div class="bucket-item todo-item${isDue ? ' todo-overdue' : ''}" data-card-id="${c.id}">
+  return `<div class="bucket-item todo-item${isDue ? ' todo-overdue' : ''}" data-card-id="${c.id}" style="border-left:3px solid ${borderColor};">
     <div class="todo-row">
       <span class="todo-text">${esc(frontTrunc)}</span>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         ${badge}
-        ${strengthEl}
       </div>
       <div class="todo-actions">
         <button onclick="openEditFlashcardModal('${c.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
