@@ -7,7 +7,7 @@ import { scrollToAndHighlight, initItemHoverDelay, initItemDragDrop, reorderItem
 // VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
 // ===================================================================
 
-const DEFAULT_CATEGORIES = ['Haut', 'Bas', 'Chaussures', 'Manteau'];
+const DEFAULT_CATEGORIES = ['Tops', 'Bottoms', 'Shoes', 'Outerwear'];
 let vestSearchQuery = '';
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
 const VEST_SHORTNAMES_KEY = 'claw_cc_vest_shortnames';
@@ -40,8 +40,8 @@ function promptVestShortname(catName) {
 const CATEGORY_COLORS = [
   '#8b5cf6', // purple — Haut
   '#3b82f6', // blue — Bas
-  '#f59e0b', // amber — Chaussures
-  '#10b981', // emerald — Manteau
+  '#f59e0b', // amber — Shoes
+  '#10b981', // emerald — Outerwear
   '#ef4444', // red
   '#ec4899', // pink
   '#06b6d4', // cyan
@@ -222,12 +222,12 @@ function renderVestiaireItem(v) {
     ? `<div class="vest-meta">${metaParts.join('')}</div>`
     : '';
 
-  // Purchase status badge (click to cycle: none → Essayé → Acheté → none)
+  // Purchase status badge (click to cycle: none → Tried → Purchased → none)
   let statusBadge = '';
   if (v.purchase_status === 'achete') {
-    statusBadge = `<span class="vest-status-badge vest-status-achete" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Acheté</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-achete" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Purchased</span>`;
   } else if (v.purchase_status === 'essaye') {
-    statusBadge = `<span class="vest-status-badge vest-status-essaye" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Essayé</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-essaye" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Tried</span>`;
   } else {
     statusBadge = `<span class="vest-status-badge vest-status-none" onclick="cycleVestiaireStatus('${v.id}')" title="Click to set status">○</span>`;
   }
@@ -376,7 +376,7 @@ async function cycleVestiaireStatus(id) {
   }).eq('id', id);
   if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
   v.purchase_status = next;
-  const label = next === 'achete' ? 'Acheté' : next === 'essaye' ? 'Essayé' : 'No status';
+  const label = next === 'achete' ? 'Purchased' : next === 'essaye' ? 'Tried' : 'No status';
   showToast(label, 'success');
   renderVestiaire();
 }
@@ -407,8 +407,8 @@ function initVestiaireModals() {
     <label>Status</label>
     <select id="newVestiairePurchaseStatus">
       <option value="">—</option>
-      <option value="essaye">Essayé</option>
-      <option value="achete">Acheté</option>
+      <option value="essaye">Tried</option>
+      <option value="achete">Purchased</option>
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeAddVestiaireModal()">Cancel</button>
@@ -439,8 +439,8 @@ function initVestiaireModals() {
     <label>Status</label>
     <select id="editVestiairePurchaseStatus">
       <option value="">—</option>
-      <option value="essaye">Essayé</option>
-      <option value="achete">Acheté</option>
+      <option value="essaye">Tried</option>
+      <option value="achete">Purchased</option>
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeEditVestiaireModal()">Cancel</button>

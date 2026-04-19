@@ -243,7 +243,7 @@ function renderDraftItem(d) {
 
   let proposalHtml = '';
   if (hasProposal) {
-    const suggestedDeck = d.proposed_deck || 'Général';
+    const suggestedDeck = d.proposed_deck || 'General';
     const deckOptions = [...new Set([...allCards.map(c => c.deck), suggestedDeck])].sort().map(dk =>
       `<option value="${esc(dk)}"${dk === suggestedDeck ? ' selected' : ''}>${esc(dk)}</option>`
     ).join('');
@@ -456,7 +456,7 @@ window.requestProposal = async function(id) {
 window.acceptProposal = async function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft || !draft.proposed_front || !draft.proposed_back) return;
-  const deck = draft.proposed_deck || 'Général';
+  const deck = draft.proposed_deck || 'General';
   if (state.sb) {
     await state.sb.from('flashcards').insert({ deck, front: draft.proposed_front, back: draft.proposed_back });
     await state.sb.from('flashcard_notes').delete().eq('id', id);
@@ -480,7 +480,7 @@ window.editProposal = function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
   closeAllFlashModals();
-  const currentDeck = draft.proposed_deck || 'Général';
+  const currentDeck = draft.proposed_deck || 'General';
   const deckOptions = [...new Set([...allCards.map(c => c.deck), currentDeck])].sort().map(dk =>
     `<option value="${esc(dk)}"${dk === currentDeck ? ' selected' : ''}>${esc(dk)}</option>`
   ).join('');
@@ -535,7 +535,7 @@ window.openAddFlashcardModal = function(deck) {
   const html = `<div class="modal-overlay" id="addFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeAddFlashcardModal()">
     <div class="modal">
       <h2>${lucideIcon('plus', 18, '#8b5cf6')} Add Flashcard</h2>
-      <input type="hidden" id="newFlashDeck" value="${esc(deck || 'Général')}">
+      <input type="hidden" id="newFlashDeck" value="${esc(deck || 'General')}">
       <label>Front (Question)</label>
       <textarea id="newFlashFront" rows="3" placeholder="Question…"></textarea>
       <label>Back (Answer)</label>
@@ -623,7 +623,7 @@ window.openAddFlashDeckModal = function() {
     <div class="modal">
       <h2>${lucideIcon('book-open', 18, '#06b6d4')} New Deck</h2>
       <label>Deck Name</label>
-      <input type="text" id="newDeckName" placeholder="e.g. Histoire, Vocabulaire…">
+      <input type="text" id="newDeckName" placeholder="e.g. History, Science…">
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeAddFlashDeckModal()">Cancel</button>
         <button class="modal-save" onclick="saveNewFlashDeck()">Create</button>
