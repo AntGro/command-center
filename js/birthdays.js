@@ -142,7 +142,7 @@ function renderBirthdays() {
   // Render nav buttons
   const navContainer = document.getElementById('birthdayNavButtons');
   navContainer.innerHTML = sections.map(s => {
-    const display = s.isUpcoming ? '🎉 Soon' : (s.shortLabel || s.label);
+    const display = s.isUpcoming ? 'Soon' : (s.shortLabel || s.label);
     return `<button class="category-nav-btn" style="--cat-color:${s.color};border-color:${s.color};color:${s.color}" onclick="navigateToBirthdaySection('${s.key}')" title="${s.label}">${display}</button>`;
   }).join('');
 
@@ -168,7 +168,7 @@ function initBirthdayHoverDelay(container) {
   initItemHoverDelay(container, {
     itemSelector: '.birthday-card',
     actionsSelector: '.birthday-actions',
-    rowSelector: '.birthday-card',
+    rowSelector: '.birthday-info',
     textSelector: '.birthday-name',
   });
 }

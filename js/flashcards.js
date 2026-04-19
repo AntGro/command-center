@@ -771,7 +771,7 @@ function showSessionSummary() {
   const accuracy = sessionDone > 0 ? Math.round((sessionCorrect / sessionDone) * 100) : 0;
   overlay.innerHTML = `
     <div class="practice-summary">
-      <div class="practice-summary-emoji">${accuracy >= 80 ? '🎉' : accuracy >= 50 ? '💪' : '📚'}</div>
+      <div class="practice-summary-emoji">${accuracy >= 80 ? lucideIcon('trophy', 32) : accuracy >= 50 ? lucideIcon('flame', 32) : lucideIcon('book-open', 32)}</div>
       <h2>Session Complete</h2>
       <div class="practice-summary-stats">
         <div class="practice-summary-stat"><span class="practice-stat-val">${sessionDone}</span><span class="practice-stat-lbl">Reviewed</span></div>

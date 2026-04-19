@@ -313,7 +313,7 @@ function renderCategoryCard(category) {
     : '';
 
   const activeEmptyMsg = displayActive.length === 0
-    ? `<p class="empty-msg">${todoFilter === 'pending' ? 'All caught up! 🎉' : 'No items yet'}</p>`
+    ? `<p class="empty-msg">${todoFilter === 'pending' ? 'All caught up!' : 'No items yet'}</p>`
     : '';
 
   const escapedCat = esc(category).replace(/'/g, "\\'");
@@ -422,7 +422,7 @@ function renderTodoItem(t) {
   if (isOutdated && !t.done) {
     const ref = new Date(t.updated_at || t.created_at);
     const daysAgo = Math.floor((now - ref) / (1000 * 60 * 60 * 24));
-    outdatedInfo = `<span class="todo-outdated-badge">🕰️ ${daysAgo}d old</span>`;
+    outdatedInfo = `<span class="todo-outdated-badge">${daysAgo}d old</span>`;
   }
 
   const classes = [
