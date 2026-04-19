@@ -389,19 +389,6 @@
   </div>
 
   <!-- Chore Done Modal (with optional note) -->
-  <div class="modal-overlay" id="choreDoneModal">
-    <div class="modal chore-done-modal">
-      <h2><span data-icon="circle-check" data-size="20"></span> Mark Chore Done</h2>
-      <p id="choreDoneName" class="modal-hint"></p>
-      <label>Note (optional)</label>
-      <input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}">
-      <input type="hidden" id="choreDoneId">
-      <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeChoreDoneModal()">Cancel</button>
-        <button class="modal-save" onclick="submitChoreDone()">Done <span data-icon="circle-check" data-size="16"></span></button>
-      </div>
-    </div>
-  </div>
 
   <!-- Chore History Modal -->
   <div class="modal-overlay" id="choreHistoryModal">
