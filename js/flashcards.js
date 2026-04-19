@@ -280,6 +280,14 @@ function renderDeckBucket(deck, q) {
   if (q) cards = cards.filter(c => c.front.toLowerCase().includes(q) || c.back.toLowerCase().includes(q));
   if (cards.length === 0 && q) return '';
 
+  // Sort by strength (retrievability): weakest first, new cards at the end
+  const nowStr = new Date().toISOString();
+  cards.sort((a, b) => {
+    const rA = a.last_review && a.stability ? retrievability(a.stability, a.last_review, nowStr) : 2;
+    const rB = b.last_review && b.stability ? retrievability(b.stability, b.last_review, nowStr) : 2;
+    return rA - rB;
+  });
+
   const color = getDeckColor(deck);
   const now = new Date();
   const allDeckCards = allCards.filter(c => c.deck === deck);
