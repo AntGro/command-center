@@ -405,7 +405,7 @@ function renderTodoItem(t) {
     const diffMs = d - now;
     const diffH = Math.round(diffMs / (1000 * 60 * 60));
     if (isOverdue) {
-      dueDateStr = `<span class="todo-due overdue">⚠️ Overdue (${formatRelativeDate(d)})</span>`;
+      dueDateStr = `<span class="todo-due overdue">Overdue (${formatRelativeDate(d)})</span>`;
     } else if (diffH < 24) {
       dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell",16)} Due ${formatRelativeDate(d)}</span>`;
     } else {
@@ -481,7 +481,7 @@ async function addTodoToCategory(inputEl) {
 async function toggleTodo(id, done) {
   const { error } = await state.sb.from('todos').update({ done }).eq('id', id);
   if (error) { showToast('Update failed', 'error'); return; }
-  showToast(done ? 'Done! ✅' : 'Reopened', 'success');
+  showToast(done ? 'Done!' : 'Reopened', 'success');
   await refreshTodos();
 }
 

@@ -294,7 +294,7 @@ async function saveNewBirthday() {
   if (error) { showToast('Failed to add birthday: ' + error.message, 'error'); return; }
 
   closeAddBirthdayModal();
-  showToast(`🎂 ${name} added!`, 'success');
+  showToast(`${name} added!`, 'success');
   await refreshBirthdays();
 }
 

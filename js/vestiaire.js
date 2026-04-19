@@ -464,7 +464,7 @@ async function saveNewVestiaire() {
   if (error) { showToast('Failed to add item: ' + error.message, 'error'); return; }
 
   closeAddVestiaireModal();
-  showToast(`👔 ${name} added!`, 'success');
+  showToast(`${name} added!`, 'success');
   await refreshVestiaire();
 }
 

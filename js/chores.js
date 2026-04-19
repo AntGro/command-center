@@ -111,7 +111,7 @@ function choreDueStatus(chore) {
 }
 
 function formatChoreDue(chore) {
-  if (!chore.next_due) return '<span class="chore-due no-date">⏳ Awaiting schedule</span>';
+  if (!chore.next_due) return '<span class="chore-due no-date">Awaiting schedule</span>';
   const due = new Date(chore.next_due);
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -120,7 +120,7 @@ function formatChoreDue(chore) {
   const status = choreDueStatus(chore);
 
   const dateStr = due.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  if (status === 'overdue') return `<span class="chore-due overdue">⚠️ Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
+  if (status === 'overdue') return `<span class="chore-due overdue">Overdue (${dateStr}, ${Math.abs(diffDays)}d ago)</span>`;
   if (status === 'due-today') return `<span class="chore-due due-today">${lucideIcon("bell",16)} Due today</span>`;
   if (status === 'due-tomorrow') return `<span class="chore-due due-today">${lucideIcon("calendar",16)} Tomorrow (${dateStr})</span>`;
   if (status === 'due-soon') return `<span class="chore-due due-soon">${lucideIcon("calendar",16)} ${dateStr} (in ${diffDays}d)</span>`;
@@ -448,7 +448,7 @@ async function deleteChore(choreId) {
 async function promoteChore(choreId) {
   const { error } = await state.sb.from('chores').update({ is_draft: false }).eq('id', choreId);
   if (error) { showToast('Failed to promote chore', 'error'); return; }
-  showToast('Chore activated ✅', 'success');
+  showToast('Chore activated', 'success');
   await refreshChores();
 }
 
@@ -485,7 +485,7 @@ async function submitChoreDone() {
   await clearChoreNextDue(choreId);
 
   closeChoreDoneModal();
-  showToast('Chore done! ✅', 'success');
+  showToast('Chore done!', 'success');
   await refreshChores();
 }
 

@@ -275,7 +275,7 @@ function renderTask(t, isArchived = false) {
   const isDraft = t.status === 'draft';
   let meta = '';
   if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
-  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">🪶 Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'response')}</div>`;
+  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">${lucideIcon('feather', 14)} Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'response')}</div>`;
 
   let promoteBtn = '';
   let actionBtns = '';
@@ -287,7 +287,7 @@ function renderTask(t, isArchived = false) {
     actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">${lucideIcon("refresh-cw",16)}</button>`;
   }
   if (t.status === 'approved' && isArchived) {
-    actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">↩️</button>`;
+    actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">${lucideIcon('undo-2', 14)}</button>`;
   }
   actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>`;
   actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>`;
@@ -708,7 +708,7 @@ function expandTask(id) {
   const content = document.getElementById('taskExpandContent');
   let meta = '';
   if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">${lucideIcon("clipboard-list",16)} Plan:</strong><br>${renderMd(t.plan_note)}</div>`;
-  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">🪶 Claw:</strong><br>${renderMd(t.hatch_response)}</div>`;
+  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">${lucideIcon('feather', 14)} Claw:</strong><br>${renderMd(t.hatch_response)}</div>`;
 
   let actions = '';
   if (t.status === 'review') {
