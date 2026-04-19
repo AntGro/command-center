@@ -4,47 +4,57 @@ import { esc, showToast, showDeleteConfirm } from './utils.js';
 import { scrollToAndHighlight, inlineEditText, initItemHoverDelay } from './item-utils.js';
 
 // ===================================================================
-// FLASHCARDS — Spaced Repetition (FSRS v5)
+// FLASHCARDS — Spaced Repetition (Algo-style intervals)
 // ===================================================================
 
-// ── FSRS v5 Parameters ──
-const P = {
-  w1: 0.40, w2: 0.60, w3: 2.40, w4: -0.30,
-  w5: -0.20, w6: 0.80, w7: 0.60,
-  w8: 0.30, w9: 0.20, w10: 0.50, w11: 1.20,
-  w12: 0.80, w13: 1.30,
-  w14: 0.30, w15: 0.80, w16: 5.00,
-  targetRetention: 0.90,
-};
+// ── SM-2 / Algo-style Spaced Repetition Core ──
+// Ratings: 1=Again, 2=Hard, 3=Good, 4=Easy
+// Stability ≈ target interval in days. Next review = stability days from now.
 
-// ── FSRS v5 Core ──
+const DECAY = 0.5;
+const FACTOR = Math.pow(0.9, 1 / -DECAY) - 1; // ≈ 0.2346 — power forgetting curve constant
+
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(x, hi)); }
 function daysBetween(d1, d2) { return (new Date(d2) - new Date(d1)) / 86400000; }
 
+// Power forgetting curve (FSRS v5 style): R(S,S)=0.9 by construction
 function retrievability(S, lastReview, now) {
   if (!lastReview || !S) return 0;
-  return Math.exp(-daysBetween(lastReview, now) / S);
+  const t = daysBetween(lastReview, now);
+  return Math.pow(t / S * FACTOR + 1, -DECAY);
 }
 
-function nextInterval(S) { return Math.max(1, -S * Math.log(P.targetRetention)); }
-function initDifficulty(r) { return clamp(P.w1 + P.w2 * (r - 3), 1, 10); }
-function initStability(r) { return Math.max(0.1, P.w3 * Math.exp(P.w4 * (r - 3))); }
-function ratingFactor(r) { return r === 2 ? P.w12 : r === 4 ? P.w13 : 1.0; }
+// Interval ≈ stability (for 90% target retention)
+function nextInterval(S) { return Math.max(1, Math.round(S)); }
 
+// New card: initial stabilities per rating
+function initStability(rating) {
+  return [0.007, 1, 1, 4][rating - 1] || 1; // Again≈10min, Hard=1d, Good=1d, Easy=4d
+}
+
+// New card: initial difficulty (Easy→low, Again→high)
+function initDifficulty(rating) {
+  return clamp(7 - 1.5 * (rating - 1), 1, 10); // Again=7, Hard=5.5, Good=4, Easy=2.5
+}
+
+// Successful review: multiply stability by rating-dependent factor
 function stabilityAfterSuccess(S, D, R, rating) {
-  const growth = Math.exp(P.w5) * (11 - D) * Math.pow(S, -P.w6)
-    * (Math.exp((1 - R) * P.w7) - 1) * ratingFactor(rating);
-  return S * (1 + growth);
+  const baseMult = { 2: 1.2, 3: 2.5, 4: 2.5 }[rating] || 2.5;
+  const easyBonus = rating === 4 ? 1.3 : 1.0;
+  const diffFactor = clamp(1 + (5 - D) * 0.05, 0.75, 1.25); // easy cards grow faster
+  return S * baseMult * easyBonus * diffFactor;
 }
 
+// Lapse (Again on review): reduce interval significantly
 function stabilityAfterLapse(S, D, R) {
-  return P.w8 * Math.pow(D, -P.w9) * Math.pow(S + 1, P.w10) * Math.exp((1 - R) * P.w11);
+  return Math.max(0.5, S * 0.3);
 }
 
+// Difficulty drifts toward 5 (mean reversion), adjusted by rating
 function updateDifficulty(D, rating) {
-  let Dnew = D - P.w14 * (rating - 3);
-  Dnew = P.w15 * Dnew + (1 - P.w15) * P.w16;
-  return clamp(Dnew, 1, 10);
+  const delta = -(rating - 3) * 0.5; // Easy→-0.5, Good→0, Hard→+0.5, Again→+1.0
+  const Dnew = D + delta;
+  return clamp(Dnew * 0.9 + 5 * 0.1, 1, 10); // 10% mean reversion toward 5
 }
 
 function fuzz(interval) {
@@ -57,7 +67,7 @@ function fsrsUpdate(card, rating, now) {
   let S, D;
   if (isNew) { D = initDifficulty(rating); S = initStability(rating); }
   else {
-    const R = retrievability(card.stability, card.last_review, now);
+    const R = retrievability(card.stability, card.last_review, now.toISOString());
     S = rating === 1 ? stabilityAfterLapse(card.stability, card.difficulty, R)
       : stabilityAfterSuccess(card.stability, card.difficulty, R, rating);
     D = updateDifficulty(card.difficulty, rating);
