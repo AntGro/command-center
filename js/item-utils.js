@@ -231,15 +231,15 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;
-  input.rows = Math.max(2, originalText.split('\n').length);
+  const lineCount = originalText.split('\n').length;
+  input.rows = lineCount;
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
-  input.style.minHeight = '2.4em';
   if (maxLength) input.maxLength = maxLength;
 
   function autoSize() {
     input.style.height = 'auto';
-    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
+    input.style.height = input.scrollHeight + 'px';
   }
 
   const finishEdit = async (save) => {
