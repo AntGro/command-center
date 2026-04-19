@@ -7,6 +7,8 @@ import { scrollToAndHighlight, initItemHoverDelay } from './item-utils.js';
 // BIRTHDAYS — DATA, CRUD & RENDERING
 // ===================================================================
 
+let birthdaySearchQuery = '';
+
 async function refreshBirthdays() {
   if (!state.sb) return;
   const { data, error } = await state.sb
@@ -81,7 +83,13 @@ function renderBirthdays() {
   const grid = document.getElementById('birthdayGrid');
   if (!grid) return;
 
-  const birthdays = [...state.allBirthdays];
+  let birthdays = [...state.allBirthdays];
+
+  // Apply search filter
+  if (birthdaySearchQuery) {
+    const q = birthdaySearchQuery.toLowerCase();
+    birthdays = birthdays.filter(b => b.name && b.name.toLowerCase().includes(q));
+  }
 
   // Sort by next occurrence
   birthdays.sort((a, b) => {
@@ -360,3 +368,4 @@ window.saveEditBirthday = saveEditBirthday;
 window.deleteBirthday = deleteBirthday;
 window.renderBirthdays = renderBirthdays;
 window.navigateToBirthdaySection = navigateToBirthdaySection;
+window.filterBirthdays = function(e) { birthdaySearchQuery = e.target.value; renderBirthdays(); };

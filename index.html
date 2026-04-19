@@ -62,6 +62,7 @@
         <button class="btn" onclick="openPromptEditor()" title="Edit task-pickup prompt"><span data-icon="file-text" data-size="16"></span></button>
         <button class="btn" onclick="toggleShowArchived()" id="archiveToggleBtn" title="Toggle archived"><span data-icon="package" data-size="16"></span></button>
         <button class="btn" onclick="openAddProjectModal()" title="Add project"><span data-icon="folder-plus" data-size="16"></span></button>
+        <input type="text" class="page-search" placeholder="Search tasks…" oninput="filterProjects(event)">
       </div>
     </div>
     <div class="main-content">
@@ -94,6 +95,7 @@
       </div>
       <div class="page-toolbar-right">
         <button class="btn" onclick="openAddCategoryModal()" title="Add category"><span data-icon="folder-plus" data-size="16"></span></button>
+        <input type="text" class="page-search" placeholder="Search todos…" oninput="filterTodos(event)">
       </div>
     </div>
     <div class="main-content">
@@ -120,6 +122,7 @@
       <div class="page-toolbar-right">
         <button class="btn" onclick="openAddChoreModal()" title="Add chore"><span data-icon="plus" data-size="16"></span></button>
         <button class="btn" onclick="openAddChoreCategoryModal()" title="Add category"><span data-icon="folder-plus" data-size="16"></span></button>
+        <input type="text" class="page-search" placeholder="Search chores…" oninput="filterChores(event)">
       </div>
     </div>
     <div class="main-content">
@@ -135,6 +138,7 @@
       </div>
       <div class="page-toolbar-right">
         <button class="btn" onclick="openAddBirthdayModal()" title="Add birthday"><span data-icon="plus" data-size="16"></span></button>
+        <input type="text" class="page-search" placeholder="Search birthdays…" oninput="filterBirthdays(event)">
       </div>
     </div>
     <div class="main-content">
@@ -150,6 +154,7 @@
       </div>
       <div class="page-toolbar-right">
         <button class="btn" onclick="openAddVestiaireModal()" title="Add item"><span data-icon="plus" data-size="16"></span></button>
+        <input type="text" class="page-search" placeholder="Search wardrobe…" oninput="filterVestiaire(event)">
       </div>
     </div>
     <div class="main-content">

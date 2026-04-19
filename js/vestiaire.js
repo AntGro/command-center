@@ -8,6 +8,7 @@ import { scrollToAndHighlight, initItemHoverDelay, initItemDragDrop, reorderItem
 // ===================================================================
 
 const DEFAULT_CATEGORIES = ['Haut', 'Bas', 'Chaussures', 'Manteau'];
+let vestSearchQuery = '';
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
 const VEST_SHORTNAMES_KEY = 'claw_cc_vest_shortnames';
 
@@ -113,8 +114,18 @@ function renderVestiaire() {
   const grid = document.getElementById('vestiaireGrid');
   if (!grid) return;
 
-  const items = state.allVestiaire || [];
+  let items = state.allVestiaire || [];
   const cats = getVestiaireCategories();
+
+  // Apply search filter
+  if (vestSearchQuery) {
+    const q = vestSearchQuery.toLowerCase();
+    items = items.filter(v =>
+      (v.name && v.name.toLowerCase().includes(q)) ||
+      (v.brand && v.brand.toLowerCase().includes(q)) ||
+      (v.category && v.category.toLowerCase().includes(q))
+    );
+  }
 
   renderVestiaireNavButtons(cats, items);
 
@@ -596,3 +607,4 @@ window.renderVestiaire = renderVestiaire;
 window.editVestiaireInline = editVestiaireInline;
 
 window.promptVestShortname = promptVestShortname;
+window.filterVestiaire = function(e) { vestSearchQuery = e.target.value; renderVestiaire(); };

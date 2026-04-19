@@ -9,6 +9,9 @@ import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderI
 // ===================================================================
 // (state managed in supabase.js)
 
+// ── Search State ──
+let projectSearchQuery = '';
+
 function getArchivedProjectIds() {
   try { return JSON.parse(localStorage.getItem(ARCHIVED_PROJECTS_KEY) || '[]'); } catch { return []; }
 }
@@ -212,7 +215,18 @@ function renderAllTasks() {
   visibleProjects.forEach(p => {
     const container = document.getElementById(`tasks-${p.id}`);
     if (!container) return;
-    const projectTasks = state.allTasks.filter(t => t.project === p.id);
+    let projectTasks = state.allTasks.filter(t => t.project === p.id);
+
+    // Apply search filter
+    if (projectSearchQuery) {
+      const q = projectSearchQuery.toLowerCase();
+      projectTasks = projectTasks.filter(t =>
+        (t.text && t.text.toLowerCase().includes(q)) ||
+        (t.hatch_response && t.hatch_response.toLowerCase().includes(q)) ||
+        (p.name && p.name.toLowerCase().includes(q))
+      );
+    }
+
     const activeTasks = projectTasks.filter(t => t.status !== 'approved');
     // Sort: non-draft tasks first, then drafts, preserving sort_order within each group
     activeTasks.sort((a, b) => {
@@ -910,3 +924,4 @@ window.saveProjectPrompt = saveProjectPrompt;
 window.updateCharCounter = updateCharCounter;
 window.handleTaskInput = handleTaskInput;
 window.refreshAll = refreshAll;
+window.filterProjects = function(e) { projectSearchQuery = e.target.value; renderAllTasks(); };

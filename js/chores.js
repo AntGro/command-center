@@ -10,6 +10,7 @@ import { getCategoryColor } from './todos.js';
 // (state managed in supabase.js)
 // (state managed in supabase.js)
 let choreFilter = 'all';
+let choreSearchQuery = '';
 // ── Shortnames ──
 const CHORE_SHORTNAMES_KEY = 'claw_chore_shortnames';
 function getChoreShortnames() {
@@ -129,6 +130,16 @@ function formatChoreDue(chore) {
 
 function getFilteredChoresForCategory(category) {
   let filtered = state.allChores.filter(c => (c.category || 'General') === (category || 'General'));
+
+  // Apply search filter
+  if (choreSearchQuery) {
+    const q = choreSearchQuery.toLowerCase();
+    filtered = filtered.filter(c =>
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      ((c.category || '').toLowerCase().includes(q))
+    );
+  }
+
   if (choreFilter === 'overdue') filtered = filtered.filter(c => choreDueStatus(c) === 'overdue');
   else if (choreFilter === 'due-soon') filtered = filtered.filter(c => ['overdue', 'due-today', 'due-tomorrow', 'due-soon'].includes(choreDueStatus(c)));
 
@@ -645,3 +656,4 @@ window.renderChores = renderChores;
 window.navigateToChoreCategory = navigateToChoreCategory;
 
 window.promptChoreShortname = promptChoreShortname;
+window.filterChores = function(e) { choreSearchQuery = e.target.value; renderChores(); };

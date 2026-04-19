@@ -9,6 +9,7 @@ import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderI
 // ===================================================================
 let allTodos = [];
 let todoFilter = 'pending';
+let todoSearchQuery = '';
 const CATEGORIES_KEY = 'todo_categories';
 const CATEGORY_COLORS_KEY = 'todo_category_colors';
 const DEFAULT_CATEGORY_PALETTE = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16'];
@@ -177,6 +178,15 @@ function getFilteredTodosForCategory(category) {
     const cat = t.category || '';
     return cat === category;
   });
+
+  // Apply search filter
+  if (todoSearchQuery) {
+    const q = todoSearchQuery.toLowerCase();
+    filtered = filtered.filter(t =>
+      (t.text && t.text.toLowerCase().includes(q)) ||
+      ((t.category || '').toLowerCase().includes(q))
+    );
+  }
 
   if (todoFilter === 'pending') {
     filtered = filtered.filter(t => !t.done && (!t.snooze_until || new Date(t.snooze_until) <= now));
@@ -931,3 +941,4 @@ window.updateTodoCharCounter = updateTodoCharCounter;
 window.openEditCategoryModal = openEditCategoryModal;
 window.closeEditCategoryModal = closeEditCategoryModal;
 window.saveEditCategory = saveEditCategory;
+window.filterTodos = function(e) { todoSearchQuery = e.target.value; renderTodos(); };
