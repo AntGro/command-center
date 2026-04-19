@@ -326,10 +326,16 @@ function renderFlashcardItem(c, color) {
     badge = `<span class="fc-status-badge fc-status-ok">${daysLeft}d</span>`;
   }
 
-  // Left border color from retrievability: green (strong) → amber → red (weak), grey for new
+  // Left border color: smooth gradient from red (R=0) → amber (R=0.5) → green (R=1), grey for new
   let borderColor = 'var(--muted)';
   if (R !== null) {
-    borderColor = R > 0.8 ? '#22c55e' : R > 0.5 ? '#f59e0b' : '#ef4444';
+    // Interpolate hue: 0 (red) → 38 (amber) → 142 (green) based on R
+    const hue = R <= 0.5
+      ? Math.round(R * 2 * 38)            // 0→38
+      : Math.round(38 + (R - 0.5) * 2 * 104); // 38→142
+    const sat = 70 + Math.round(R * 15);   // 70-85%
+    const lum = 40 + Math.round(R * 10);   // 40-50%
+    borderColor = `hsl(${hue}, ${sat}%, ${lum}%)`;
   }
 
   const frontTrunc = c.front.length > 90 ? c.front.slice(0, 90) + '…' : c.front;
