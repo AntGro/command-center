@@ -217,7 +217,9 @@ function renderVestiaireItem(v) {
     statusBadge = `<span class="vest-status-badge vest-status-essaye">Essayé</span>`;
   }
 
-  return `<div class="bucket-item vestiaire-item" data-vest-id="${v.id}">
+  const statusCls = v.purchase_status === 'achete' ? ' vest-purchased' : v.purchase_status === 'essaye' ? ' vest-tried' : '';
+
+  return `<div class="bucket-item vestiaire-item${statusCls}" data-vest-id="${v.id}">
     <div class="vest-row">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;">
