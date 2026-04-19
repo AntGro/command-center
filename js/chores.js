@@ -269,7 +269,7 @@ function renderChoreItem(chore) {
       </div>
       <div class="chore-actions">
         ${promoteBtn}
-        ${!isDraft ? `<button onclick="openChoreDoneModal('${chore.id}')" title="Mark done" class="chore-done-btn">${lucideIcon("circle-check",16)}</button>` : ''}
+        ${!isDraft ? `<button onclick="markChoreDone('${chore.id}')" title="Mark done" class="chore-done-btn">${lucideIcon("circle-check",16)}</button>` : ''}
         <button onclick="openChoreHistory('${chore.id}')" title="History (${completionCount})" class="chore-history-btn">${lucideIcon("clipboard-list",16)} ${completionCount}</button>
         <button onclick="openEditChoreModal('${chore.id}')" title="Edit">${lucideIcon("pencil",16)}</button>
         <button onclick="deleteChore('${chore.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>
@@ -311,17 +311,11 @@ function initChoreModals() {
   m2.innerHTML = `<div class="modal"><h2>` + lucideIcon("pencil",20) + ` Edit Chore</h2><input type="hidden" id="editChoreId"><label>Name</label><input type="text" id="editChoreName" maxlength="200"><label>Frequency Rule</label><input type="text" id="editChoreFrequency" maxlength="300"><label>Category</label><select id="editChoreCategory"></select><div class="modal-actions"><button class="modal-cancel" onclick="closeEditChoreModal()">Cancel</button><button class="modal-save" onclick="saveEditChore()">Save</button></div></div>`;
   app.appendChild(m2);
 
-  // Chore Done Modal
-  const m3 = document.createElement('div');
-  m3.className = 'modal-overlay'; m3.id = 'choreDoneModal';
-  m3.innerHTML = `<div class="modal chore-done-modal"><h2>` + lucideIcon("circle-check",20) + ` Mark Chore Done</h2><p id="choreDoneName" style="font-size:0.88rem;margin-bottom:12px;"></p><label>Note (optional)</label><input type="text" id="choreDoneNote" placeholder="e.g. Deep clean, only kitchen..." maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChoreDone();}"><input type="hidden" id="choreDoneId"><div class="modal-actions"><button class="modal-cancel" onclick="closeChoreDoneModal()">Cancel</button><button class="modal-save" onclick="submitChoreDone()">Done ` + lucideIcon("circle-check",16) + `</button></div></div>`;
-  app.appendChild(m3);
-
   // Chore History Modal
-  const m4 = document.createElement('div');
-  m4.className = 'modal-overlay'; m4.id = 'choreHistoryModal';
-  m4.innerHTML = `<div class="modal chore-history-modal"><h2>` + lucideIcon("clipboard-list",20) + ` Chore History</h2><p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p><div id="choreHistoryList"></div><div class="modal-actions"><button class="modal-cancel" onclick="closeChoreHistoryModal()">Close</button></div></div>`;
-  app.appendChild(m4);
+  const m3 = document.createElement('div');
+  m3.className = 'modal-overlay'; m3.id = 'choreHistoryModal';
+  m3.innerHTML = `<div class="modal chore-history-modal"><h2>` + lucideIcon("clipboard-list",20) + ` Chore History</h2><p id="choreHistoryName" style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;"></p><div id="choreHistoryList"></div><div class="modal-actions"><button class="modal-cancel" onclick="closeChoreHistoryModal()">Close</button></div></div>`;
+  app.appendChild(m3);
 
   // Add Chore Category Modal
   const m5 = document.createElement('div');
@@ -456,27 +450,10 @@ async function promoteChore(choreId) {
 // ===================================================================
 // CHORE DONE FLOW
 // ===================================================================
-function openChoreDoneModal(choreId) {
-  const chore = state.allChores.find(c => c.id === choreId);
-  if (!chore) return;
-  document.getElementById('choreDoneId').value = choreId;
-  document.getElementById('choreDoneName').innerHTML = `${lucideIcon("brush",16)} ${chore.name}`;
-  document.getElementById('choreDoneNote').value = '';
-  document.getElementById('choreDoneModal').classList.add('visible');
-  setTimeout(() => document.getElementById('choreDoneNote').focus(), 100);
-}
-
-function closeChoreDoneModal() {
-  document.getElementById('choreDoneModal').classList.remove('visible');
-}
-
-async function submitChoreDone() {
-  const choreId = document.getElementById('choreDoneId').value;
-  const note = document.getElementById('choreDoneNote').value.trim();
+async function markChoreDone(choreId) {
   if (!choreId) return;
 
   const row = { chore_id: choreId, completed_at: new Date().toISOString() };
-  if (note) row.note = note;
 
   const { error } = await state.sb.from('chore_completions').insert(row);
   if (error) { showToast('Failed to record completion', 'error'); return; }
@@ -484,7 +461,6 @@ async function submitChoreDone() {
   // Signal heartbeat to recompute next_due based on this new completion
   await clearChoreNextDue(choreId);
 
-  closeChoreDoneModal();
   showToast('Chore done!', 'success');
   await refreshChores();
 }
@@ -653,9 +629,7 @@ window.closeEditChoreModal = closeEditChoreModal;
 window.saveEditChore = saveEditChore;
 window.deleteChore = deleteChore;
 window.promoteChore = promoteChore;
-window.openChoreDoneModal = openChoreDoneModal;
-window.closeChoreDoneModal = closeChoreDoneModal;
-window.submitChoreDone = submitChoreDone;
+window.markChoreDone = markChoreDone;
 window.openChoreHistory = openChoreHistory;
 window.closeChoreHistoryModal = closeChoreHistoryModal;
 window.editChoreCompletion = editChoreCompletion;
