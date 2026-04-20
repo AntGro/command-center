@@ -47,7 +47,14 @@
       <button class="view-tab" id="tabFlashcards" onclick="switchView('flashcards')"><span data-icon="book-open" data-size="16" data-color="#06b6d4"></span> Flashcards</button>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="toggleLang()" id="langToggle" title="Language">EN</button>
+      <div class="lang-picker" id="langPicker">
+        <button class="btn" id="langToggle" title="Language"><span data-icon="globe" data-size="16"></span></button>
+        <div class="lang-dropdown" id="langDropdown">
+          <button class="lang-option" data-lang="en">English</button>
+          <button class="lang-option" data-lang="fr">Français</button>
+          <button class="lang-option" data-lang="es">Español</button>
+        </div>
+      </div>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme"></button>
       <button class="btn btn-disconnect" onclick="disconnect()" id="logoutBtn" title="Disconnect &amp; log out"><span data-icon="log-out" data-size="16"></span></button>
     </div>

@@ -1,5 +1,5 @@
 import { lucideIcon } from './icons.js';
-import { t, getLang, nextLang } from './i18n.js';
+import { t, getLang, setLang, nextLang } from './i18n.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
@@ -204,15 +204,46 @@ async function connect(url, key) {
 // LANGUAGE TOGGLE
 // ===================================================================
 function applyLang() {
-  const btn = document.getElementById('langToggle');
-  if (btn) btn.textContent = getLang().toUpperCase();
+  // Highlight active language in dropdown
+  const dropdown = document.getElementById('langDropdown');
+  if (dropdown) {
+    const lang = getLang();
+    dropdown.querySelectorAll('.lang-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.lang === lang);
+    });
+  }
   updateStaticLabels();
 }
 
-function toggleLang() {
-  nextLang();
-  applyLang();
-  // Re-render current view
+function initLangPicker() {
+  const picker = document.getElementById('langPicker');
+  const toggle = document.getElementById('langToggle');
+  const dropdown = document.getElementById('langDropdown');
+  if (!picker || !toggle || !dropdown) return;
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    picker.classList.toggle('open');
+  });
+
+  dropdown.addEventListener('click', (e) => {
+    const opt = e.target.closest('.lang-option');
+    if (!opt) return;
+    const lang = opt.dataset.lang;
+    if (lang && lang !== getLang()) {
+      setLang(lang);
+      applyLang();
+      reRenderCurrentView();
+    }
+    picker.classList.remove('open');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', () => picker.classList.remove('open'));
+  picker.addEventListener('click', (e) => e.stopPropagation());
+}
+
+function reRenderCurrentView() {
   const view = state.currentView;
   if (view === 'projects') refreshAll();
   else if (view === 'todos') renderTodos();
@@ -293,11 +324,11 @@ function updateStaticLabels() {
   const dashLink = document.getElementById('supabaseDashLink');
   if (dashLink) dashLink.textContent = t('login.supabase_dashboard') + ' ↗';
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.textContent = t('login.log_out');
+  if (logoutBtn) logoutBtn.innerHTML = lucideIcon('log-out', 16);
 }
 
 // Init lang on page load
-(function() { applyLang(); })();
+(function() { applyLang(); initLangPicker(); })();
 
 
 // ===================================================================
@@ -473,5 +504,4 @@ function renderLastUpdated() {
 
 window.switchView = switchView;
 window.toggleTheme = toggleTheme;
-window.toggleLang = toggleLang;
 window.disconnect = disconnect;
