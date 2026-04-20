@@ -2,6 +2,7 @@ import { lucideIcon } from './icons.js';
 import state, { TODO_MAX_LEN } from './supabase.js';
 import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
 import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, inlineEditText, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
+import { t } from './i18n.js';
 
 // ===================================================================
 // TODOS — DATA & CRUD (Category Card Layout)
@@ -73,7 +74,7 @@ async function saveEditCategory() {
   const oldName = document.getElementById('editCategoryOldName').value;
   const newName = document.getElementById('editCategoryName').value.trim();
   const shortname = document.getElementById('editCategoryShortname').value.trim();
-  if (!newName) { showToast('Name is required', 'error'); return; }
+  if (!newName) { showToast(t('toast.name_required'), 'error'); return; }
 
   // Update shortname
   setCategoryShortname(newName, shortname);
@@ -104,7 +105,7 @@ async function saveEditCategory() {
 
   closeEditCategoryModal();
   renderTodos();
-  showToast('Category updated', 'success');
+  showToast(t('toast.updated'), 'success');
 }
 
 function getCategories() {
@@ -153,7 +154,7 @@ async function refreshTodos() {
   const { data, error } = await state.sb.from('todos').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
-    showToast('Failed to load todos', 'error');
+    showToast(t('toast.failed_to_load'), 'error');
     return;
   }
   allTodos = data || [];
@@ -316,14 +317,14 @@ function renderCategoryCard(category) {
     displayDone = doneTodos;
   }
 
-  const statsText = `${pending} pending` + (doneCount > 0 ? ` · ${doneCount} done` : '');
+  const statsText = `${pending} ${t('todos.pending').toLowerCase()}` + (doneCount > 0 ? ` · ${doneCount} ${t('todos.done').toLowerCase()}` : '');
 
   const deleteBtn = !isGeneral
-    ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="Delete category">${lucideIcon("trash-2",16)}</button>`
+    ? `<button class="todo-cat-delete-btn" onclick="deleteCategory('${esc(category)}')" title="${t('common.delete')}">${lucideIcon("trash-2",16)}</button>`
     : '';
 
   const activeEmptyMsg = displayActive.length === 0
-    ? `<p class="empty-msg">${todoFilter === 'pending' ? 'All caught up!' : 'No items yet'}</p>`
+    ? `<p class="empty-msg">${todoFilter === 'pending' ? t('todos.all_caught_up') : t('todos.no_items')}</p>`
     : '';
 
   const escapedCat = esc(category).replace(/'/g, "\\'");
@@ -335,10 +336,10 @@ function renderCategoryCard(category) {
   // Done toggle (collapsible, like archived tasks in projects)
   let doneToggle = '';
   if (doneCount > 0 && todoFilter !== 'done') {
-    const deleteAllBtn = `<button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllDoneTodos('${escapedCat}')" title="Delete all done">${lucideIcon("trash-2",16)} Delete all</button>`;
+    const deleteAllBtn = `<button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllDoneTodos('${escapedCat}')" title="${t('todos.delete_all_done')}">${lucideIcon("trash-2",16)} ${t('todos.delete_all_done')}</button>`;
     doneToggle = `
       <div class="archive-toggle" onclick="toggleDoneTodos('${catId}')" id="done-toggle-${catId}">
-        <span class="arrow" id="done-arrow-${catId}">▶</span> Done (${doneCount})
+        <span class="arrow" id="done-arrow-${catId}">▶</span> ${t('todos.done')} (${doneCount})
         ${deleteAllBtn}
       </div>
       <div class="archived-tasks" id="done-list-${catId}">
@@ -348,11 +349,11 @@ function renderCategoryCard(category) {
 
   // For the 'done' filter view, show done items in the main list
   const mainListContent = todoFilter === 'done'
-    ? (displayDone.length === 0 ? '<p class="empty-msg">No completed items</p>' : displayDone.map(t => renderTodoItem(t)).join(''))
+    ? (displayDone.length === 0 ? `<p class="empty-msg">${t('todos.no_items')}</p>` : displayDone.map(t2 => renderTodoItem(t2)).join(''))
     : (activeEmptyMsg || displayActive.map(t => renderTodoItem(t)).join(''));
 
   const shortnameBtn = !isGeneral
-    ? `<button class="todo-cat-shortname-btn" onclick="openEditCategoryModal('${esc(category).replace(/'/g, "\\'")}')" title="Edit category">${lucideIcon("pencil",14)}</button>`
+    ? `<button class="todo-cat-shortname-btn" onclick="openEditCategoryModal('${esc(category).replace(/'/g, "\\'")}')" title="${t('common.edit')}">${lucideIcon("pencil",14)}</button>`
     : '';
 
   const shortnameLabel = shortname
@@ -373,7 +374,7 @@ function renderCategoryCard(category) {
       </div>
     </div>
     <div class="todo-cat-add">
-      <input type="text" placeholder="Add a TODO..." maxlength="2000" class="todo-cat-input" data-category="${esc(category)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodoToCategory(this);}" oninput="updateTodoCharCounter(this)">
+      <input type="text" placeholder="${t('todos.add_todo_placeholder')}" maxlength="2000" class="todo-cat-input" data-category="${esc(category)}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addTodoToCategory(this);}" oninput="updateTodoCharCounter(this)">
       <button onclick="addTodoToCategory(this.previousElementSibling)">+</button>
     </div>
     <div class="char-counter" id="todo-counter-${catId}"></div>
@@ -386,38 +387,38 @@ function renderCategoryCard(category) {
 
 const TODO_OUTDATED_DAYS = 7;
 
-function isTodoOutdated(t) {
-  if (t.done) return false;
-  if (!t.due_date) return false;
+function isTodoOutdated(td) {
+  if (td.done) return false;
+  if (!td.due_date) return false;
   const now = new Date();
-  const ref = new Date(t.updated_at || t.created_at);
+  const ref = new Date(td.updated_at || td.created_at);
   const diffDays = (now - ref) / (1000 * 60 * 60 * 24);
   return diffDays >= TODO_OUTDATED_DAYS;
 }
 
-function renderTodoItem(t) {
+function renderTodoItem(td) {
   const now = new Date();
-  const isOverdue = t.due_date && !t.done && new Date(t.due_date) < now;
-  const isSnoozed = t.snooze_until && new Date(t.snooze_until) > now;
-  const isOutdated = isTodoOutdated(t);
-  const isFlagged = t.priority && t.priority !== 'normal';
+  const isOverdue = td.due_date && !td.done && new Date(td.due_date) < now;
+  const isSnoozed = td.snooze_until && new Date(td.snooze_until) > now;
+  const isOutdated = isTodoOutdated(td);
+  const isFlagged = td.priority && td.priority !== 'normal';
   const prioBadge = isFlagged
-    ? `<span class="todo-priority-badge priority-${t.priority}">${t.priority}</span>` : '';
+    ? `<span class="todo-priority-badge priority-${td.priority}">${td.priority}</span>` : '';
 
   // Flag button: cycles normal → high → urgent → normal
-  const flagIcon = t.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : t.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : lucideIcon('flag', 14);
-  const flagTitle = t.priority === 'urgent' ? 'Unflag (urgent → normal)' : t.priority === 'high' ? 'Flag urgent' : 'Flag high';
-  const flagBtn = !t.done ? `<button class="todo-flag-btn ${isFlagged ? 'flagged' : ''}" onclick="cycleTodoPriority('${t.id}')" title="${flagTitle}">${flagIcon}</button>` : '';
+  const flagIcon = td.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : td.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : lucideIcon('flag', 14);
+  const flagTitle = td.priority === 'urgent' ? t('todos.unflag') : td.priority === 'high' ? t('todos.flag_to_urgent') : t('todos.flag_to_high');
+  const flagBtn = !td.done ? `<button class="todo-flag-btn ${isFlagged ? 'flagged' : ''}" onclick="cycleTodoPriority('${td.id}')" title="${flagTitle}">${flagIcon}</button>` : '';
 
   let dueDateStr = '';
-  if (t.due_date) {
-    const d = new Date(t.due_date);
+  if (td.due_date) {
+    const d = new Date(td.due_date);
     const diffMs = d - now;
     const diffH = Math.round(diffMs / (1000 * 60 * 60));
     if (isOverdue) {
-      dueDateStr = `<span class="todo-due overdue">${lucideIcon('alert-triangle', 14)} Overdue (${formatRelativeDate(d)})</span>`;
+      dueDateStr = `<span class="todo-due overdue">${lucideIcon('alert-triangle', 14)} ${t('todos.overdue')} (${formatRelativeDate(d)})</span>`;
     } else if (diffH < 24) {
-      dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell",16)} Due ${formatRelativeDate(d)}</span>`;
+      dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell",16)} ${t('todos.due')} ${formatRelativeDate(d)}</span>`;
     } else {
       dueDateStr = `<span class="todo-due">${lucideIcon("calendar",16)} ${formatRelativeDate(d)}</span>`;
     }
@@ -425,35 +426,35 @@ function renderTodoItem(t) {
 
   let snoozeInfo = '';
   if (isSnoozed) {
-    snoozeInfo = `<span class="todo-snoozed">${lucideIcon("moon",16)} Snoozed until ${new Date(t.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+    snoozeInfo = `<span class="todo-snoozed">${lucideIcon("moon",16)} ${t('todos.snoozed_until')} ${new Date(td.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
   }
 
   let outdatedInfo = '';
-  if (isOutdated && !t.done) {
-    const ref = new Date(t.updated_at || t.created_at);
+  if (isOutdated && !td.done) {
+    const ref = new Date(td.updated_at || td.created_at);
     const daysAgo = Math.floor((now - ref) / (1000 * 60 * 60 * 24));
-    outdatedInfo = `<span class="todo-outdated-badge">${daysAgo}d old</span>`;
+    outdatedInfo = `<span class="todo-outdated-badge">${t('todos.days_old', daysAgo)}</span>`;
   }
 
   const classes = [
     'bucket-item',
     'todo-item',
-    t.done ? 'todo-done' : '',
+    td.done ? 'todo-done' : '',
     isOverdue ? 'todo-overdue' : '',
     isOutdated ? 'todo-outdated' : '',
     isFlagged ? 'todo-flagged' : ''
   ].filter(Boolean).join(' ');
 
-  return `<div class="${classes}" data-todo-id="${t.id}">
+  return `<div class="${classes}" data-todo-id="${td.id}">
     <div class="todo-row">
       ${flagBtn}
-      <span class="todo-text" ondblclick="editTodoInline('${t.id}')">${t.text.length > 150 ? truncateWithShowMore(t.text, 150, t.id, 'todo') : renderMd(t.text)}</span>
+      <span class="todo-text" ondblclick="editTodoInline('${td.id}')">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
-        ${!t.done ? `<button onclick="toggleTodo('${t.id}', true)" title="Done">${lucideIcon("circle-check",16)}</button>` : `<button onclick="toggleTodo('${t.id}', false)" title="Undo">${lucideIcon("refresh-cw",16)}</button>`}
-        ${!t.done ? `<button onclick="openSnoozeModal('${t.id}')" title="Snooze">${lucideIcon("moon",16)}</button>` : ''}
-        <button onclick="editTodoInline('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>
-        <button onclick="deleteTodo('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>
+        ${!td.done ? `<button onclick="toggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check",16)}</button>` : `<button onclick="toggleTodo('${td.id}', false)" title="${t('common.undo')}">${lucideIcon("refresh-cw",16)}</button>`}
+        ${!td.done ? `<button onclick="openSnoozeModal('${td.id}')" title="${t('todos.snooze')}">${lucideIcon("moon",16)}</button>` : ''}
+        <button onclick="editTodoInline('${td.id}')" title="${t('common.edit')}">${lucideIcon("pencil",16)}</button>
+        <button onclick="deleteTodo('${td.id}')" title="${t('common.delete')}">${lucideIcon("trash-2",16)}</button>
       </div>
     </div>
     ${dueDateStr || snoozeInfo || outdatedInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}${outdatedInfo}</div>` : ''}
@@ -466,8 +467,8 @@ async function cycleTodoPriority(id) {
   const cycle = { normal: 'high', high: 'urgent', urgent: 'normal' };
   const next = cycle[todo.priority] || 'high';
   const { error } = await state.sb.from('todos').update({ priority: next }).eq('id', id);
-  if (error) { showToast('Failed to update priority', 'error'); return; }
-  const labels = { high: 'Flagged high', urgent: 'Flagged urgent', normal: 'Flag removed' };
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
+  const labels = { high: t('todos.flag_to_high'), urgent: t('todos.flag_to_urgent'), normal: t('todos.unflag') };
   showToast(labels[next] || `Priority: ${next}`, 'success');
   await refreshTodos();
 }
@@ -482,27 +483,27 @@ async function addTodoToCategory(inputEl) {
   const maxOrder = pendingTodos.length > 0 ? Math.max(...pendingTodos.map(t => t.sort_order || 0)) + 1 : 0;
 
   const { error } = await state.sb.from('todos').insert({ text, priority: 'normal', category, sort_order: maxOrder });
-  if (error) { showToast('Failed to add todo: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
   inputEl.value = '';
-  showToast('TODO added', 'success');
+  showToast(t('toast.added'), 'success');
   await refreshTodos();
 }
 
 async function toggleTodo(id, done) {
   const { error } = await state.sb.from('todos').update({ done }).eq('id', id);
-  if (error) { showToast('Update failed', 'error'); return; }
-  showToast(done ? 'Done!' : 'Reopened', 'success');
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
+  showToast(done ? t('common.done') + '!' : t('common.reopen'), 'success');
   await refreshTodos();
 }
 
 async function deleteTodo(id) {
   showDeleteConfirm(
-    'Delete TODO',
+    t('common.delete'),
     'Delete this TODO? This cannot be undone.',
     async () => {
       const { error } = await state.sb.from('todos').delete().eq('id', id);
-      if (error) { showToast('Delete failed', 'error'); return; }
-      showToast('TODO deleted', 'info');
+      if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
+      showToast(t('toast.deleted'), 'info');
       await refreshTodos();
     }
   );
@@ -520,13 +521,13 @@ async function deleteAllDoneTodos(category) {
   if (!doneTodos.length) return;
   const catName = category || 'General';
   showDeleteConfirm(
-    'Delete All Done TODOs',
+    t('todos.delete_all_done'),
     `Delete all ${doneTodos.length} completed TODO${doneTodos.length > 1 ? 's' : ''} in "${catName}"? This cannot be undone.`,
     async () => {
-      for (const t of doneTodos) {
-        await state.sb.from('todos').delete().eq('id', t.id);
+      for (const td of doneTodos) {
+        await state.sb.from('todos').delete().eq('id', td.id);
       }
-      showToast(`Deleted ${doneTodos.length} done TODO${doneTodos.length > 1 ? 's' : ''}`, 'info');
+      showToast(t('toast.deleted'), 'info');
       await refreshTodos();
     }
   );
@@ -548,7 +549,7 @@ async function editTodoInline(id) {
   const deadlineRow = document.createElement('div');
   deadlineRow.className = 'todo-edit-deadline-row';
   const deadlineLabel = document.createElement('label');
-  deadlineLabel.innerHTML = lucideIcon('calendar') + ' Deadline:';
+  deadlineLabel.innerHTML = lucideIcon('calendar') + ' ' + t('todos.deadline') + ':';
   deadlineLabel.className = 'todo-edit-deadline-label';
   const deadlineInput = document.createElement('input');
   deadlineInput.type = 'datetime-local';
@@ -561,7 +562,7 @@ async function editTodoInline(id) {
   clearBtn.type = 'button';
   clearBtn.className = 'todo-edit-deadline-clear';
   clearBtn.textContent = '✕';
-  clearBtn.title = 'Clear deadline';
+  clearBtn.title = t('common.close');
   clearBtn.onclick = (e) => { e.stopPropagation(); deadlineInput.value = ''; };
   deadlineRow.appendChild(deadlineLabel);
   deadlineRow.appendChild(deadlineInput);
@@ -583,8 +584,8 @@ async function editTodoInline(id) {
       }
       if (Object.keys(updates).length > 0) {
         const { error } = await state.sb.from('todos').update(updates).eq('id', id);
-        if (error) showToast('Update failed', 'error');
-        else showToast('TODO updated', 'success');
+        if (error) showToast(t('toast.update_failed'), 'error');
+        else showToast(t('todos.todo_updated'), 'success');
       }
     },
     refreshFn: refreshTodos,
@@ -600,13 +601,13 @@ function initTodoModals() {
   // Snooze Modal
   const m1 = document.createElement('div');
   m1.className = 'modal-overlay'; m1.id = 'snoozeModal';
-  m1.innerHTML = `<div class="modal snooze-modal"><h2>${lucideIcon("clock",20)} Snooze TODO</h2><p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Pick when to be reminded about this item.</p><div class="snooze-options"><button onclick="snoozeFor(1,'h')">1 hour</button><button onclick="snoozeFor(3,'h')">3 hours</button><button onclick="snoozeFor(1,'d')">Tomorrow</button><button onclick="snoozeFor(3,'d')">3 days</button><button onclick="snoozeFor(7,'d')">1 week</button><button onclick="snoozeFor(1,'M')">1 month</button></div><label style="margin-top:12px;">Or pick a date & time:</label><input type="datetime-local" id="snoozeCustomDate" style="width:100%;margin-top:4px;"><input type="hidden" id="snoozeTaskId"><div class="modal-actions"><button class="modal-cancel" onclick="closeSnoozeModal()">Cancel</button><button class="modal-save" onclick="submitSnooze()">Snooze</button></div></div>`;
+  m1.innerHTML = `<div class="modal snooze-modal"><h2>${lucideIcon("clock",20)} ${t('todos.snooze')}</h2><p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">${t('todos.snooze_hint')}</p><div class="snooze-options"><button onclick="snoozeFor(1,'h')">${t('todos.snooze_1h')}</button><button onclick="snoozeFor(3,'h')">${t('todos.snooze_3h')}</button><button onclick="snoozeFor(1,'d')">${t('todos.snooze_1d')}</button><button onclick="snoozeFor(3,'d')">${t('todos.snooze_3d')}</button><button onclick="snoozeFor(7,'d')">${t('todos.snooze_1w')}</button><button onclick="snoozeFor(1,'M')">${t('todos.snooze_1m')}</button></div><label style="margin-top:12px;">Or pick a date & time:</label><input type="datetime-local" id="snoozeCustomDate" style="width:100%;margin-top:4px;"><input type="hidden" id="snoozeTaskId"><div class="modal-actions"><button class="modal-cancel" onclick="closeSnoozeModal()">${t('common.cancel')}</button><button class="modal-save" onclick="submitSnooze()">${t('todos.snooze')}</button></div></div>`;
   app.appendChild(m1);
 
   // Add Category Modal
   const m2 = document.createElement('div');
   m2.className = 'modal-overlay'; m2.id = 'addCategoryModal';
-  m2.innerHTML = `<div class="modal"><h2>${lucideIcon("folder-plus",20)} Add Category</h2><label>Category Name</label><input type="text" id="newCategoryName" placeholder="e.g. Work, Personal, Shopping..." maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewCategory();}"><div class="modal-actions"><button class="modal-cancel" onclick="closeAddCategoryModal()">Cancel</button><button class="modal-save" onclick="saveNewCategory()">Create</button></div></div>`;
+  m2.innerHTML = `<div class="modal"><h2>${lucideIcon("folder-plus",20)} ${t('todos.add_category')}</h2><label>${t('todos.category_name')}</label><input type="text" id="newCategoryName" placeholder="${t('todos.category_placeholder')}" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewCategory();}"><div class="modal-actions"><button class="modal-cancel" onclick="closeAddCategoryModal()">${t('common.cancel')}</button><button class="modal-save" onclick="saveNewCategory()">${t('common.add')}</button></div></div>`;
   app.appendChild(m2);
 }
 
@@ -623,18 +624,18 @@ function closeAddCategoryModal() {
 function saveNewCategory() {
   const input = document.getElementById('newCategoryName');
   const name = input.value.trim();
-  if (!name) { showToast('Enter a category name', 'error'); return; }
+  if (!name) { showToast(t('toast.enter_name'), 'error'); return; }
 
   const categories = getCategories();
   if (categories.some(c => c.toLowerCase() === name.toLowerCase())) {
-    showToast('Category already exists', 'error');
+    showToast(t('toast.name_required'), 'error');
     return;
   }
 
   categories.push(name);
   saveCategories(categories);
   closeAddCategoryModal();
-  showToast(`Category "${name}" created`, 'success');
+  showToast(t('toast.added'), 'success');
   renderTodos();
 }
 
@@ -644,7 +645,7 @@ async function deleteCategory(name) {
     ? `Delete "${name}"? Its ${todosInCat.length} TODO(s) will move to General.`
     : `Delete empty category "${name}"?`;
 
-  showDeleteConfirm('Delete Category', msg, async () => {
+  showDeleteConfirm(t('common.delete'), msg, async () => {
     // Move todos to General
     for (const t of todosInCat) {
       await state.sb.from('todos').update({ category: '' }).eq('id', t.id);
@@ -659,7 +660,7 @@ async function deleteCategory(name) {
     const colorMap = getCategoryColors();
     delete colorMap[name];
     saveCategoryColors(colorMap);
-    showToast(`Category "${name}" deleted`, 'info');
+    showToast(t('toast.deleted'), 'info');
     await refreshTodos();
   });
 }
@@ -696,7 +697,7 @@ function snoozeFor(amount, unit) {
 
 async function submitSnooze() {
   const customDate = document.getElementById('snoozeCustomDate').value;
-  if (!customDate) { showToast('Pick a date or use a quick option', 'error'); return; }
+  if (!customDate) { showToast(t('toast.content_required'), 'error'); return; }
   doSnooze(new Date(customDate));
 }
 
@@ -704,9 +705,9 @@ async function doSnooze(snoozeUntil) {
   const taskId = document.getElementById('snoozeTaskId').value;
   if (!taskId) return;
   const { error } = await state.sb.from('todos').update({ snooze_until: snoozeUntil.toISOString() }).eq('id', taskId);
-  if (error) { showToast('Snooze failed', 'error'); return; }
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   closeSnoozeModal();
-  showToast(`Snoozed until ${snoozeUntil.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 'success');
+  showToast(`${t('todos.snoozed_until')} ${snoozeUntil.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 'success');
   await refreshTodos();
 }
 
@@ -857,7 +858,7 @@ async function reorderCategories(draggedName, targetName) {
   });
 
   initCategoryDragDrop();
-  showToast('Categories reordered', 'success');
+  showToast(t('toast.reordered'), 'success');
 }
 
 

@@ -2,6 +2,7 @@ import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
 import { scrollToAndHighlight, initItemHoverDelay, initItemDragDrop, reorderItems, inlineEditText } from './item-utils.js';
+import { t } from './i18n.js';
 
 // ===================================================================
 // VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
@@ -85,7 +86,7 @@ async function refreshVestiaire() {
     .order('name', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
-    showToast('Failed to load wardrobe', 'error');
+    showToast(t('toast.failed_to_load'), 'error');
     return;
   }
   state.allVestiaire = data || [];
@@ -213,7 +214,7 @@ function renderCategoryCard(cat, items) {
 function renderVestiaireItem(v) {
   const brandHtml = v.brand
     ? `<span class="vest-brand" onclick="editVestiaireBrandInline('${v.id}')" title="Click to edit brand">${esc(v.brand)}</span>`
-    : `<span class="vest-brand vest-brand-empty" onclick="editVestiaireBrandInline('${v.id}')" title="Click to add brand">+ brand</span>`;
+    : `<span class="vest-brand vest-brand-empty" onclick="editVestiaireBrandInline('${v.id}')" title="Click to add brand">${t('vestiaire.add_brand')}</span>`;
   const metaParts = [];
   if (v.size) metaParts.push(`${lucideIcon('ruler', 12)} ${esc(v.size)}`);
   if (v.color) metaParts.push(`${lucideIcon('palette', 12)} ${esc(v.color)}`);
@@ -225,9 +226,9 @@ function renderVestiaireItem(v) {
   // Purchase status badge (click to cycle: none → Tried → Purchased → none)
   let statusBadge = '';
   if (v.purchase_status === 'achete') {
-    statusBadge = `<span class="vest-status-badge vest-status-achete" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Purchased</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-achete" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">${t('vestiaire.purchased')}</span>`;
   } else if (v.purchase_status === 'essaye') {
-    statusBadge = `<span class="vest-status-badge vest-status-essaye" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">Tried</span>`;
+    statusBadge = `<span class="vest-status-badge vest-status-essaye" onclick="cycleVestiaireStatus('${v.id}')" title="Click to cycle status">${t('vestiaire.tried')}</span>`;
   } else {
     statusBadge = `<span class="vest-status-badge vest-status-none" onclick="cycleVestiaireStatus('${v.id}')" title="Click to set status">○</span>`;
   }
@@ -334,9 +335,9 @@ async function editVestiaireInline(id) {
         name: newName,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
-      if (error) { showToast('Rename failed: ' + error.message, 'error'); return; }
+      if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
       v.name = newName;
-      showToast('Renamed', 'success');
+      showToast(t('toast.renamed'), 'success');
     },
     refreshFn: renderVestiaire,
   });
@@ -355,9 +356,9 @@ async function editVestiaireBrandInline(id) {
         brand: newBrand || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
-      if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+      if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
       v.brand = newBrand || null;
-      showToast('Brand updated', 'success');
+      showToast(t('toast.updated'), 'success');
     },
     refreshFn: renderVestiaire,
   });
@@ -374,9 +375,9 @@ async function cycleVestiaireStatus(id) {
     purchase_status: next,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
-  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
   v.purchase_status = next;
-  const label = next === 'achete' ? 'Purchased' : next === 'essaye' ? 'Tried' : 'No status';
+  const label = next === 'achete' ? t('vestiaire.purchased') : next === 'essaye' ? t('vestiaire.tried') : t('vestiaire.no_status');
   showToast(label, 'success');
   renderVestiaire();
 }
@@ -391,28 +392,28 @@ function initVestiaireModals() {
   m1.className = 'modal-overlay';
   m1.id = 'addVestiaireModal';
   m1.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('shirt', 20)} Add Clothing Item</h2>
+    <h2>${lucideIcon('shirt', 20)} ${t('vestiaire.add_item')}</h2>
     <input type="hidden" id="newVestiaireCategory">
-    <label>Name</label>
-    <input type="text" id="newVestiaireName" placeholder="e.g. Oxford shirt, Chinos..." maxlength="200"
+    <label>${t('common.name')}</label>
+    <input type="text" id="newVestiaireName" placeholder="${t('vestiaire.name_placeholder')}" maxlength="200"
       onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewVestiaire();}">
-    <label>Brand / Make</label>
-    <input type="text" id="newVestiaireBrand" placeholder="e.g. Uniqlo, John Lewis..." maxlength="200">
-    <label>Size</label>
-    <input type="text" id="newVestiaireSize" placeholder="e.g. M, 28W32L, 42..." maxlength="100">
-    <label>Color (optional)</label>
-    <input type="text" id="newVestiaireColor" placeholder="e.g. Navy, Blanc..." maxlength="100">
-    <label>Notes (optional)</label>
-    <input type="text" id="newVestiaireNotes" placeholder="e.g. Slim fit, bought at..." maxlength="500">
-    <label>Status</label>
+    <label>${t('vestiaire.brand')}</label>
+    <input type="text" id="newVestiaireBrand" placeholder="${t('vestiaire.brand_placeholder')}" maxlength="200">
+    <label>${t('vestiaire.size')}</label>
+    <input type="text" id="newVestiaireSize" placeholder="${t('vestiaire.size_placeholder')}" maxlength="100">
+    <label>${t('vestiaire.color_optional')}</label>
+    <input type="text" id="newVestiaireColor" placeholder="${t('vestiaire.color_placeholder')}" maxlength="100">
+    <label>${t('vestiaire.notes_optional')}</label>
+    <input type="text" id="newVestiaireNotes" placeholder="${t('vestiaire.notes_placeholder')}" maxlength="500">
+    <label>${t('vestiaire.status')}</label>
     <select id="newVestiairePurchaseStatus">
       <option value="">—</option>
-      <option value="essaye">Tried</option>
-      <option value="achete">Purchased</option>
+      <option value="essaye">${t('vestiaire.tried')}</option>
+      <option value="achete">${t('vestiaire.purchased')}</option>
     </select>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeAddVestiaireModal()">Cancel</button>
-      <button class="modal-save" onclick="saveNewVestiaire()">Add</button>
+      <button class="modal-cancel" onclick="closeAddVestiaireModal()">${t('common.cancel')}</button>
+      <button class="modal-save" onclick="saveNewVestiaire()">${t('common.add')}</button>
     </div>
   </div>`;
   app.appendChild(m1);
@@ -422,29 +423,29 @@ function initVestiaireModals() {
   m2.className = 'modal-overlay';
   m2.id = 'editVestiaireModal';
   m2.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('pencil', 20)} Edit Clothing Item</h2>
+    <h2>${lucideIcon('pencil', 20)} ${t('vestiaire.edit_item')}</h2>
     <input type="hidden" id="editVestiaireId">
-    <label>Name</label>
+    <label>${t('common.name')}</label>
     <input type="text" id="editVestiaireName" maxlength="200">
-    <label>Brand / Make</label>
+    <label>${t('vestiaire.brand')}</label>
     <input type="text" id="editVestiaireBrand" maxlength="200">
-    <label>Size</label>
+    <label>${t('vestiaire.size')}</label>
     <input type="text" id="editVestiaireSize" maxlength="100">
-    <label>Category</label>
+    <label>${t('common.category')}</label>
     <select id="editVestiaireCategory"></select>
-    <label>Color (optional)</label>
+    <label>${t('vestiaire.color_optional')}</label>
     <input type="text" id="editVestiaireColor" maxlength="100">
-    <label>Notes (optional)</label>
+    <label>${t('vestiaire.notes_optional')}</label>
     <input type="text" id="editVestiaireNotes" maxlength="500">
-    <label>Status</label>
+    <label>${t('vestiaire.status')}</label>
     <select id="editVestiairePurchaseStatus">
       <option value="">—</option>
-      <option value="essaye">Tried</option>
-      <option value="achete">Purchased</option>
+      <option value="essaye">${t('vestiaire.tried')}</option>
+      <option value="achete">${t('vestiaire.purchased')}</option>
     </select>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeEditVestiaireModal()">Cancel</button>
-      <button class="modal-save" onclick="saveEditVestiaire()">Save</button>
+      <button class="modal-cancel" onclick="closeEditVestiaireModal()">${t('common.cancel')}</button>
+      <button class="modal-save" onclick="saveEditVestiaire()">${t('common.save')}</button>
     </div>
   </div>`;
   app.appendChild(m2);
@@ -454,13 +455,13 @@ function initVestiaireModals() {
   m3.className = 'modal-overlay';
   m3.id = 'addVestiaireCategoryModal';
   m3.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('folder-plus', 20)} Add Category</h2>
-    <label>Category Name</label>
-    <input type="text" id="newVestiaireCategoryName" placeholder="e.g. Sport, Formel..." maxlength="40"
+    <h2>${lucideIcon('folder-plus', 20)} ${t('vestiaire.add_category')}</h2>
+    <label>${t('common.name')}</label>
+    <input type="text" id="newVestiaireCategoryName" placeholder="${t('vestiaire.category_placeholder')}" maxlength="40"
       onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewVestiaireCategory();}">
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeAddVestiaireCategoryModal()">Cancel</button>
-      <button class="modal-save" onclick="saveNewVestiaireCategory()">Create</button>
+      <button class="modal-cancel" onclick="closeAddVestiaireCategoryModal()">${t('common.cancel')}</button>
+      <button class="modal-save" onclick="saveNewVestiaireCategory()">${t('common.add')}</button>
     </div>
   </div>`;
   app.appendChild(m3);
@@ -503,7 +504,7 @@ async function saveNewVestiaire() {
   const notes = document.getElementById('newVestiaireNotes').value.trim();
   const purchaseStatus = document.getElementById('newVestiairePurchaseStatus').value;
 
-  if (!name) { showToast('Enter a name', 'error'); return; }
+  if (!name) { showToast(t('toast.enter_name'), 'error'); return; }
 
   // Compute sort_order: place new item at end of its category
   const catItems = (state.allVestiaire || []).filter(v => v.category === category);
@@ -516,10 +517,10 @@ async function saveNewVestiaire() {
   if (purchaseStatus) row.purchase_status = purchaseStatus;
 
   const { error } = await state.sb.from('vestiaire').insert(row);
-  if (error) { showToast('Failed to add item: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
 
   closeAddVestiaireModal();
-  showToast(`${name} added!`, 'success');
+  showToast(t('vestiaire.item_added', name), 'success');
   await refreshVestiaire();
 }
 
@@ -552,7 +553,7 @@ async function saveEditVestiaire() {
   const notes = document.getElementById('editVestiaireNotes').value.trim();
   const purchaseStatus = document.getElementById('editVestiairePurchaseStatus').value;
 
-  if (!name) { showToast('Enter a name', 'error'); return; }
+  if (!name) { showToast(t('toast.enter_name'), 'error'); return; }
 
   const { error } = await state.sb.from('vestiaire').update({
     name, brand: brand || null, size: size || null, category,
@@ -560,10 +561,10 @@ async function saveEditVestiaire() {
     purchase_status: purchaseStatus || null,
     updated_at: new Date().toISOString()
   }).eq('id', id);
-  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
 
   closeEditVestiaireModal();
-  showToast('Item updated', 'success');
+  showToast(t('toast.updated'), 'success');
   await refreshVestiaire();
 }
 
@@ -571,12 +572,12 @@ async function deleteVestiaire(id) {
   const v = (state.allVestiaire || []).find(x => x.id === id);
   if (!v) return;
   showDeleteConfirm(
-    'Delete Item',
+    t('common.delete'),
     `Remove "${v.name}" from your wardrobe?`,
     async () => {
       const { error } = await state.sb.from('vestiaire').delete().eq('id', id);
-      if (error) { showToast('Delete failed', 'error'); return; }
-      showToast('Item removed', 'info');
+      if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
+      showToast(t('toast.removed'), 'info');
       await refreshVestiaire();
     }
   );
@@ -599,29 +600,29 @@ function closeAddVestiaireCategoryModal() {
 
 function saveNewVestiaireCategory() {
   const name = document.getElementById('newVestiaireCategoryName').value.trim();
-  if (!name) { showToast('Enter a category name', 'error'); return; }
+  if (!name) { showToast(t('toast.enter_name'), 'error'); return; }
   const cats = getVestiaireCategories();
-  if (cats.includes(name)) { showToast('Category already exists', 'error'); return; }
+  if (cats.includes(name)) { showToast(t('toast.failed_to_add'), 'error'); return; }
   cats.push(name);
   saveVestiaireCategories(cats);
   closeAddVestiaireCategoryModal();
-  showToast(`Category "${name}" added`, 'success');
+  showToast(t('toast.added'), 'success');
   renderVestiaire();
 }
 
 function deleteVestiaireCategory(cat) {
   const items = (state.allVestiaire || []).filter(v => v.category === cat);
   if (items.length > 0) {
-    showToast(`Can't delete "${cat}" — it has ${items.length} item(s). Move or delete them first.`, 'error');
+    showToast(t('vestiaire.category_has_items', cat, items.length), 'error');
     return;
   }
   showDeleteConfirm(
-    'Delete Category',
+    t('vestiaire.delete_category'),
     `Remove the "${cat}" category?`,
     () => {
       const cats = getVestiaireCategories().filter(c => c !== cat);
       saveVestiaireCategories(cats);
-      showToast(`Category "${cat}" removed`, 'info');
+      showToast(t('toast.removed'), 'info');
       renderVestiaire();
     }
   );

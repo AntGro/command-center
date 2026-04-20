@@ -2,6 +2,7 @@ import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
 import { scrollToAndHighlight, initItemHoverDelay } from './item-utils.js';
+import { t } from './i18n.js';
 
 // ===================================================================
 // BIRTHDAYS — DATA, CRUD & RENDERING
@@ -17,7 +18,7 @@ async function refreshBirthdays() {
     .order('birthday', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
-    showToast('Failed to load birthdays', 'error');
+    showToast(t('toast.failed_to_load'), 'error');
     return;
   }
   state.allBirthdays = data || [];
@@ -103,7 +104,7 @@ function renderBirthdays() {
     grid.innerHTML = `<div class="birthday-empty">
       ${lucideIcon('cake', 48, 'var(--muted)')}
       <p>No birthdays tracked yet</p>
-      <button class="btn-primary" onclick="openAddBirthdayModal()">Add first birthday</button>
+      <button class="btn-primary" onclick="openAddBirthdayModal()">${t('birthdays.add_first')}</button>
     </div>`;
     document.getElementById('birthdayNavButtons').innerHTML = '';
     return;
@@ -150,7 +151,7 @@ function renderBirthdays() {
   // Render nav buttons
   const navContainer = document.getElementById('birthdayNavButtons');
   navContainer.innerHTML = sections.map(s => {
-    const display = s.isUpcoming ? 'Soon' : (s.shortLabel || s.label);
+    const display = s.isUpcoming ? t('birthdays.soon') : (s.shortLabel || s.label);
     return `<button class="category-nav-btn" style="--cat-color:${s.color};border-color:${s.color};color:${s.color}" onclick="navigateToBirthdaySection('${s.key}')" title="${s.label}">${display}</button>`;
   }).join('');
 
@@ -212,13 +213,13 @@ function renderBirthdayCard(b, isUpcoming) {
       </div>
       <div class="birthday-meta">
         <span class="birthday-date">${lucideIcon('cake', 14)} ${dateStr}</span>
-        <span class="birthday-age">Turning ${turning}</span>
+        <span class="birthday-age">${t('birthdays.turning')} ${turning}</span>
         ${noteHtml}
       </div>
     </div>
     <div class="birthday-actions">
-      <button onclick="openEditBirthdayModal('${b.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
-      <button onclick="deleteBirthday('${b.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
+      <button onclick="openEditBirthdayModal('${b.id}')" title="${t('common.edit')}">${lucideIcon('pencil', 16)}</button>
+      <button onclick="deleteBirthday('${b.id}')" title="${t('common.delete')}">${lucideIcon('trash-2', 16)}</button>
     </div>
   </div>`;
 }
@@ -235,17 +236,17 @@ function initBirthdayModals() {
   m1.className = 'modal-overlay';
   m1.id = 'addBirthdayModal';
   m1.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('cake', 20)} Add Birthday</h2>
-    <label>Name</label>
-    <input type="text" id="newBirthdayName" placeholder="e.g. Yassin, Maman..." maxlength="200"
+    <h2>${lucideIcon('cake', 20)} ${t('birthdays.add_birthday')}</h2>
+    <label>${t('common.name')}</label>
+    <input type="text" id="newBirthdayName" placeholder="${t('birthdays.name_placeholder')}" maxlength="200"
       onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewBirthday();}">
-    <label>Birthday</label>
+    <label>${t('birthdays.birthday_label')}</label>
     <input type="date" id="newBirthdayDate">
-    <label>Note (optional)</label>
-    <input type="text" id="newBirthdayNote" placeholder="e.g. Likes books, allergic to nuts..." maxlength="500">
+    <label>${t('birthdays.note_label')}</label>
+    <input type="text" id="newBirthdayNote" placeholder="${t('birthdays.note_placeholder')}" maxlength="500">
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeAddBirthdayModal()">Cancel</button>
-      <button class="modal-save" onclick="saveNewBirthday()">Add</button>
+      <button class="modal-cancel" onclick="closeAddBirthdayModal()">${t('common.cancel')}</button>
+      <button class="modal-save" onclick="saveNewBirthday()">${t('common.add')}</button>
     </div>
   </div>`;
   app.appendChild(m1);
@@ -255,17 +256,17 @@ function initBirthdayModals() {
   m2.className = 'modal-overlay';
   m2.id = 'editBirthdayModal';
   m2.innerHTML = `<div class="modal">
-    <h2>${lucideIcon('pencil', 20)} Edit Birthday</h2>
+    <h2>${lucideIcon('pencil', 20)} ${t('birthdays.edit_birthday')}</h2>
     <input type="hidden" id="editBirthdayId">
-    <label>Name</label>
+    <label>${t('common.name')}</label>
     <input type="text" id="editBirthdayName" maxlength="200">
-    <label>Birthday</label>
+    <label>${t('birthdays.birthday_label')}</label>
     <input type="date" id="editBirthdayDate">
-    <label>Note (optional)</label>
+    <label>${t('birthdays.note_label')}</label>
     <input type="text" id="editBirthdayNote" maxlength="500">
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeEditBirthdayModal()">Cancel</button>
-      <button class="modal-save" onclick="saveEditBirthday()">Save</button>
+      <button class="modal-cancel" onclick="closeEditBirthdayModal()">${t('common.cancel')}</button>
+      <button class="modal-save" onclick="saveEditBirthday()">${t('common.save')}</button>
     </div>
   </div>`;
   app.appendChild(m2);
@@ -292,17 +293,17 @@ async function saveNewBirthday() {
   const date = document.getElementById('newBirthdayDate').value;
   const note = document.getElementById('newBirthdayNote').value.trim();
 
-  if (!name) { showToast('Enter a name', 'error'); return; }
-  if (!date) { showToast('Enter a birthday date', 'error'); return; }
+  if (!name) { showToast(t('birthdays.enter_name'), 'error'); return; }
+  if (!date) { showToast(t('birthdays.enter_date'), 'error'); return; }
 
   const row = { name, birthday: date };
   if (note) row.note = note;
 
   const { error } = await state.sb.from('birthdays').insert(row);
-  if (error) { showToast('Failed to add birthday: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
 
   closeAddBirthdayModal();
-  showToast(`${name} added!`, 'success');
+  showToast(t('birthdays.birthday_added', name), 'success');
   await refreshBirthdays();
 }
 
@@ -327,16 +328,16 @@ async function saveEditBirthday() {
   const date = document.getElementById('editBirthdayDate').value;
   const note = document.getElementById('editBirthdayNote').value.trim();
 
-  if (!name) { showToast('Enter a name', 'error'); return; }
-  if (!date) { showToast('Enter a birthday date', 'error'); return; }
+  if (!name) { showToast(t('birthdays.enter_name'), 'error'); return; }
+  if (!date) { showToast(t('birthdays.enter_date'), 'error'); return; }
 
   const { error } = await state.sb.from('birthdays').update({
     name, birthday: date, note: note || null, updated_at: new Date().toISOString()
   }).eq('id', id);
-  if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+  if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
 
   closeEditBirthdayModal();
-  showToast('Birthday updated', 'success');
+  showToast(t('birthdays.birthday_updated'), 'success');
   await refreshBirthdays();
 }
 
@@ -348,8 +349,8 @@ async function deleteBirthday(id) {
     `Remove ${b.name}'s birthday?`,
     async () => {
       const { error } = await state.sb.from('birthdays').delete().eq('id', id);
-      if (error) { showToast('Delete failed', 'error'); return; }
-      showToast('Birthday removed', 'info');
+      if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
+      showToast(t('birthdays.birthday_removed'), 'info');
       await refreshBirthdays();
     }
   );

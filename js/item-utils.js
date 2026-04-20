@@ -3,6 +3,7 @@
 // ===================================================================
 
 import { showToast } from './utils.js';
+import { t } from './i18n.js';
 
 // ===================================================================
 // SHARED DRAG STATE
@@ -200,7 +201,7 @@ export async function reorderItems({
   ordered.forEach(el => container.appendChild(el));
 
   if (reinitFn) reinitFn();
-  showToast('Reordered', 'success');
+  showToast(t('toast.reordered'), 'success');
 
   Promise.all(items.map((t, i) =>
     sb.from(tableName).update({ sort_order: i }).eq('id', t.id)

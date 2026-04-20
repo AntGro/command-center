@@ -1,4 +1,5 @@
 import { lucideIcon } from './icons.js';
+import { t } from './i18n.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
 import { scrollToAndHighlight, inlineEditText, initItemHoverDelay } from './item-utils.js';
@@ -144,7 +145,7 @@ function renderDeckNavButtons() {
   const decks = [...new Set(allCards.map(c => c.deck))].sort();
 
   // Draft nav button first
-  let html = `<button class="category-nav-btn" style="--cat-color:${DRAFT_COLOR};border-color:${DRAFT_COLOR};color:${DRAFT_COLOR}" onclick="navigateToFlashDeck('__drafts')">${lucideIcon('file-edit', 14, DRAFT_COLOR)} Drafts (${allDrafts.length})</button>`;
+  let html = `<button class="category-nav-btn" style="--cat-color:${DRAFT_COLOR};border-color:${DRAFT_COLOR};color:${DRAFT_COLOR}" onclick="navigateToFlashDeck('__drafts')">${lucideIcon('file-edit', 14, DRAFT_COLOR)} ${t('flashcards.draft')} (${allDrafts.length})</button>`;
 
   html += decks.map(deck => {
     const color = getDeckColor(deck);
@@ -187,8 +188,8 @@ function renderAllBuckets() {
   if (!html.trim()) {
     html = `<div class="fc-empty-state">
       <div class="fc-empty-icon">${lucideIcon('book-open', 40, '#8b5cf6')}</div>
-      <h3>No flashcards yet</h3>
-      <p>Add drafts or create cards to start learning.</p>
+      <h3>${t('flashcards.no_flashcards')}</h3>
+      <p>${t('flashcards.no_flashcards_hint')}</p>
     </div>`;
   }
 
@@ -214,24 +215,24 @@ function renderDraftsBucket(q) {
   const readyCount = drafts.filter(d => d.proposal_status === 'ready').length;
 
   const chips = [];
-  if (pendingCount > 0) chips.push(`<span class="fc-chip" style="background:rgba(245,158,11,0.15);color:#f59e0b;">${pendingCount} generating…</span>`);
+  if (pendingCount > 0) chips.push(`<span class="fc-chip" style="background:rgba(245,158,11,0.15);color:#f59e0b;">${pendingCount} ${t('flashcards.generating')}</span>`);
   if (readyCount > 0) chips.push(`<span class="fc-chip" style="background:rgba(34,197,94,0.15);color:#22c55e;">${readyCount} ready</span>`);
 
   return `<div class="project-card" id="flashDraftsDeck" style="--cat-color:${DRAFT_COLOR}">
     <div class="project-card-header">
       <div style="display:flex;align-items:flex-start;gap:6px;">
         <div class="project-info">
-          <h3>${lucideIcon('file-edit', 16, DRAFT_COLOR)} <span style="color:${DRAFT_COLOR};">Drafts</span></h3>
+          <h3>${lucideIcon('file-edit', 16, DRAFT_COLOR)} <span style="color:${DRAFT_COLOR};">${t('flashcards.draft')}</span></h3>
           <span class="tech">${drafts.length} items ${chips.join(' ')}</span>
         </div>
       </div>
     </div>
     <div class="add-task">
-      <textarea placeholder="Add draft…" id="draftQuickInput" onkeydown="handleDraftInput(event)" rows="1" style="resize:none;overflow:hidden;"></textarea>
+      <textarea placeholder="${t('flashcards.draft_placeholder')}" id="draftQuickInput" onkeydown="handleDraftInput(event)" rows="1" style="resize:none;overflow:hidden;"></textarea>
       <button onclick="quickAddDraft()">+</button>
     </div>
     <div class="task-list">
-      ${drafts.length === 0 ? '<p class="empty-msg">Jot down topics to learn — generate flashcard proposals from them.</p>' : ''}
+      ${drafts.length === 0 ? '<p class="empty-msg">' + t('flashcards.draft_hint') + '</p>' : ''}
       ${drafts.map(d => renderDraftItem(d)).join('')}
     </div>
   </div>`;
@@ -251,11 +252,11 @@ function renderDraftItem(d) {
       <div class="fc-proposal-label">${lucideIcon('sparkles', 14, '#22c55e')} Proposed card:</div>
       <div class="fc-proposal-qa"><strong>Q:</strong> ${esc(d.proposed_front)}</div>
       <div class="fc-proposal-qa"><strong>A:</strong> ${esc(d.proposed_back)}</div>
-      <div class="fc-proposal-deck"><strong>Deck:</strong> <select onchange="updateProposedDeck('${d.id}', this.value)">${deckOptions}</select></div>
+      <div class="fc-proposal-deck"><strong>${t('flashcards.deck')}:</strong> <select onchange="updateProposedDeck('${d.id}', this.value)">${deckOptions}</select></div>
       <div class="fc-proposal-actions">
-        <button class="fc-proposal-accept" onclick="acceptProposal('${d.id}')">${lucideIcon('check', 14, '#fff')} Accept</button>
-        <button class="fc-proposal-edit" onclick="editProposal('${d.id}')">${lucideIcon('pencil', 14)} Edit</button>
-        <button class="fc-proposal-reject" onclick="rejectProposal('${d.id}')">${lucideIcon('x', 14)} Reject</button>
+        <button class="fc-proposal-accept" onclick="acceptProposal('${d.id}')">${lucideIcon('check', 14, '#fff')} ${t('flashcards.accept')}</button>
+        <button class="fc-proposal-edit" onclick="editProposal('${d.id}')">${lucideIcon('pencil', 14)} ${t('common.edit')}</button>
+        <button class="fc-proposal-reject" onclick="rejectProposal('${d.id}')">${lucideIcon('x', 14)} ${t('flashcards.reject')}</button>
       </div>
     </div>`;
   }
@@ -263,11 +264,11 @@ function renderDraftItem(d) {
   return `<div class="bucket-item todo-item" data-draft-id="${d.id}">
     <div class="todo-row">
       <span class="todo-text" ondblclick="startInlineEditDraft('${d.id}', this)" style="cursor:text;">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
-      ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">Generating…</span>` : ''}
+      ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">${t('flashcards.generating')}</span>` : ''}
       <div class="todo-actions">
-        ${!hasProposal && !isPending ? `<button onclick="requestProposal('${d.id}')" title="Generate flashcard">${lucideIcon('sparkles', 16)}</button>` : ''}
-        <button onclick="startInlineEditDraftById('${d.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
-        <button onclick="deleteDraft('${d.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
+        ${!hasProposal && !isPending ? `<button onclick="requestProposal('${d.id}')" title="${t('flashcards.propose')}">${lucideIcon('sparkles', 16)}</button>` : ''}
+        <button onclick="startInlineEditDraftById('${d.id}')" title="${t('common.edit')}">${lucideIcon('pencil', 16)}</button>
+        <button onclick="deleteDraft('${d.id}')" title="${t('common.delete')}">${lucideIcon('trash-2', 16)}</button>
       </div>
     </div>
     ${proposalHtml}
@@ -295,8 +296,8 @@ function renderDeckBucket(deck, q) {
   const dueCount = allDeckCards.filter(c => c.last_review && (!c.next_review || new Date(c.next_review) <= now)).length;
 
   const chips = [];
-  if (newCount > 0) chips.push(`<span class="fc-chip fc-chip-new">${newCount} new</span>`);
-  if (dueCount > 0) chips.push(`<span class="fc-chip fc-chip-due">${dueCount} due</span>`);
+  if (newCount > 0) chips.push(`<span class="fc-chip fc-chip-new">${newCount} ${t('flashcards.new_count')}</span>`);
+  if (dueCount > 0) chips.push(`<span class="fc-chip fc-chip-due">${dueCount} ${t('flashcards.due_count')}</span>`);
 
   const practiceCount = dueCount + newCount;
 
@@ -305,13 +306,13 @@ function renderDeckBucket(deck, q) {
       <div style="display:flex;align-items:flex-start;gap:6px;">
         <div class="project-info">
           <h3><span style="color:${color};">${esc(deck)}</span>${getFlashShortname(deck) ? '<span class="todo-cat-shortname-label">' + esc(getFlashShortname(deck)) + '</span>' : ''}</h3>
-          <span class="tech">${allDeckCards.length} cards ${chips.join(' ')}</span>
+          <span class="tech">${allDeckCards.length} ${t('flashcards.cards')} ${chips.join(' ')}</span>
         </div>
       </div>
       <div class="project-header-actions" style="opacity:1;">
         <button class="todo-cat-shortname-btn" onclick="promptFlashShortname('${esc(deck).replace(/'/g, "\\\\'")}')" title="${getFlashShortname(deck) ? 'Edit short name' : 'Set short name'}">${lucideIcon("pencil",14)}</button>
-        ${practiceCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="Practice">${lucideIcon('play', 14, '#fff')} ${practiceCount}</button>` : `<span class="fc-all-done">${lucideIcon('circle-check', 14, '#22c55e')} Caught up</span>`}
-        <button class="archive-project-btn" onclick="openAddFlashcardModal('${esc(deck)}')" title="Add card">${lucideIcon('plus', 16)}</button>
+        ${practiceCount > 0 ? `<button class="fc-practice-btn" style="background:${color};" onclick="startPractice('${esc(deck)}')" title="${t('flashcards.practice')}">${lucideIcon('play', 14, '#fff')} ${practiceCount}</button>` : `<span class="fc-all-done">${lucideIcon('circle-check', 14, '#22c55e')} Caught up</span>`}
+        <button class="archive-project-btn" onclick="openAddFlashcardModal('${esc(deck)}')" title="${t('flashcards.add_card')}">${lucideIcon('plus', 16)}</button>
       </div>
     </div>
     <div class="task-list">
@@ -327,11 +328,11 @@ function renderFlashcardItem(c, color) {
   const R = c.last_review && c.stability ? retrievability(c.stability, c.last_review, now.toISOString()) : null;
 
   let badge = '';
-  if (isNew) badge = `<span class="fc-status-badge fc-status-new">New</span>`;
-  else if (isDue) badge = `<span class="fc-status-badge fc-status-due">Due</span>`;
+  if (isNew) badge = `<span class="fc-status-badge fc-status-new">${t('flashcards.new_card')}</span>`;
+  else if (isDue) badge = `<span class="fc-status-badge fc-status-due">${t('flashcards.due')}</span>`;
   else {
     const daysLeft = c.next_review ? Math.ceil((new Date(c.next_review) - now) / 86400000) : 0;
-    badge = `<span class="fc-status-badge fc-status-ok">${daysLeft}d</span>`;
+    badge = `<span class="fc-status-badge fc-status-ok">${t('flashcards.days_left', daysLeft)}</span>`;
   }
 
   // Left border color: smooth gradient from red (R=0) → amber (R=0.5) → green (R=1), grey for new
@@ -355,8 +356,8 @@ function renderFlashcardItem(c, color) {
         ${badge}
       </div>
       <div class="todo-actions">
-        <button onclick="openEditFlashcardModal('${c.id}')" title="Edit">${lucideIcon('pencil', 16)}</button>
-        <button onclick="deleteFlashcard('${c.id}')" title="Delete">${lucideIcon('trash-2', 16)}</button>
+        <button onclick="openEditFlashcardModal('${c.id}')" title="${t('common.edit')}">${lucideIcon('pencil', 16)}</button>
+        <button onclick="deleteFlashcard('${c.id}')" title="${t('common.delete')}">${lucideIcon('trash-2', 16)}</button>
       </div>
     </div>
   </div>`;
@@ -372,12 +373,12 @@ window.openAddDraftModal = function() {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addDraftModal" style="display:flex;" onclick="if(event.target===this)closeAddDraftModal()">
     <div class="modal">
-      <h2>${lucideIcon('file-edit', 18, DRAFT_COLOR)} Add Draft</h2>
-      <label>What do you want to learn?</label>
-      <textarea id="newDraftContent" rows="4" placeholder="Any topic, question, or fact you want to memorize…"></textarea>
+      <h2>${lucideIcon('file-edit', 18, DRAFT_COLOR)} ${t('flashcards.add_draft')}</h2>
+      <label>${t('flashcards.what_to_learn')}</label>
+      <textarea id="newDraftContent" rows="4" placeholder="${t('flashcards.learn_placeholder')}"></textarea>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeAddDraftModal()">Cancel</button>
-        <button class="modal-save" onclick="saveNewDraft()">Save</button>
+        <button class="modal-cancel" onclick="closeAddDraftModal()">${t('common.cancel')}</button>
+        <button class="modal-save" onclick="saveNewDraft()">${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -391,11 +392,11 @@ window.closeAddDraftModal = function() {
 
 window.saveNewDraft = async function() {
   const content = document.getElementById('newDraftContent').value.trim();
-  if (!content) { showToast('Content required'); return; }
+  if (!content) { showToast(t('toast.content_required')); return; }
   if (state.sb) await state.sb.from('flashcard_notes').insert({ content });
   closeAddDraftModal();
   await refreshFlashcards();
-  showToast('Draft added');
+  showToast(t('flashcards.draft_added'));
 };
 
 window.handleDraftInput = function(e) {
@@ -410,7 +411,7 @@ window.quickAddDraft = async function() {
   if (state.sb) await state.sb.from('flashcard_notes').insert({ content });
   input.value = '';
   await refreshFlashcards();
-  showToast('Draft added');
+  showToast(t('flashcards.draft_added'));
 };
 
 // ── Inline Draft Editing (uses shared inlineEditText) ──
@@ -421,7 +422,7 @@ window.startInlineEditDraft = function(id, spanEl) {
     saveFn: async (content) => {
       if (state.sb) {
         await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
-        showToast('Draft updated');
+        showToast(t('flashcards.draft_updated'));
       }
     },
     refreshFn: refreshFlashcards,
@@ -439,7 +440,7 @@ window.deleteDraft = function(id) {
   showDeleteConfirm('Delete Draft', 'Are you sure?', async () => {
     if (state.sb) await state.sb.from('flashcard_notes').delete().eq('id', id);
     await refreshFlashcards();
-    showToast('Draft deleted');
+    showToast(t('flashcards.draft_deleted'));
   });
 };
 
@@ -450,7 +451,7 @@ window.requestProposal = async function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (draft) draft.proposal_status = 'pending';
   renderAllBuckets();
-  showToast('Generating flashcard proposal…');
+  showToast(t('flashcards.generating_proposal'));
 };
 
 window.acceptProposal = async function(id) {
@@ -462,7 +463,7 @@ window.acceptProposal = async function(id) {
     await state.sb.from('flashcard_notes').delete().eq('id', id);
   }
   await refreshFlashcards();
-  showToast(`Card added to ${deck}`);
+  showToast(t('flashcards.card_added_to', deck));
 };
 
 window.rejectProposal = async function(id) {
@@ -473,7 +474,7 @@ window.rejectProposal = async function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (draft) { draft.proposal_status = null; draft.proposed_front = null; draft.proposed_back = null; }
   renderAllBuckets();
-  showToast('Proposal rejected');
+  showToast(t('flashcards.proposal_rejected'));
 };
 
 window.editProposal = function(id) {
@@ -486,16 +487,16 @@ window.editProposal = function(id) {
   ).join('');
   const html = `<div class="modal-overlay" id="editProposalModal" style="display:flex;" onclick="if(event.target===this)closeEditProposalModal()">
     <div class="modal">
-      <h2>${lucideIcon('pencil', 18, '#8b5cf6')} Edit Proposal</h2>
-      <label>Front (Question)</label>
+      <h2>${lucideIcon('pencil', 18, '#8b5cf6')} ${t('flashcards.edit_proposal')}</h2>
+      <label>${t('flashcards.question')}</label>
       <textarea id="editProposalFront" rows="3">${esc(draft.proposed_front || '')}</textarea>
-      <label>Back (Answer)</label>
+      <label>${t('flashcards.answer')}</label>
       <textarea id="editProposalBack" rows="4">${esc(draft.proposed_back || '')}</textarea>
-      <label>Deck</label>
+      <label>${t('flashcards.deck')}</label>
       <select id="editProposalDeck">${deckOptions}</select>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeEditProposalModal()">Cancel</button>
-        <button class="modal-save" onclick="saveEditedProposal('${draft.id}')">Save</button>
+        <button class="modal-cancel" onclick="closeEditProposalModal()">${t('common.cancel')}</button>
+        <button class="modal-save" onclick="saveEditedProposal('${draft.id}')">${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -510,7 +511,7 @@ window.saveEditedProposal = async function(id) {
   const front = document.getElementById('editProposalFront').value.trim();
   const back = document.getElementById('editProposalBack').value.trim();
   const deck = document.getElementById('editProposalDeck').value;
-  if (!front || !back) { showToast('Both fields are required'); return; }
+  if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
   if (state.sb) {
     await state.sb.from('flashcard_notes').update({ proposed_front: front, proposed_back: back, proposed_deck: deck }).eq('id', id);
   }
@@ -518,7 +519,7 @@ window.saveEditedProposal = async function(id) {
   if (draft) { draft.proposed_front = front; draft.proposed_back = back; draft.proposed_deck = deck; }
   closeEditProposalModal();
   renderAllBuckets();
-  showToast('Proposal updated');
+  showToast(t('flashcards.proposal_updated'));
 };
 
 window.updateProposedDeck = async function(id, deck) {
@@ -534,15 +535,15 @@ window.openAddFlashcardModal = function(deck) {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeAddFlashcardModal()">
     <div class="modal">
-      <h2>${lucideIcon('plus', 18, '#8b5cf6')} Add Flashcard</h2>
+      <h2>${lucideIcon('plus', 18, '#8b5cf6')} ${t('flashcards.add_card')}</h2>
       <input type="hidden" id="newFlashDeck" value="${esc(deck || 'General')}">
-      <label>Front (Question)</label>
-      <textarea id="newFlashFront" rows="3" placeholder="Question…"></textarea>
-      <label>Back (Answer)</label>
-      <textarea id="newFlashBack" rows="3" placeholder="Answer…"></textarea>
+      <label>${t('flashcards.question')}</label>
+      <textarea id="newFlashFront" rows="3" placeholder="${t('flashcards.question_placeholder')}"></textarea>
+      <label>${t('flashcards.answer')}</label>
+      <textarea id="newFlashBack" rows="3" placeholder="${t('flashcards.answer_placeholder')}"></textarea>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeAddFlashcardModal()">Cancel</button>
-        <button class="modal-save" onclick="saveNewFlashcard()">Save</button>
+        <button class="modal-cancel" onclick="closeAddFlashcardModal()">${t('common.cancel')}</button>
+        <button class="modal-save" onclick="saveNewFlashcard()">${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -558,11 +559,11 @@ window.saveNewFlashcard = async function() {
   const deck = document.getElementById('newFlashDeck').value.trim();
   const front = document.getElementById('newFlashFront').value.trim();
   const back = document.getElementById('newFlashBack').value.trim();
-  if (!front || !back) { showToast('Front and back required'); return; }
+  if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
   if (state.sb) await state.sb.from('flashcards').insert({ deck, front, back });
   closeAddFlashcardModal();
   await refreshFlashcards();
-  showToast('Card added');
+  showToast(t('flashcards.card_added'));
 };
 
 window.openEditFlashcardModal = function(id) {
@@ -573,17 +574,17 @@ window.openEditFlashcardModal = function(id) {
   const deckOptions = decks.map(d => `<option value="${esc(d)}" ${d === card.deck ? 'selected' : ''}>${esc(d)}</option>`).join('');
   const html = `<div class="modal-overlay" id="editFlashcardModal" style="display:flex;" onclick="if(event.target===this)closeEditFlashcardModal()">
     <div class="modal">
-      <h2>${lucideIcon('pencil', 18, '#f59e0b')} Edit Flashcard</h2>
+      <h2>${lucideIcon('pencil', 18, '#f59e0b')} ${t('flashcards.edit_card')}</h2>
       <input type="hidden" id="editFlashId" value="${id}">
-      <label>Deck</label>
+      <label>${t('flashcards.deck')}</label>
       <select id="editFlashDeck">${deckOptions}</select>
-      <label>Front (Question)</label>
+      <label>${t('flashcards.question')}</label>
       <textarea id="editFlashFront" rows="3">${esc(card.front)}</textarea>
-      <label>Back (Answer)</label>
+      <label>${t('flashcards.answer')}</label>
       <textarea id="editFlashBack" rows="3">${esc(card.back)}</textarea>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeEditFlashcardModal()">Cancel</button>
-        <button class="modal-save" onclick="saveEditFlashcard()">Save</button>
+        <button class="modal-cancel" onclick="closeEditFlashcardModal()">${t('common.cancel')}</button>
+        <button class="modal-save" onclick="saveEditFlashcard()">${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -599,11 +600,11 @@ window.saveEditFlashcard = async function() {
   const deck = document.getElementById('editFlashDeck').value.trim();
   const front = document.getElementById('editFlashFront').value.trim();
   const back = document.getElementById('editFlashBack').value.trim();
-  if (!front || !back) { showToast('Front and back required'); return; }
+  if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
   if (state.sb) await state.sb.from('flashcards').update({ deck, front, back }).eq('id', id);
   closeEditFlashcardModal();
   await refreshFlashcards();
-  showToast('Card updated');
+  showToast(t('flashcards.card_updated'));
 };
 
 window.deleteFlashcard = function(id) {
@@ -612,7 +613,7 @@ window.deleteFlashcard = function(id) {
   showDeleteConfirm('Delete Flashcard', 'Are you sure?', async () => {
     if (state.sb) await state.sb.from('flashcards').delete().eq('id', id);
     await refreshFlashcards();
-    showToast('Card deleted');
+    showToast(t('flashcards.card_deleted'));
   });
 };
 
@@ -621,12 +622,12 @@ window.openAddFlashDeckModal = function() {
   closeAllFlashModals();
   const html = `<div class="modal-overlay" id="addFlashDeckModal" style="display:flex;" onclick="if(event.target===this)closeAddFlashDeckModal()">
     <div class="modal">
-      <h2>${lucideIcon('book-open', 18, '#06b6d4')} New Deck</h2>
-      <label>Deck Name</label>
-      <input type="text" id="newDeckName" placeholder="e.g. History, Science…">
+      <h2>${lucideIcon('book-open', 18, '#06b6d4')} ${t('flashcards.new_deck')}</h2>
+      <label>${t('flashcards.deck_name')}</label>
+      <input type="text" id="newDeckName" placeholder="${t('flashcards.deck_placeholder')}">
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeAddFlashDeckModal()">Cancel</button>
-        <button class="modal-save" onclick="saveNewFlashDeck()">Create</button>
+        <button class="modal-cancel" onclick="closeAddFlashDeckModal()">${t('common.cancel')}</button>
+        <button class="modal-save" onclick="saveNewFlashDeck()">${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -640,7 +641,7 @@ window.closeAddFlashDeckModal = function() {
 
 window.saveNewFlashDeck = function() {
   const name = document.getElementById('newDeckName').value.trim();
-  if (!name) { showToast('Name required'); return; }
+  if (!name) { showToast(t('toast.name_required')); return; }
   closeAddFlashDeckModal();
   openAddFlashcardModal(name);
 };
@@ -656,7 +657,7 @@ function startPractice(deckFilter) {
   const now = new Date();
   let pool = allCards.filter(c => !c.next_review || new Date(c.next_review) <= now);
   if (deckFilter && deckFilter !== '__all') pool = pool.filter(c => c.deck === deckFilter);
-  if (pool.length === 0) { showToast('No cards due for review!'); return; }
+  if (pool.length === 0) { showToast(t('flashcards.no_cards_due')); return; }
 
   const SESSION_SIZE = 10;
   const failed = pool.filter(c => c.last_review && c.stability > 0 && c.stability <= 2);
@@ -720,21 +721,21 @@ function showNextCard() {
     <div class="practice-card-area" onclick="revealCard()">
       <div class="practice-card" id="practiceCard">
         <div class="practice-card-front">
-          <div class="practice-card-label">Question</div>
+          <div class="practice-card-label">${t('flashcards.question')}</div>
           <div class="practice-card-text">${esc(card.front)}</div>
         </div>
         <div class="practice-card-back">
-          <div class="practice-card-label">Answer</div>
+          <div class="practice-card-label">${t('flashcards.answer')}</div>
           <div class="practice-card-text">${esc(card.back)}</div>
         </div>
       </div>
     </div>
     <div class="practice-hint" id="practiceHint">Tap to reveal answer</div>
     <div class="practice-buttons" id="practiceButtons" style="display:none;">
-      <button class="rating-btn rating-again" onclick="rateCard(1)"><span class="rating-num">1</span> Again</button>
-      <button class="rating-btn rating-hard" onclick="rateCard(2)"><span class="rating-num">2</span> Hard</button>
-      <button class="rating-btn rating-good" onclick="rateCard(3)"><span class="rating-num">3</span> Good</button>
-      <button class="rating-btn rating-easy" onclick="rateCard(4)"><span class="rating-num">4</span> Easy</button>
+      <button class="rating-btn rating-again" onclick="rateCard(1)"><span class="rating-num">1</span> ${t('flashcards.again')}</button>
+      <button class="rating-btn rating-hard" onclick="rateCard(2)"><span class="rating-num">2</span> ${t('flashcards.hard')}</button>
+      <button class="rating-btn rating-good" onclick="rateCard(3)"><span class="rating-num">3</span> ${t('flashcards.good')}</button>
+      <button class="rating-btn rating-easy" onclick="rateCard(4)"><span class="rating-num">4</span> ${t('flashcards.easy')}</button>
     </div>`;
 }
 
@@ -772,13 +773,13 @@ function showSessionSummary() {
   overlay.innerHTML = `
     <div class="practice-summary">
       <div class="practice-summary-emoji">${accuracy >= 80 ? lucideIcon('trophy', 32) : accuracy >= 50 ? lucideIcon('flame', 32) : lucideIcon('book-open', 32)}</div>
-      <h2>Session Complete</h2>
+      <h2>${t('flashcards.session_complete')}</h2>
       <div class="practice-summary-stats">
-        <div class="practice-summary-stat"><span class="practice-stat-val">${sessionDone}</span><span class="practice-stat-lbl">Reviewed</span></div>
+        <div class="practice-summary-stat"><span class="practice-stat-val">${sessionDone}</span><span class="practice-stat-lbl">${t('flashcards.cards_reviewed')}</span></div>
         <div class="practice-summary-stat"><span class="practice-stat-val">${sessionCorrect}</span><span class="practice-stat-lbl">Good+</span></div>
-        <div class="practice-summary-stat"><span class="practice-stat-val">${accuracy}%</span><span class="practice-stat-lbl">Accuracy</span></div>
+        <div class="practice-summary-stat"><span class="practice-stat-val">${accuracy}%</span><span class="practice-stat-lbl">${t('flashcards.accuracy')}</span></div>
       </div>
-      <button class="btn practice-done-btn" onclick="endPractice()">Done</button>
+      <button class="btn practice-done-btn" onclick="endPractice()">${t('common.close')}</button>
     </div>`;
 }
 

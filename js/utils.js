@@ -1,4 +1,5 @@
 import { lucideIcon } from './icons.js';
+import { t } from './i18n.js';
 import state from './supabase.js';
 
 // ===================================================================
@@ -193,7 +194,7 @@ function updateFooterStats(viewCountsGetter) {
   }
 
   // Always add DB size
-  statsHtml += `<div class="db-stat">${lucideIcon('hard-drive', 14)} DB: <span id="dbSizeMb">—</span> / 500 MB</div>`;
+  statsHtml += `<div class="db-stat">${lucideIcon('hard-drive', 14)} ${t('utils.db')}: <span id="dbSizeMb">—</span> / 500 MB</div>`;
   container.innerHTML = statsHtml;
 
   // Set dashboard link using the connected URL

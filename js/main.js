@@ -1,4 +1,5 @@
 import { lucideIcon } from './icons.js';
+import { t, getLang, nextLang } from './i18n.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
@@ -31,7 +32,7 @@ function initGate() {
   if (saved) {
     // Show a brief connecting message, then auto-connect
     document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('loginError').textContent = 'Reconnecting…';
+    document.getElementById('loginError').textContent = t('toast.reconnecting');
     document.getElementById('username').value = saved.url;
     document.getElementById('password').value = saved.key;
     autoConnect(saved.url, saved.key);
@@ -56,7 +57,7 @@ async function autoConnect(url, key) {
   } catch (e) {
     // Stored credentials are stale — clear them and show the form
     clearStayConnectedCreds();
-    document.getElementById('loginError').textContent = 'Saved session expired — please log in again';
+    document.getElementById('loginError').textContent = t('toast.session_expired');
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
     document.getElementById('username').focus();
@@ -91,8 +92,8 @@ async function doLogin() {
   const key = document.getElementById('password').value.trim();
   const stayConnected = document.getElementById('stayConnected').checked;
   const err = document.getElementById('loginError');
-  if (!url || !key) { err.textContent = 'Enter both URL and key'; return; }
-  err.textContent = 'Connecting...';
+  if (!url || !key) { err.textContent = t('toast.enter_name'); return; }
+  err.textContent = t('toast.connecting');
   try {
     await connect(url, key);
     err.textContent = '';
@@ -110,7 +111,7 @@ async function doLogin() {
       } catch(e) {}
     }
   } catch (e) {
-    err.textContent = 'Connection failed — check URL and key';
+    err.textContent = t('toast.connection_failed');
   }
 }
 
@@ -197,6 +198,106 @@ async function connect(url, key) {
     if (h !== state.currentView) switchView(h);
   });
 }
+
+
+// ===================================================================
+// LANGUAGE TOGGLE
+// ===================================================================
+function applyLang() {
+  const btn = document.getElementById('langToggle');
+  if (btn) btn.textContent = getLang().toUpperCase();
+  updateStaticLabels();
+}
+
+function toggleLang() {
+  nextLang();
+  applyLang();
+  // Re-render current view
+  const view = state.currentView;
+  if (view === 'projects') refreshAll();
+  else if (view === 'todos') renderTodos();
+  else if (view === 'chores') renderChores();
+  else if (view === 'birthdays') renderBirthdays();
+  else if (view === 'vestiaire') renderVestiaire();
+  else if (view === 'flashcards') renderFlashcards();
+}
+
+function updateStaticLabels() {
+  // Nav tabs
+  const tabLabels = { tabProjects: 'nav.projects', tabTodos: 'nav.todos', tabChores: 'nav.chores',
+    tabBirthdays: 'nav.birthdays', tabVestiaire: 'nav.wardrobe', tabFlashcards: 'nav.flashcards' };
+  for (const [id, key] of Object.entries(tabLabels)) {
+    const el = document.getElementById(id);
+    if (el) {
+      // Keep the icon SVG, replace only text
+      const svg = el.querySelector('svg');
+      const svgHtml = svg ? svg.outerHTML : '';
+      el.innerHTML = svgHtml + ' ' + t(key);
+    }
+  }
+  // Login
+  const urlInput = document.getElementById('username');
+  const keyInput = document.getElementById('password');
+  if (urlInput) urlInput.placeholder = t('login.url_placeholder');
+  if (keyInput) keyInput.placeholder = t('login.key_placeholder');
+  const stayLabel = document.querySelector('label[for="stayConnected"]');
+  if (stayLabel) stayLabel.textContent = t('login.stay_connected');
+  const connectBtn = document.querySelector('#loginForm button[type="submit"]');
+  if (connectBtn) connectBtn.textContent = t('login.connect');
+  // Search inputs
+  const searchMap = {
+    'projectsView': 'common.search',
+    'todosView': 'common.search',
+    'choresView': 'common.search',
+    'birthdaysView': 'common.search',
+    'vestiaireView': 'common.search',
+    'flashcardsView': 'flashcards.search_placeholder',
+  };
+  for (const [viewId, key] of Object.entries(searchMap)) {
+    const view = document.getElementById(viewId);
+    if (view) {
+      const input = view.querySelector('.page-search');
+      if (input) input.placeholder = t(key) + '…';
+    }
+  }
+  // Todo filters
+  const todoFilterMap = { pending: 'todos.pending', done: 'todos.done', all: 'todos.all' };
+  document.querySelectorAll('#todoFilters .filter-btn').forEach(btn => {
+    const f = btn.dataset.filter;
+    if (f === 'flagged') { const svg = btn.querySelector('svg'); btn.innerHTML = (svg ? svg.outerHTML : '') + ' ' + t('todos.flagged'); }
+    else if (f === 'outdated') { const svg = btn.querySelector('svg'); btn.innerHTML = (svg ? svg.outerHTML : '') + ' ' + t('todos.outdated'); }
+    else if (todoFilterMap[f]) btn.textContent = t(todoFilterMap[f]);
+  });
+  // Todo sort
+  const todoSort = document.getElementById('todoSortBy');
+  if (todoSort) {
+    todoSort.options[0].text = t('todos.sort_manual');
+    todoSort.options[1].text = t('todos.sort_due');
+    todoSort.options[2].text = t('todos.sort_priority');
+    todoSort.options[3].text = t('todos.sort_created');
+  }
+  // Chore filters
+  const choreFilterMap = { all: 'chores.filter_all', overdue: 'chores.filter_overdue', 'due-soon': 'chores.filter_due_soon' };
+  document.querySelectorAll('#choreFilters .filter-btn').forEach(btn => {
+    const f = btn.dataset.filter;
+    if (choreFilterMap[f]) btn.textContent = t(choreFilterMap[f]);
+  });
+  // Chore sort
+  const choreSort = document.getElementById('choreSortBy');
+  if (choreSort) {
+    choreSort.options[0].text = t('chores.sort_due');
+    choreSort.options[1].text = t('chores.sort_name');
+    choreSort.options[2].text = t('chores.sort_last_done');
+  }
+  // Footer
+  const dashLink = document.getElementById('supabaseDashLink');
+  if (dashLink) dashLink.textContent = t('login.supabase_dashboard') + ' ↗';
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.textContent = t('login.log_out');
+}
+
+// Init lang on page load
+(function() { applyLang(); })();
 
 
 // ===================================================================
@@ -372,4 +473,5 @@ function renderLastUpdated() {
 
 window.switchView = switchView;
 window.toggleTheme = toggleTheme;
+window.toggleLang = toggleLang;
 window.disconnect = disconnect;

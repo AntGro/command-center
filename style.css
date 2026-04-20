@@ -65,6 +65,7 @@ input,select,button{font-family:inherit;}
 .header-actions .btn{padding:8px;border:none;background:transparent;border-radius:50%;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;backdrop-filter:none;}
 .header-actions .btn:hover{background:var(--surface2);color:var(--text);transform:none;box-shadow:none;border:none;}
 .header-actions .btn:active{transform:scale(0.92);}
+#langToggle{width:auto;min-width:34px;border-radius:6px;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;}
 .header-actions .btn.btn-active{background:rgba(100,108,255,0.12);color:var(--accent);}
 .header-actions .btn.btn-active:hover{background:rgba(100,108,255,0.18);color:var(--accent);}
 .header-actions .btn.btn-disconnect{opacity:0.4;}

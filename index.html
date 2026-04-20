@@ -24,7 +24,7 @@
       <input type="text" id="username" name="username" placeholder="Supabase Project URL" autocomplete="username" style="margin-bottom:10px;">
       <label for="password" style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:2px;">Password</label>
       <input type="password" id="password" name="password" placeholder="Publishable Key" autocomplete="current-password">
-      <label class="stay-connected-label">
+      <label class="stay-connected-label" for="stayConnected">
         <input type="checkbox" id="stayConnected" checked>
         <span>Stay connected on this device</span>
       </label>
@@ -47,8 +47,9 @@
       <button class="view-tab" id="tabFlashcards" onclick="switchView('flashcards')"><span data-icon="book-open" data-size="16" data-color="#06b6d4"></span> Flashcards</button>
     </div>
     <div class="header-actions">
+      <button class="btn" onclick="toggleLang()" id="langToggle" title="Language">EN</button>
       <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme"></button>
-      <button class="btn btn-disconnect" onclick="disconnect()" title="Disconnect &amp; log out"><span data-icon="log-out" data-size="16"></span></button>
+      <button class="btn btn-disconnect" onclick="disconnect()" id="logoutBtn" title="Disconnect &amp; log out"><span data-icon="log-out" data-size="16"></span></button>
     </div>
   </header>
 

@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 import { lucideIcon } from './icons.js';
 import state, { ARCHIVED_PROJECTS_KEY, SHOW_ARCHIVED_KEY, MAX_TEXT_LEN, MAX_META_DISPLAY, TODO_MAX_LEN } from './supabase.js';
 import { esc, linkify, renderMd, showToast, showDeleteConfirm,
@@ -55,7 +56,7 @@ function updateArchiveToggleBtn() {
 
 async function loadProjects() {
   const { data, error } = await state.sb.from('projects').select('*').order('sort_order', { ascending: true });
-  if (error) { showToast('Failed to load projects', 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_load'), 'error'); return; }
   state.PROJECTS = (data || []).map(p => ({
     ...p,
     links: typeof p.links === 'string' ? JSON.parse(p.links) : (p.links || [])
@@ -69,7 +70,7 @@ async function archiveProject(id) {
   initProjectDragDrop();
   renderArchivedProjects();
   await refreshAll();
-  showToast('Project archived', 'info');
+  showToast(t('projects.project_archived'), 'info');
 }
 
 async function unarchiveProject(id) {
@@ -79,27 +80,27 @@ async function unarchiveProject(id) {
   initProjectDragDrop();
   renderArchivedProjects();
   await refreshAll();
-  showToast('Project restored', 'success');
+  showToast(t('projects.project_restored'), 'success');
 }
 
 async function deleteProject(id, name) {
   const taskCount = state.allTasks.filter(t => t.project === id).length;
   const detail = taskCount > 0 ? `This will also delete ${taskCount} task${taskCount > 1 ? 's' : ''} in this project.` : null;
   showDeleteConfirm(
-    'Delete Project',
+    t('common.delete'),
     `Delete "${name}"? This cannot be undone.`,
     async () => {
       await state.sb.from('tasks').delete().eq('project', id);
       await state.sb.from('prompts').delete().eq('key', id);
       const { error } = await state.sb.from('projects').delete().eq('id', id);
-      if (error) { showToast('Failed to delete project: ' + error.message, 'error'); return; }
+      if (error) { showToast(t('toast.failed_to_delete') + ': ' + error.message, 'error'); return; }
       const ids = getArchivedProjectIds().filter(i => i !== id);
       saveArchivedProjectIds(ids);
       await loadProjects();
       buildProjectCards();
       renderArchivedProjects();
       initProjectDragDrop();
-      showToast(`Project "${name}" deleted`, 'info');
+      showToast(t('projects.project_deleted'), 'info');
     },
     detail
   );
@@ -127,7 +128,7 @@ function renderArchivedProjects() {
     <div class="archived-project-item">
       <span>${esc(p.name)} <span style="color:var(--muted);font-size:0.72rem;">${esc(p.tech || '')}</span></span>
       <button onclick="unarchiveProject('${p.id}')">Restore</button>
-      <button onclick="deleteProject('${p.id}','${esc(p.name)}')" style="color:var(--red);">Delete</button>
+      <button onclick="deleteProject('${p.id}','${esc(p.name)}')" style="color:var(--red);">${t('common.delete')}</button>
     </div>
   `).join('');
 }
@@ -151,27 +152,27 @@ function buildProjectCards() {
       <div class="project-card-header">
         <div style="display:flex;align-items:flex-start;gap:6px;">
           <div class="project-info">
-            <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">Copied!</span></span></h3>
+            <h3><span class="project-title-copy" onclick="copyProjectTitle(event, '${esc(p.name)}')">${esc(p.name)}<span class="copy-tooltip">${t('common.copied')}</span></span></h3>
             <span class="tech">${esc(p.tech || '')}</span>
           </div>
         </div>
         <div class="project-header-actions">
           ${p.links.map(l => `<a class="project-link" href="${l.url}" target="_blank">${l.label} ↗</a>`).join(' ')}
           <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">${lucideIcon('maximize-2', 14, 'currentColor')}</button>
-          <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="Edit project prompt">${lucideIcon("file-text",16)}</button>
-          <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="Edit project">${lucideIcon("pencil",16)}</button>
+          <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="${t('projects.edit_prompt')}">${lucideIcon("file-text",16)}</button>
+          <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="${t('projects.edit_project')}">${lucideIcon("pencil",16)}</button>
           <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">${lucideIcon("package")}</button>
         </div>
       </div>
-      <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">Loading...</p></div>
+      <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">${t('common.loading')}</p></div>
       <div class="archive-toggle" onclick="toggleArchivedTasks('${p.id}')" id="archive-toggle-${p.id}" style="display:none;">
-        <span class="arrow" id="archive-arrow-${p.id}">▶</span> Archived tasks (<span id="archive-count-${p.id}">0</span>)
-        <button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllArchivedTasks('${p.id}')" title="Delete all archived tasks">${lucideIcon("trash-2",16)} Delete all</button>
+        <span class="arrow" id="archive-arrow-${p.id}">▶</span> ${t('projects.archived_tasks')} (<span id="archive-count-${p.id}">0</span>)
+        <button class="delete-all-archived-btn" onclick="event.stopPropagation();deleteAllArchivedTasks('${p.id}')" title="${t('common.delete')}">${lucideIcon("trash-2",16)} ${t('common.delete')}</button>
       </div>
       <div class="archived-tasks" id="archived-tasks-${p.id}"></div>
       <div class="add-task">
-        <textarea placeholder="Add task..." maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
-        <label class="draft-slider" title="Save as draft (personal note, not picked up by Claw)"><input type="checkbox" id="draft-${p.id}" onchange="this.parentElement.classList.toggle('active',this.checked)"><span class="draft-slider-track"><span class="draft-slider-thumb"></span></span><span class="draft-slider-label">Draft</span></label>
+        <textarea placeholder="${t('projects.add_task_placeholder')}" maxlength="${MAX_TEXT_LEN}" id="input-${p.id}" onkeydown="handleTaskInput(event,'${p.id}')" oninput="updateCharCounter(this)" rows="1" style="resize:none;overflow:hidden;"></textarea>
+        <label class="draft-slider" title="${t('projects.status_draft')}"><input type="checkbox" id="draft-${p.id}" onchange="this.parentElement.classList.toggle('active',this.checked)"><span class="draft-slider-track"><span class="draft-slider-thumb"></span></span><span class="draft-slider-label">${t('projects.status_draft')}</span></label>
         <button onclick="addTask('${p.id}')">+</button>
       </div>
       <div class="char-counter" id="counter-${p.id}"></div>
@@ -202,7 +203,7 @@ function updateCharCounter(input) {
 async function refreshAll() {
   if (!state.sb || isDragging) return;
   const { data, error } = await state.sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
-  if (error) { showToast('Failed to load tasks', 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_load'), 'error'); return; }
   const all = data || [];
   state.allTasks = all;
   renderAllTasks();
@@ -272,45 +273,45 @@ async function deleteAllArchivedTasks(projectId) {
   const project = state.PROJECTS.find(p => p.id === projectId);
   const name = project ? project.name : projectId;
   showDeleteConfirm(
-    'Delete All Archived Tasks',
+    t('common.delete'),
     `Delete all ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''} in "${name}"? This cannot be undone.`,
     async () => {
       for (const t of archivedTasks) {
         await state.sb.from('tasks').delete().eq('id', t.id);
       }
-      showToast(`Deleted ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''}`, 'info');
+      showToast(t('projects.deleted_tasks', archivedTasks.length), 'info');
       await refreshAll();
     }
   );
 }
 
 
-function renderTask(t, isArchived = false) {
-  const isDraft = t.status === 'draft';
+function renderTask(task, isArchived = false) {
+  const isDraft = task.status === 'draft';
   let meta = '';
-  if (t.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(t.plan_note, MAX_META_DISPLAY, t.id, 'plan')}</div>`;
-  if (t.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">${lucideIcon('feather', 14)} Claw:</span>${truncateWithShowMore(t.hatch_response, MAX_META_DISPLAY, t.id, 'response')}</div>`;
+  if (task.plan_note) meta += `<div class="task-meta-item"><span class="task-meta-label plan">${lucideIcon("clipboard-list",16)} Plan:</span>${truncateWithShowMore(task.plan_note, MAX_META_DISPLAY, task.id, 'plan')}</div>`;
+  if (task.hatch_response) meta += `<div class="task-meta-item response"><span class="task-meta-label claw">${lucideIcon('feather', 14)} ${t('projects.claw')}:</span>${truncateWithShowMore(task.hatch_response, MAX_META_DISPLAY, task.id, 'response')}</div>`;
 
   let promoteBtn = '';
   let actionBtns = '';
   if (isDraft) {
-    promoteBtn = `<button class="promote-btn" onclick="updateTaskStatus('${t.id}','todo')" title="Promote to task">▶ Todo</button>`;
+    promoteBtn = `<button class="promote-btn" onclick="updateTaskStatus('${task.id}','todo')" title="${t('projects.promote_todo')}">▶ ${t('projects.promote_todo')}</button>`;
   }
-  if (t.status === 'review') {
-    actionBtns += `<button onclick="updateTaskStatus('${t.id}','approved')" title="Approve">${lucideIcon("circle-check",16)}</button>`;
-    actionBtns += `<button onclick="openRevisionModal('${t.id}')" title="Request Revision">${lucideIcon("refresh-cw",16)}</button>`;
+  if (task.status === 'review') {
+    actionBtns += `<button onclick="updateTaskStatus('${task.id}','approved')" title="${t('projects.status_approved')}">${lucideIcon("circle-check",16)}</button>`;
+    actionBtns += `<button onclick="openRevisionModal('${task.id}')" title="${t('projects.status_revision')}">${lucideIcon("refresh-cw",16)}</button>`;
   }
-  if (t.status === 'approved' && isArchived) {
-    actionBtns += `<button onclick="updateTaskStatus('${t.id}','todo')" title="Reopen">${lucideIcon('undo-2', 14)}</button>`;
+  if (task.status === 'approved' && isArchived) {
+    actionBtns += `<button onclick="updateTaskStatus('${task.id}','todo')" title="${t('common.reopen')}">${lucideIcon('undo-2', 14)}</button>`;
   }
-  actionBtns += `<button onclick="promptEditTask('${t.id}')" title="Edit">${lucideIcon("pencil",16)}</button>`;
-  actionBtns += `<button onclick="deleteTask('${t.id}')" title="Delete">${lucideIcon("trash-2",16)}</button>`;
+  actionBtns += `<button onclick="promptEditTask('${task.id}')" title="${t('common.edit')}">${lucideIcon("pencil",16)}</button>`;
+  actionBtns += `<button onclick="deleteTask('${task.id}')" title="${t('common.delete')}">${lucideIcon("trash-2",16)}</button>`;
 
   const draftClass = isDraft ? ' task-draft' : '';
 
-  return `<div class="bucket-item task-item${draftClass} task-status-${t.status}" data-task-id="${t.id}">
+  return `<div class="bucket-item task-item${draftClass} task-status-${task.status}" data-task-id="${task.id}">
     <div class="task-row">
-      <span class="task-text" ondblclick="promptEditTask('${t.id}')">${renderMd(t.text)}</span>
+      <span class="task-text" ondblclick="promptEditTask('${task.id}')">${renderMd(task.text)}</span>
       ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
     </div>
@@ -366,7 +367,7 @@ async function addTask(projectId) {
   const input = document.getElementById(`input-${projectId}`);
   const text = input.value.trim();
   if (!text) return;
-  if (text.length > MAX_TEXT_LEN) { showToast(`Max ${MAX_TEXT_LEN} characters`, 'error'); return; }
+  if (text.length > MAX_TEXT_LEN) { showToast(t('projects.max_chars', MAX_TEXT_LEN), 'error'); return; }
   const draftCheckbox = document.getElementById(`draft-${projectId}`);
   const isDraft = draftCheckbox && draftCheckbox.checked;
   input.value = '';
@@ -377,14 +378,14 @@ async function addTask(projectId) {
   const maxOrder = projectTasks.length > 0 ? Math.max(...projectTasks.map(t => t.sort_order || 0)) + 1 : 0;
   const status = isDraft ? 'draft' : 'todo';
   const { error } = await state.sb.from('tasks').insert({ project: projectId, text, status, sort_order: maxOrder });
-  if (error) showToast('Failed to add task', 'error');
-  else { showToast(isDraft ? 'Draft saved' : 'Task added', 'success'); await refreshAll(); }
+  if (error) showToast(t('toast.failed_to_add'), 'error');
+  else { showToast(t('toast.added'), 'success'); await refreshAll(); }
 }
 
 async function updateTaskStatus(id, status) {
   const { error } = await state.sb.from('tasks').update({ status }).eq('id', id);
-  if (error) showToast('Update failed', 'error');
-  else { showToast(`Status → ${status}`, 'success'); await refreshAll(); }
+  if (error) showToast(t('toast.update_failed'), 'error');
+  else { showToast(t('toast.updated'), 'success'); await refreshAll(); }
 }
 
 async function promptEditTask(id) {
@@ -421,8 +422,8 @@ async function promptEditTask(id) {
     },
     saveFn: async (trimmed) => {
       const { error } = await state.sb.from('tasks').update({ text: trimmed }).eq('id', id);
-      if (error) showToast('Update failed', 'error');
-      else showToast('Task updated', 'success');
+      if (error) showToast(t('toast.update_failed'), 'error');
+      else showToast(t('projects.task_updated'), 'success');
     },
     refreshFn: refreshAll,
   });
@@ -430,12 +431,12 @@ async function promptEditTask(id) {
 
 async function deleteTask(id) {
   showDeleteConfirm(
-    'Delete Task',
+    t('common.delete'),
     'Delete this task? This cannot be undone.',
     async () => {
       const { error } = await state.sb.from('tasks').delete().eq('id', id);
-      if (error) showToast('Delete failed', 'error');
-      else { showToast('Task deleted', 'success'); await refreshAll(); }
+      if (error) showToast(t('toast.delete_failed'), 'error');
+      else { showToast(t('toast.deleted'), 'success'); await refreshAll(); }
     }
   );
 }
@@ -475,8 +476,8 @@ async function saveNewProject() {
   const github = document.getElementById('newProjectGithub').value.trim();
   const live = document.getElementById('newProjectLive').value.trim();
 
-  if (!id || !name) { showToast('ID and Name are required', 'error'); return; }
-  if (state.PROJECTS.find(p => p.id === id)) { showToast('Project ID already exists', 'error'); return; }
+  if (!id || !name) { showToast(t('toast.name_required'), 'error'); return; }
+  if (state.PROJECTS.find(p => p.id === id)) { showToast(t('projects.id_exists'), 'error'); return; }
 
   const links = [];
   if (github) links.push({ label: 'GitHub', url: github });
@@ -485,13 +486,13 @@ async function saveNewProject() {
   const maxOrder = state.PROJECTS.length > 0 ? Math.max(...state.PROJECTS.map(p => p.sort_order || 0)) + 1 : 0;
 
   const { error } = await state.sb.from('projects').insert({ id, name, shortname, color, tech, links, sort_order: maxOrder });
-  if (error) { showToast('Failed to create project: ' + (error.message || ''), 'error'); return; }
+  if (error) { showToast(t('toast.failed_to_add') + ': ' + (error.message || ''), 'error'); return; }
 
   closeAddProjectModal();
   await loadProjects();
   buildProjectCards();
   await refreshAll();
-  showToast(`Project "${name}" created`, 'success');
+  showToast(t('toast.added'), 'success');
 }
 
 
@@ -608,7 +609,7 @@ async function reorderProjects(draggedId, targetId) {
 
   // Re-init drag
   initProjectDragDrop();
-  showToast('Projects reordered', 'success');
+  showToast(t('toast.reordered'), 'success');
 
   // Background Supabase sync
   Promise.all(visible.map((p, i) =>
@@ -647,18 +648,18 @@ async function saveEditProject() {
   const tech = document.getElementById('editProjectTech').value.trim();
   const github = document.getElementById('editProjectGithub').value.trim();
   const live = document.getElementById('editProjectLive').value.trim();
-  if (!name) { showToast('Name is required', 'error'); return; }
+  if (!name) { showToast(t('toast.name_required'), 'error'); return; }
   const links = [];
   if (github) links.push({ label: 'GitHub', url: github });
   if (live) links.push({ label: 'Live', url: live });
   const { error } = await state.sb.from('projects').update({ name, shortname, color, tech, links }).eq('id', id);
-  if (error) { showToast('Update failed: ' + (error.message || ''), 'error'); return; }
+  if (error) { showToast(t('toast.update_failed') + ': ' + (error.message || ''), 'error'); return; }
   closeEditProjectModal();
   await loadProjects();
   buildProjectCards();
   initProjectDragDrop();
   await refreshAll();
-  showToast(`Project "${name}" updated`, 'success');
+  showToast(t('toast.updated'), 'success');
 }
 
 // ===================================================================
@@ -693,26 +694,26 @@ function toggleExpandProject(projectId) {
 // EXPAND TASK VIEW (modal)
 // ===================================================================
 function expandTask(id) {
-  const t = state.allTasks.find(task => task.id === id);
-  if (!t) return;
-  const project = state.PROJECTS.find(p => p.id === t.project);
+  const tk = state.allTasks.find(task => task.id === id);
+  if (!tk) return;
+  const project = state.PROJECTS.find(p => p.id === tk.project);
   const content = document.getElementById('taskExpandContent');
   let meta = '';
-  if (t.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">${lucideIcon("clipboard-list",16)} Plan:</strong><br>${renderMd(t.plan_note)}</div>`;
-  if (t.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">${lucideIcon('feather', 14)} Claw:</strong><br>${renderMd(t.hatch_response)}</div>`;
+  if (tk.plan_note) meta += `<div class="task-full-meta-item"><strong style="color:var(--accent);">${lucideIcon("clipboard-list",16)} Plan:</strong><br>${renderMd(tk.plan_note)}</div>`;
+  if (tk.hatch_response) meta += `<div class="task-full-meta-item response"><strong style="color:var(--yellow);">${lucideIcon('feather', 14)} ${t('projects.claw')}:</strong><br>${renderMd(tk.hatch_response)}</div>`;
 
   let actions = '';
-  if (t.status === 'review') {
-    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${t.id}','approved');closeTaskExpandModal();">${lucideIcon("circle-check",16)} Approve</button><button class="btn" onclick="closeTaskExpandModal();openRevisionModal('${t.id}');">${lucideIcon("refresh-cw",16)} Revision</button></div>`;
+  if (tk.status === 'review') {
+    actions = `<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn" onclick="updateTaskStatus('${tk.id}','approved');closeTaskExpandModal();">${lucideIcon("circle-check",16)} ${t('projects.status_approved')}</button><button class="btn" onclick="closeTaskExpandModal();openRevisionModal('${tk.id}');">${lucideIcon("refresh-cw",16)} ${t('projects.status_revision')}</button></div>`;
   }
 
   content.innerHTML = `
-    <h2><span class="status-dot ${t.status}"></span> ${project ? esc(project.name) : esc(t.project)}</h2>
-    <div class="task-full-text">${esc(t.text)}</div>
+    <h2><span class="status-dot ${tk.status}"></span> ${project ? esc(project.name) : esc(tk.project)}</h2>
+    <div class="task-full-text">${esc(tk.text)}</div>
     ${meta ? `<div class="task-full-meta">${meta}</div>` : ''}
-    <div style="font-size:0.72rem;color:var(--muted);">Created: ${new Date(t.created_at).toLocaleString()} · Status: ${t.status}</div>
+    <div style="font-size:0.72rem;color:var(--muted);">Created: ${new Date(tk.created_at).toLocaleString()} · Status: ${tk.status}</div>
     ${actions}
-    <div style="margin-top:16px;text-align:right;"><button class="btn" onclick="closeTaskExpandModal()">Close</button></div>
+    <div style="margin-top:16px;text-align:right;"><button class="btn" onclick="closeTaskExpandModal()">${t('common.close')}</button></div>
   `;
   document.getElementById('taskExpandModal').classList.add('visible');
 }
@@ -758,7 +759,7 @@ async function submitRevision() {
   }
 
   const { error } = await state.sb.from('tasks').update(updates).eq('id', taskId);
-  if (error) { showToast('Update failed', 'error'); return; }
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   closeRevisionModal();
   showToast('Revision requested' + (feedback ? ' with feedback' : ''), 'success');
   await refreshAll();
@@ -796,7 +797,7 @@ async function saveGlobalPrompt() {
   await state.sb.from('prompts').upsert({ key: 'global', text }, { onConflict: 'key' });
   promptsCache['global'] = text;
   closePromptEditor();
-  showToast('Global prompt saved', 'success');
+  showToast(t('toast.updated'), 'success');
 }
 
 // Per-project prompt (card button)
@@ -825,7 +826,7 @@ async function saveProjectPrompt() {
     delete promptsCache[projectId];
   }
   closeProjectPrompt();
-  showToast('Project prompt saved', 'success');
+  showToast(t('toast.updated'), 'success');
 }
 
 
