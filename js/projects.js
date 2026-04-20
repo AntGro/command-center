@@ -50,7 +50,7 @@ function updateArchiveToggleBtn() {
   if (!btn) return;
   const active = isShowArchived();
   btn.innerHTML = active ? lucideIcon('folder-open') : lucideIcon('package');
-  btn.title = active ? 'Hide archived' : 'Show archived';
+  btn.title = t('projects.toggle_archived');
   btn.classList.toggle('btn-active', active);
 }
 
@@ -161,7 +161,7 @@ function buildProjectCards() {
           <button class="expand-project-btn" onclick="toggleExpandProject('${p.id}')" title="Expand/collapse project" id="expand-btn-${p.id}">${lucideIcon('maximize-2', 14, 'currentColor')}</button>
           <button class="prompt-project-btn" onclick="openProjectPrompt('${p.id}')" title="${t('projects.edit_prompt')}">${lucideIcon("file-text",16)}</button>
           <button class="archive-project-btn" onclick="openEditProjectModal('${p.id}')" title="${t('projects.edit_project')}">${lucideIcon("pencil",16)}</button>
-          <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="Archive project">${lucideIcon("package")}</button>
+          <button class="archive-project-btn" onclick="archiveProject('${p.id}')" title="${t('projects.toggle_archived')}">${lucideIcon("package")}</button>
         </div>
       </div>
       <div class="task-list" id="tasks-${p.id}"><p class="empty-msg">${t('common.loading')}</p></div>
@@ -276,8 +276,8 @@ async function deleteAllArchivedTasks(projectId) {
     t('common.delete'),
     `Delete all ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''} in "${name}"? This cannot be undone.`,
     async () => {
-      for (const t of archivedTasks) {
-        await state.sb.from('tasks').delete().eq('id', t.id);
+      for (const task of archivedTasks) {
+        await state.sb.from('tasks').delete().eq('id', task.id);
       }
       showToast(t('projects.deleted_tasks', archivedTasks.length), 'info');
       await refreshAll();
@@ -761,7 +761,7 @@ async function submitRevision() {
   const { error } = await state.sb.from('tasks').update(updates).eq('id', taskId);
   if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   closeRevisionModal();
-  showToast('Revision requested' + (feedback ? ' with feedback' : ''), 'success');
+  showToast(t('toast.updated'), 'success');
   await refreshAll();
 }
 
@@ -804,7 +804,7 @@ async function saveGlobalPrompt() {
 async function openProjectPrompt(projectId) {
   await loadPrompts();
   const project = state.PROJECTS.find(p => p.id === projectId);
-  document.getElementById('projectPromptTitle').innerHTML = `${lucideIcon("file-text",20)} ${project ? project.name : projectId} Prompt`;
+  document.getElementById('projectPromptTitle').innerHTML = `${lucideIcon("file-text",20)} ${project ? project.name : projectId} — ${t('projects.project_prompt')}`;
   document.getElementById('promptProjectId').value = projectId;
   document.getElementById('promptProjectText').value = promptsCache[projectId] || '';
   document.getElementById('projectPromptModal').classList.add('visible');
