@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { TODO_MAX_LEN } from './supabase.js';
 import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
-import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
+import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, inlineEditText, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
 
 // ===================================================================
 // TODOS — DATA & CRUD (Category Card Layout)
@@ -540,25 +540,11 @@ async function editTodoInline(id) {
   const textEl = itemEl.querySelector('.todo-text');
   if (!textEl || textEl.dataset.editing) return;
 
-  textEl.dataset.editing = 'true';
   // Hide action buttons while editing
   const actionsEl = itemEl.querySelector('.todo-actions');
   if (actionsEl) actionsEl.classList.remove('visible');
 
-  // Create a wrapper for text + deadline editing
-  const wrapper = document.createElement('div');
-  wrapper.className = 'todo-edit-wrapper';
-
-  const input = document.createElement('textarea');
-  input.className = 'task-edit-input';
-  input.value = todo.text;
-  input.maxLength = 2000;
-  input.rows = Math.max(2, todo.text.split('\n').length);
-  input.style.resize = 'none';
-  input.style.overflow = 'hidden';
-  input.style.minHeight = '2.4em';
-
-  // Deadline date input
+  // Build deadline date input as extra element
   const deadlineRow = document.createElement('div');
   deadlineRow.className = 'todo-edit-deadline-row';
   const deadlineLabel = document.createElement('label');
@@ -568,7 +554,6 @@ async function editTodoInline(id) {
   deadlineInput.type = 'datetime-local';
   deadlineInput.className = 'todo-edit-deadline-input';
   if (todo.due_date) {
-    // Format existing due_date for datetime-local input
     const d = new Date(todo.due_date);
     deadlineInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
@@ -578,59 +563,32 @@ async function editTodoInline(id) {
   clearBtn.textContent = '✕';
   clearBtn.title = 'Clear deadline';
   clearBtn.onclick = (e) => { e.stopPropagation(); deadlineInput.value = ''; };
-
   deadlineRow.appendChild(deadlineLabel);
   deadlineRow.appendChild(deadlineInput);
   deadlineRow.appendChild(clearBtn);
 
-  wrapper.appendChild(input);
-  wrapper.appendChild(deadlineRow);
-
-  function autoSize() {
-    input.style.height = 'auto';
-    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
-  }
-
-  let finished = false;
-  const finish = async (save) => {
-    if (finished) return;
-    finished = true;
-    if (save) {
-      const updates = {};
-      const newText = input.value.trim();
-      if (newText && newText !== todo.text) updates.text = newText;
-      // Update deadline
+  inlineEditText(textEl, todo.text, {
+    maxLength: 2000,
+    extraEl: deadlineRow,
+    collectExtra: () => {
       const newDeadline = deadlineInput.value ? new Date(deadlineInput.value).toISOString() : null;
-      const oldDeadline = todo.due_date || null;
-      if (newDeadline !== oldDeadline) updates.due_date = newDeadline;
+      return { due_date: newDeadline };
+    },
+    saveFn: async (newText, extra) => {
+      const updates = {};
+      if (newText !== todo.text) updates.text = newText;
+      if (extra) {
+        const oldDeadline = todo.due_date || null;
+        if (extra.due_date !== oldDeadline) updates.due_date = extra.due_date;
+      }
       if (Object.keys(updates).length > 0) {
         const { error } = await state.sb.from('todos').update(updates).eq('id', id);
         if (error) showToast('Update failed', 'error');
         else showToast('TODO updated', 'success');
       }
-    }
-    delete textEl.dataset.editing;
-    await refreshTodos();
-  };
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finish(true); }
-    if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    },
+    refreshFn: refreshTodos,
   });
-  deadlineInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-    if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-  });
-  // Only finish on blur if focus leaves the entire wrapper
-  wrapper.addEventListener('focusout', (e) => {
-    setTimeout(() => {
-      if (!wrapper.contains(document.activeElement)) finish(true);
-    }, 150);
-  });
-  input.addEventListener('input', autoSize);
-  textEl.replaceWith(wrapper);
-  // Use rAF to ensure layout is computed before reading scrollHeight
-  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }
 
 // ===================================================================

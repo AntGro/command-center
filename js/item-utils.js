@@ -224,29 +224,57 @@ export function scrollToAndHighlight(element, color, durationMs = 1500) {
 // ===================================================================
 // INLINE TEXT EDIT — generic textarea-replace pattern
 // ===================================================================
-export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refreshFn }) {
+// Options:
+//   maxLength    — textarea maxLength
+//   saveFn(text) — called with trimmed new text on save
+//   refreshFn()  — called after edit finishes (save or cancel)
+//   extraEl      — optional DOM element appended below textarea (e.g. deadline row)
+//   onStart()    — called before replacing span (e.g. expand parent)
+//   onFinish()   — called after edit ends (e.g. restore parent)
+//   collectExtra() — optional fn returning extra update data from extraEl
+export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refreshFn, extraEl, onStart, onFinish, collectExtra }) {
   if (spanEl.dataset.editing) return;
   spanEl.dataset.editing = 'true';
 
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;
-  const lineCount = originalText.split('\n').length;
-  input.rows = lineCount;
+  input.rows = originalText.split('\n').length;
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
   if (maxLength) input.maxLength = maxLength;
+
+  // If extra element, wrap textarea + extra together
+  let root = input;
+  if (extraEl) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'todo-edit-wrapper';
+    wrapper.appendChild(input);
+    wrapper.appendChild(extraEl);
+    root = wrapper;
+  }
+
+  if (onStart) onStart();
 
   function autoSize() {
     input.style.height = 'auto';
     input.style.height = input.scrollHeight + 'px';
   }
 
+  let finished = false;
   const finishEdit = async (save) => {
+    if (finished) return;
+    finished = true;
     const trimmed = input.value.trim();
     if (save && trimmed && trimmed !== originalText) {
-      await saveFn(trimmed);
+      const extra = collectExtra ? collectExtra() : undefined;
+      await saveFn(trimmed, extra);
+    } else if (save && collectExtra) {
+      // Text unchanged but extra fields may have changed
+      const extra = collectExtra();
+      if (extra) await saveFn(originalText, extra);
     }
+    if (onFinish) onFinish();
     delete spanEl.dataset.editing;
     await refreshFn();
   };
@@ -256,8 +284,23 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
     if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
   });
   input.addEventListener('input', autoSize);
-  input.addEventListener('blur', () => finishEdit(true));
 
-  spanEl.replaceWith(input);
+  if (extraEl) {
+    // Blur only when focus leaves the entire wrapper
+    root.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (!root.contains(document.activeElement)) finishEdit(true);
+      }, 150);
+    });
+    // Enter/Escape on extra inputs
+    extraEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); finishEdit(true); }
+      if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+    });
+  } else {
+    input.addEventListener('blur', () => finishEdit(true));
+  }
+
+  spanEl.replaceWith(root);
   requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }

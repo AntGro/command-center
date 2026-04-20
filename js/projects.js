@@ -2,7 +2,7 @@ import { lucideIcon } from './icons.js';
 import state, { ARCHIVED_PROJECTS_KEY, SHOW_ARCHIVED_KEY, MAX_TEXT_LEN, MAX_META_DISPLAY, TODO_MAX_LEN } from './supabase.js';
 import { esc, linkify, renderMd, showToast, showDeleteConfirm,
          updateFooterStats, updateTaskListMaxHeight, truncateWithShowMore } from './utils.js';
-import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
+import { isDragging, setDragging, initItemHoverDelay, initItemDragDrop, reorderItems, scrollToAndHighlight, inlineEditText, LONG_PRESS_MS, DRAG_THRESHOLD } from './item-utils.js';
 
 // ===================================================================
 // state.PROJECTS (loaded from Supabase)
@@ -396,59 +396,36 @@ async function promptEditTask(id) {
   if (!textSpan || textSpan.dataset.editing) return;
 
   const originalText = task.text;
-  textSpan.dataset.editing = 'true';
   // Hide action buttons while editing
   const actionsEl = taskEl.querySelector('.task-actions');
   if (actionsEl) actionsEl.classList.remove('visible');
-  const input = document.createElement('textarea');
-  input.className = 'task-edit-input';
-  input.value = originalText;
-  input.maxLength = MAX_TEXT_LEN;
-  input.rows = Math.max(2, originalText.split('\n').length);
-  input.style.resize = 'none';
-  input.style.overflow = 'hidden';
-  input.style.minHeight = '2.4em';
 
   // Temporarily expand parent task-list so textarea isn't clipped
   const taskList = taskEl.closest('.task-list');
   let savedMaxHeight = '';
-  if (taskList) {
-    savedMaxHeight = taskList.style.maxHeight;
-    taskList.style.maxHeight = 'none';
-    taskList.style.overflowY = 'visible';
-  }
 
-  function autoSize() {
-    input.style.height = 'auto';
-    input.style.height = Math.max(input.scrollHeight, 40) + 'px';
-  }
-
-  const finishEdit = async (save) => {
-    if (save && input.value.trim() && input.value.trim() !== originalText) {
-      const trimmed = input.value.trim().slice(0, MAX_TEXT_LEN);
+  inlineEditText(textSpan, originalText, {
+    maxLength: MAX_TEXT_LEN,
+    onStart: () => {
+      if (taskList) {
+        savedMaxHeight = taskList.style.maxHeight;
+        taskList.style.maxHeight = 'none';
+        taskList.style.overflowY = 'visible';
+      }
+    },
+    onFinish: () => {
+      if (taskList) {
+        taskList.style.maxHeight = savedMaxHeight;
+        taskList.style.overflowY = '';
+      }
+    },
+    saveFn: async (trimmed) => {
       const { error } = await state.sb.from('tasks').update({ text: trimmed }).eq('id', id);
       if (error) showToast('Update failed', 'error');
       else showToast('Task updated', 'success');
-    }
-    // Restore parent task-list constraints
-    if (taskList) {
-      taskList.style.maxHeight = savedMaxHeight;
-      taskList.style.overflowY = '';
-    }
-    delete textSpan.dataset.editing;
-    await refreshAll();
-  };
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEdit(true); }
-    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+    },
+    refreshFn: refreshAll,
   });
-  input.addEventListener('input', autoSize);
-  input.addEventListener('blur', () => finishEdit(true));
-
-  textSpan.replaceWith(input);
-  // Use rAF to ensure layout is computed before reading scrollHeight
-  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
 }
 
 async function deleteTask(id) {
