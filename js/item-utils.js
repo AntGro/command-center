@@ -244,6 +244,7 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
 
   // Measure the original span before replacing it
   const spanRect = spanEl.getBoundingClientRect();
+  const parentRect = spanEl.parentElement.getBoundingClientRect();
 
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
@@ -251,7 +252,9 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   input.rows = 1; // minimal; autoSize will expand
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
-  input.style.width = spanRect.width + 'px';
+  // Use parent width so textarea fills the available row; min 120px
+  const targetWidth = Math.max(parentRect.width, spanRect.width, 120);
+  input.style.width = targetWidth + 'px';
   input.style.boxSizing = 'border-box';
   if (maxLength) input.maxLength = maxLength;
 

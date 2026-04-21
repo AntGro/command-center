@@ -307,7 +307,7 @@ input,select,button{font-family:inherit;}
 @keyframes btnSpin{to{transform:rotate(360deg);}}
 
 /* ===== INLINE EDIT ===== */
-.task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;line-height:1.35;box-sizing:border-box;}
+.task-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;line-height:1.35;box-sizing:border-box;max-width:100%;}
 
 /* ===== MARKDOWN RENDERING ===== */
 .md-inline-code{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:0.82em;}
