@@ -242,19 +242,13 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   if (spanEl.dataset.editing) return;
   spanEl.dataset.editing = 'true';
 
-  // Measure the original span before replacing it
-  const spanRect = spanEl.getBoundingClientRect();
-  const parentRect = spanEl.parentElement.getBoundingClientRect();
-
   const input = document.createElement('textarea');
   input.className = 'task-edit-input';
   input.value = originalText;
-  input.rows = 1; // minimal; autoSize will expand
+  input.rows = 1;
   input.style.resize = 'none';
   input.style.overflow = 'hidden';
-  // Use parent width so textarea fills the available row; min 120px
-  const targetWidth = Math.max(parentRect.width, spanRect.width, 120);
-  input.style.width = targetWidth + 'px';
+  input.style.width = '100%';
   input.style.boxSizing = 'border-box';
   if (maxLength) input.maxLength = maxLength;
 
@@ -316,5 +310,9 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   }
 
   spanEl.replaceWith(root);
-  requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
+  // Double rAF: first frame renders the element at its final width,
+  // second frame reads correct scrollHeight for multi-line content
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
+  });
 }
