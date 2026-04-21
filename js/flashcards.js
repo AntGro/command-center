@@ -784,7 +784,7 @@ function showNextCard() {
         </div>
       </div>
     </div>
-    <div class="practice-hint" id="practiceHint">Tap to reveal answer</div>
+    <div class="practice-hint" id="practiceHint">${t('flashcards.tap_to_reveal')}</div>
     <div class="practice-buttons" id="practiceButtons" style="display:none;">
       <button class="rating-btn rating-again" onclick="rateCard(1)"><span class="rating-num">1</span> ${t('flashcards.again')}</button>
       <button class="rating-btn rating-hard" onclick="rateCard(2)"><span class="rating-num">2</span> ${t('flashcards.hard')}</button>
@@ -830,7 +830,7 @@ function showSessionSummary() {
       <h2>${t('flashcards.session_complete')}</h2>
       <div class="practice-summary-stats">
         <div class="practice-summary-stat"><span class="practice-stat-val">${sessionDone}</span><span class="practice-stat-lbl">${t('flashcards.cards_reviewed')}</span></div>
-        <div class="practice-summary-stat"><span class="practice-stat-val">${sessionCorrect}</span><span class="practice-stat-lbl">Good+</span></div>
+        <div class="practice-summary-stat"><span class="practice-stat-val">${sessionCorrect}</span><span class="practice-stat-lbl">${t('flashcards.good_plus')}</span></div>
         <div class="practice-summary-stat"><span class="practice-stat-val">${accuracy}%</span><span class="practice-stat-lbl">${t('flashcards.accuracy')}</span></div>
       </div>
       <button class="btn practice-done-btn" onclick="endPractice()">${t('common.close')}</button>

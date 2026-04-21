@@ -168,6 +168,8 @@ const T = {
       cards: 'cards', due_count: 'due', new_count: 'new',
       accuracy: 'Accuracy', cards_reviewed: 'Cards reviewed',
       next_review: 'Next review',
+      tap_to_reveal: 'Tap to reveal answer',
+      good_plus: 'Good+',
     },
     // ── Utils / Stats ──
     utils: {
@@ -326,6 +328,8 @@ const T = {
       cards: 'cartes', due_count: 'à réviser', new_count: 'nouvelles',
       accuracy: 'Précision', cards_reviewed: 'Cartes révisées',
       next_review: 'Prochaine révision',
+      tap_to_reveal: 'Touchez pour révéler la réponse',
+      good_plus: 'Bien+',
     },
     utils: {
       db: 'BDD', supabase_dashboard: 'Tableau de bord Supabase',
@@ -483,6 +487,8 @@ const T = {
       cards: 'tarjetas', due_count: 'pendientes', new_count: 'nuevas',
       accuracy: 'Precisión', cards_reviewed: 'Tarjetas revisadas',
       next_review: 'Próxima revisión',
+      tap_to_reveal: 'Toca para ver la respuesta',
+      good_plus: 'Bien+',
     },
     utils: {
       db: 'BDD', supabase_dashboard: 'Panel de Supabase',
