@@ -179,6 +179,10 @@ function initBirthdayHoverDelay(container) {
     actionsSelector: '.birthday-actions',
     rowSelector: '.birthday-info',
     textSelector: '.birthday-name',
+    onDblClick: (item) => {
+      const id = item.dataset.id;
+      if (id) openEditBirthdayModal(id);
+    },
   });
 }
 

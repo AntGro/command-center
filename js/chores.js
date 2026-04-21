@@ -197,6 +197,10 @@ function initChoreHoverDelay(container) {
     actionsSelector: '.chore-actions',
     rowSelector: '.chore-row',
     textSelector: '.chore-name',
+    onDblClick: (item) => {
+      const id = item.dataset.choreId;
+      if (id) openEditChoreModal(id);
+    },
   });
 }
 

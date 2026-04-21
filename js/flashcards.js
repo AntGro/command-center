@@ -203,6 +203,15 @@ function initFlashcardHoverDelay(container) {
     actionsSelector: '.todo-actions',
     rowSelector: '.todo-row',
     textSelector: '.todo-text',
+    onDblClick: (item) => {
+      const draftId = item.dataset.draftId;
+      const cardId = item.dataset.cardId;
+      if (draftId) {
+        window.startInlineEditDraftById(draftId);
+      } else if (cardId) {
+        window.openEditFlashcardModal(cardId);
+      }
+    },
   });
 }
 
@@ -263,7 +272,7 @@ function renderDraftItem(d) {
 
   return `<div class="bucket-item todo-item" data-draft-id="${d.id}">
     <div class="todo-row">
-      <span class="todo-text" ondblclick="startInlineEditDraft('${d.id}', this)" style="cursor:text;">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
+      <span class="todo-text" style="cursor:text;">${esc(d.content.length > 120 ? d.content.slice(0, 120) + '…' : d.content)}</span>
       ${isPending ? `<span class="fc-status-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">${t('flashcards.generating')}</span>` : ''}
       <div class="todo-actions">
         ${!hasProposal && !isPending ? `<button onclick="requestProposal('${d.id}')" title="${t('flashcards.propose')}">${lucideIcon('sparkles', 16)}</button>` : ''}

@@ -239,7 +239,7 @@ function renderVestiaireItem(v) {
     <div class="vest-row">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;">
-          <span class="vest-text" ondblclick="editVestiaireInline('${v.id}')">${esc(v.name)}</span>
+          <span class="vest-text">${esc(v.name)}</span>
           ${brandHtml}
           ${statusBadge}
         </div>
@@ -298,9 +298,14 @@ function getCategoryIcon(cat) {
 /** Hover-delay for vest-actions (matches todo / task pattern) */
 function initVestiaireHoverDelay(listEl) {
   initItemHoverDelay(listEl, {
+    itemSelector: '.vestiaire-item',
     rowSelector: '.vestiaire-item',
     actionsSelector: '.vest-actions',
     textSelector: '.vest-text',
+    onDblClick: (item) => {
+      const id = item.dataset.vestId;
+      if (id) editVestiaireInline(id);
+    },
   });
 }
 

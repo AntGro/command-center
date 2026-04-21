@@ -24,6 +24,7 @@ export function initItemHoverDelay(container, {
   rowSelector,
   textSelector,
   editingSelector = '.task-edit-input',
+  onDblClick,
 }) {
   const isTouchDevice = window.matchMedia('(max-width:480px)').matches || 'ontouchstart' in window;
   if (isTouchDevice) return;
@@ -59,8 +60,12 @@ export function initItemHoverDelay(container, {
           if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
         }, 250);
       });
-      text.addEventListener('dblclick', () => {
+      text.addEventListener('dblclick', (e) => {
         if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+        if (onDblClick) {
+          e.preventDefault();
+          onDblClick(item);
+        }
       });
     }
   });

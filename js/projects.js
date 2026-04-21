@@ -311,7 +311,7 @@ function renderTask(task, isArchived = false) {
 
   return `<div class="bucket-item task-item${draftClass} task-status-${task.status}" data-task-id="${task.id}">
     <div class="task-row">
-      <span class="task-text" ondblclick="promptEditTask('${task.id}')">${renderMd(task.text)}</span>
+      <span class="task-text">${renderMd(task.text)}</span>
       ${promoteBtn}
       <div class="task-actions">${actionBtns}</div>
     </div>
@@ -331,6 +331,10 @@ function initTaskHoverDelay(container) {
     rowSelector: '.task-row',
     textSelector: '.task-text',
     editingSelector: '.task-edit-input',
+    onDblClick: (item) => {
+      const id = item.dataset.taskId;
+      if (id) promptEditTask(id);
+    },
   });
 }
 

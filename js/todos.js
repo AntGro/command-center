@@ -449,7 +449,7 @@ function renderTodoItem(td) {
   return `<div class="${classes}" data-todo-id="${td.id}">
     <div class="todo-row">
       ${flagBtn}
-      <span class="todo-text" ondblclick="editTodoInline('${td.id}')">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
+      <span class="todo-text">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
       ${prioBadge}
       <div class="todo-actions">
         ${!td.done ? `<button onclick="toggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check",16)}</button>` : `<button onclick="toggleTodo('${td.id}', false)" title="${t('common.undo')}">${lucideIcon("refresh-cw",16)}</button>`}
@@ -871,6 +871,10 @@ function initTodoHoverDelay(container) {
     rowSelector: '.todo-row',
     textSelector: '.todo-text',
     editingSelector: '.task-edit-input, .todo-edit-wrapper',
+    onDblClick: (item) => {
+      const id = item.dataset.todoId;
+      if (id) editTodoInline(id);
+    },
   });
 }
 
