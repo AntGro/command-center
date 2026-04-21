@@ -111,7 +111,7 @@ export function initItemDragDrop(container, {
         document.body.appendChild(clone);
         dragState.clone = clone;
         item.classList.add('dragging');
-        item.setPointerCapture(e.pointerId);
+        try { item.setPointerCapture(e.pointerId); } catch (_) {}
       }, LONG_PRESS_MS);
     });
 
