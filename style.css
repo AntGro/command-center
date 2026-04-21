@@ -129,7 +129,7 @@ input,select,button{font-family:inherit;}
 .project-card.dragging{opacity:0.4;border:2px dashed var(--accent);}
 .project-card.drag-over{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}
 .project-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.15),0 0 0 1px var(--accent-dim);}
-.project-card[style*="--cat-color"]{border-top:3px solid var(--cat-color);}
+.project-card[style*="--cat-color"]{border-top:3px solid var(--cat-color);background:color-mix(in srgb, var(--cat-color) 5%, var(--surface));}
 .project-card-header{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .project-info h3{font-size:0.95rem;font-weight:600;margin-bottom:2px;letter-spacing:-0.2px;}
 .project-info .tech{font-size:0.72rem;color:var(--muted);}
