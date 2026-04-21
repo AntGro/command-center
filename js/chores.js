@@ -298,11 +298,11 @@ function formatChoreRelative(d) {
   const now = new Date();
   const diffMs = now - d;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
+  if (diffDays === 0) return t('chores.today');
+  if (diffDays === 1) return t('chores.yesterday');
   if (diffDays < 7) return t('chores.days_ago', diffDays);
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return `${Math.floor(diffDays / 30)}mo ago`;
+  if (diffDays < 30) return t('chores.weeks_ago', Math.floor(diffDays / 7));
+  return t('chores.months_ago', Math.floor(diffDays / 30));
 }
 
 // ===================================================================

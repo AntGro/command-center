@@ -14,6 +14,8 @@ const T = {
       search: 'Search', optional: 'optional', done: 'Done', undo: 'Undo', rename: 'Rename',
       update: 'Update', activate: 'Activate', confirm: 'Confirm', reopen: 'Reopen',
       copied: 'Copied!', loading: 'Loading…', all: 'All',
+      today_at: 'today at {0}', tomorrow_at: 'tomorrow at {0}', yesterday_at: 'yesterday at {0}',
+      in_days: 'in {0} days', days_ago: '{0} days ago', date_at: '{0} at {1}',
     },
     // ── Toasts ──
     toast: {
@@ -76,6 +78,7 @@ const T = {
       snooze_1h: '1 hour', snooze_3h: '3 hours', snooze_1d: 'Tomorrow',
       snooze_3d: '3 days', snooze_1w: '1 week', snooze_1m: '1 month',
       flag_to_high: 'Flag high', flag_to_urgent: 'Flag urgent', unflag: 'Unflag',
+      priority_high: 'HIGH', priority_urgent: 'URGENT',
     },
     // ── Chores ──
     chores: {
@@ -105,6 +108,7 @@ const T = {
       note_optional: 'Optional note...',
       edit_date: 'Date', edit_note: 'Note',
       in_days: 'in {0}d', days_ago: '{0}d ago',
+      today: 'today', yesterday: 'yesterday', weeks_ago: '{0}w ago', months_ago: '{0}mo ago',
     },
     // ── Birthdays ──
     birthdays: {
@@ -177,6 +181,8 @@ const T = {
       search: 'Rechercher', optional: 'optionnel', done: 'Fait', undo: 'Annuler', rename: 'Renommer',
       update: 'Mettre à jour', activate: 'Activer', confirm: 'Confirmer', reopen: 'Rouvrir',
       copied: 'Copié !', loading: 'Chargement…', all: 'Tous',
+      today_at: 'aujourd\'hui à {0}', tomorrow_at: 'demain à {0}', yesterday_at: 'hier à {0}',
+      in_days: 'dans {0} jours', days_ago: 'il y a {0} jours', date_at: '{0} à {1}',
     },
     toast: {
       update_failed: 'Échec de la mise à jour', delete_failed: 'Échec de la suppression',
@@ -234,6 +240,7 @@ const T = {
       snooze_1h: '1 heure', snooze_3h: '3 heures', snooze_1d: 'Demain',
       snooze_3d: '3 jours', snooze_1w: '1 semaine', snooze_1m: '1 mois',
       flag_to_high: 'Marquer important', flag_to_urgent: 'Marquer urgent', unflag: 'Retirer le marquage',
+      priority_high: 'IMPORTANT', priority_urgent: 'URGENT',
     },
     chores: {
       add_chore: 'Ajouter une corvée', edit_chore: 'Modifier la corvée', chore_history: 'Historique',
@@ -262,6 +269,7 @@ const T = {
       note_optional: 'Note optionnelle...',
       edit_date: 'Date', edit_note: 'Note',
       in_days: 'dans {0}j', days_ago: 'il y a {0}j',
+      today: 'aujourd\'hui', yesterday: 'hier', weeks_ago: 'il y a {0} sem.', months_ago: 'il y a {0} mois',
     },
     birthdays: {
       add_birthday: 'Ajouter un anniversaire', edit_birthday: 'Modifier l\'anniversaire',
@@ -330,6 +338,8 @@ const T = {
       search: 'Buscar', optional: 'opcional', done: 'Hecho', undo: 'Deshacer', rename: 'Renombrar',
       update: 'Actualizar', activate: 'Activar', confirm: 'Confirmar', reopen: 'Reabrir',
       copied: '¡Copiado!', loading: 'Cargando…', all: 'Todos',
+      today_at: 'hoy a las {0}', tomorrow_at: 'mañana a las {0}', yesterday_at: 'ayer a las {0}',
+      in_days: 'en {0} días', days_ago: 'hace {0} días', date_at: '{0} a las {1}',
     },
     toast: {
       update_failed: 'Error al actualizar', delete_failed: 'Error al eliminar',
@@ -387,6 +397,7 @@ const T = {
       snooze_1h: '1 hora', snooze_3h: '3 horas', snooze_1d: 'Mañana',
       snooze_3d: '3 días', snooze_1w: '1 semana', snooze_1m: '1 mes',
       flag_to_high: 'Marcar importante', flag_to_urgent: 'Marcar urgente', unflag: 'Desmarcar',
+      priority_high: 'IMPORTANTE', priority_urgent: 'URGENTE',
     },
     chores: {
       add_chore: 'Añadir tarea', edit_chore: 'Editar tarea', chore_history: 'Historial',
@@ -415,6 +426,7 @@ const T = {
       note_optional: 'Nota opcional...',
       edit_date: 'Fecha', edit_note: 'Nota',
       in_days: 'en {0}d', days_ago: 'hace {0}d',
+      today: 'hoy', yesterday: 'ayer', weeks_ago: 'hace {0} sem.', months_ago: 'hace {0} meses',
     },
     birthdays: {
       add_birthday: 'Añadir cumpleaños', edit_birthday: 'Editar cumpleaños',

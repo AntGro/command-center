@@ -365,7 +365,7 @@ function renderCategoryCard(category) {
       <div class="todo-cat-header-left">
         ${catDragHandle}
         <div class="todo-cat-info">
-          <h3 class="todo-cat-name">${esc(catName)}${shortnameLabel}</h3>
+          <h3 class="todo-cat-name">${esc(catName)}</h3>
           <span class="todo-cat-stats">${statsText}</span>
         </div>
       </div>
@@ -402,8 +402,9 @@ function renderTodoItem(td) {
   const isSnoozed = td.snooze_until && new Date(td.snooze_until) > now;
   const isOutdated = isTodoOutdated(td);
   const isFlagged = td.priority && td.priority !== 'normal';
+  const prioLabel = td.priority === 'urgent' ? t('todos.priority_urgent') : td.priority === 'high' ? t('todos.priority_high') : td.priority;
   const prioBadge = isFlagged
-    ? `<span class="todo-priority-badge priority-${td.priority}">${td.priority}</span>` : '';
+    ? `<span class="todo-priority-badge priority-${td.priority}">${prioLabel}</span>` : '';
 
   // Flag button: cycles normal → high → urgent → normal
   const flagIcon = td.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : td.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : lucideIcon('flag', 14);

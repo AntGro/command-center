@@ -246,12 +246,13 @@ function formatRelativeDate(d) {
   const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
   const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (diffDays === 0) return `today at ${timeStr}`;
-  if (diffDays === 1) return `tomorrow at ${timeStr}`;
-  if (diffDays === -1) return `yesterday at ${timeStr}`;
-  if (diffDays > 1 && diffDays <= 7) return `in ${diffDays} days`;
-  if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
+  if (diffDays === 0) return t('common.today_at', timeStr);
+  if (diffDays === 1) return t('common.tomorrow_at', timeStr);
+  if (diffDays === -1) return t('common.yesterday_at', timeStr);
+  if (diffDays > 1 && diffDays <= 7) return t('common.in_days', diffDays);
+  if (diffDays < -1 && diffDays >= -7) return t('common.days_ago', Math.abs(diffDays));
+  const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return t('common.date_at', dateStr, timeStr);
 }
 
 // ===================================================================
