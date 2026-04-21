@@ -653,7 +653,7 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 /* ===== BIRTHDAYS ===== */
 
 .birthday-bucket-count{font-size:0.75rem;font-weight:600;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:12px;}
-.birthday-bucket-list{max-height:none;overflow-y:visible;}
+.birthday-bucket-list{}
 
 .birthday-card{display:flex;align-items:center;gap:14px;}
 .birthday-card.birthday-today{border-color:#f97316;background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(236,72,153,0.08)),var(--surface);box-shadow:0 0 20px rgba(249,115,22,0.12);}
@@ -693,6 +693,7 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
    VESTIAIRE
    =================================================================== */
 /* Wardrobe — bucket cards reuse .project-card / .project-grid */
+.vestiaire-item-list{padding:4px 16px 12px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
 .vestiaire-item{display:flex;align-items:flex-start;justify-content:space-between;border-left:3px solid var(--muted);padding-left:10px;margin-bottom:4px;}
 .vestiaire-item.vest-purchased{border-left-color:#10b981;}
 .vestiaire-item.vest-tried{border-left-color:#f59e0b;}

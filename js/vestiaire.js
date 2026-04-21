@@ -205,7 +205,7 @@ function renderCategoryCard(cat, items) {
         </button>
       </div>
     </div>
-    <div class="vestiaire-item-list" data-category="${escapedCat}" style="padding:4px 16px 12px;">
+    <div class="vestiaire-item-list" data-category="${escapedCat}">
       ${itemsHtml}
     </div>
   </div>`;
