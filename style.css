@@ -565,7 +565,7 @@ input,select,button{font-family:inherit;}
 .todo-cat-add button:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 4px 14px rgba(100,108,255,0.3);}
 
 /* Todo list inside category card */
-.todo-cat-list{padding:0 8px 10px;display:flex;flex-direction:column;gap:3px;}
+.todo-cat-list{padding:0 8px 10px;display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;}
 .todo-cat-list .empty-msg{font-size:0.82rem;color:var(--muted);padding:8px;text-align:center;font-style:italic;}
 
 /* Todo items */
