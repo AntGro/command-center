@@ -466,7 +466,7 @@ window.editFlashcardInline = function(id) {
 
   // Auto-size the answer textarea
   function autoSizeAnswer() {
-    answerInput.style.height = 'auto';
+    answerInput.style.height = '0';
     answerInput.style.height = answerInput.scrollHeight + 'px';
   }
   answerInput.addEventListener('input', autoSizeAnswer);

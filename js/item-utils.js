@@ -265,7 +265,7 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   if (onStart) onStart();
 
   function autoSize() {
-    input.style.height = 'auto';
+    input.style.height = '0';
     input.style.height = input.scrollHeight + 'px';
   }
 
@@ -318,7 +318,7 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
       // Also auto-size any textareas inside extraEl
       if (extraEl) {
         extraEl.querySelectorAll('textarea').forEach(ta => {
-          ta.style.height = 'auto';
+          ta.style.height = '0';
           ta.style.height = ta.scrollHeight + 'px';
         });
       }

@@ -856,7 +856,7 @@ function handleTaskInput(event, projectId) {
 }
 
 function autoResizeTextarea(ta) {
-  ta.style.height = 'auto';
+  ta.style.height = '0';
   const newHeight = Math.min(ta.scrollHeight, 120);
   ta.style.height = newHeight + 'px';
   ta.style.overflowY = ta.scrollHeight > 120 ? 'auto' : 'hidden';
