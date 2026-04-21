@@ -402,9 +402,6 @@ function renderTodoItem(td) {
   const isSnoozed = td.snooze_until && new Date(td.snooze_until) > now;
   const isOutdated = isTodoOutdated(td);
   const isFlagged = td.priority && td.priority !== 'normal';
-  const prioLabel = td.priority === 'urgent' ? t('todos.priority_urgent') : td.priority === 'high' ? t('todos.priority_high') : td.priority;
-  const prioBadge = isFlagged
-    ? `<span class="todo-priority-badge priority-${td.priority}">${prioLabel}</span>` : '';
 
   // Flag button: cycles normal → high → urgent → normal
   const flagIcon = td.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : td.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : lucideIcon('flag', 14);
@@ -450,7 +447,6 @@ function renderTodoItem(td) {
     <div class="todo-row">
       ${flagBtn}
       <span class="todo-text">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
-      ${prioBadge}
       <div class="todo-actions">
         ${!td.done ? `<button onclick="toggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check",16)}</button>` : `<button onclick="toggleTodo('${td.id}', false)" title="${t('common.undo')}">${lucideIcon("refresh-cw",16)}</button>`}
         ${!td.done ? `<button onclick="openSnoozeModal('${td.id}')" title="${t('todos.snooze')}">${lucideIcon("moon",16)}</button>` : ''}

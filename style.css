@@ -472,7 +472,6 @@ input,select,button{font-family:inherit;}
   .todo-text{font-size:0.86rem;min-width:0;word-break:break-word;flex:1 1 0;}
   .todo-checkmark{width:22px;height:22px;border-radius:6px;}
   .todo-checkbox-label input:checked + .todo-checkmark::after{font-size:0.78rem;}
-  .todo-priority-badge{font-size:0.7rem;padding:3px 8px;}
   .todo-actions{display:grid !important;grid-template-columns:auto auto;gap:2px;justify-items:center;}
   .todo-actions button{font-size:0.78rem;padding:4px 6px;}
   .todo-meta{padding-left:38px;gap:6px;margin-top:6px;}
@@ -591,10 +590,7 @@ input,select,button{font-family:inherit;}
 .todo-actions button:hover{background:var(--surface2);}
 
 /* Priority Badge */
-.todo-priority-badge{font-size:0.68rem;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;flex-shrink:0;}
-.priority-low{background:rgba(107,114,128,0.15);color:#9ca3af;}
-.priority-high{background:rgba(239,68,68,0.12);color:var(--red);}
-.priority-urgent{background:rgba(239,68,68,0.15);color:var(--red);}
+
 
 /* Due Date & Snooze Meta */
 .todo-meta{display:flex;gap:12px;padding-left:56px;margin-top:4px;flex-wrap:wrap;}
