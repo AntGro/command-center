@@ -313,6 +313,17 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   // Double rAF: first frame renders the element at its final width,
   // second frame reads correct scrollHeight for multi-line content
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => { autoSize(); input.focus(); input.select(); });
+    requestAnimationFrame(() => {
+      autoSize();
+      // Also auto-size any textareas inside extraEl
+      if (extraEl) {
+        extraEl.querySelectorAll('textarea').forEach(ta => {
+          ta.style.height = 'auto';
+          ta.style.height = ta.scrollHeight + 'px';
+        });
+      }
+      input.focus();
+      input.select();
+    });
   });
 }

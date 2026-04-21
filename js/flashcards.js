@@ -470,7 +470,6 @@ window.editFlashcardInline = function(id) {
     answerInput.style.height = answerInput.scrollHeight + 'px';
   }
   answerInput.addEventListener('input', autoSizeAnswer);
-  requestAnimationFrame(autoSizeAnswer);
 
   inlineEditText(spanEl, card.front, {
     extraEl: answerRow,
