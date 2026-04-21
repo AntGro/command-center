@@ -250,6 +250,7 @@ export function inlineEditText(spanEl, originalText, { maxLength, saveFn, refres
   input.style.overflow = 'hidden';
   input.style.width = '100%';
   input.style.boxSizing = 'border-box';
+  input.style.flex = 'none'; // prevent flex-grow in column flex wrapper from overriding height
   if (maxLength) input.maxLength = maxLength;
 
   // If extra element, wrap textarea + extra together

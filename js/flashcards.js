@@ -461,6 +461,7 @@ window.editFlashcardInline = function(id) {
   answerInput.rows = Math.max(1, card.back.split('\n').length);
   answerInput.style.resize = 'none';
   answerInput.style.overflow = 'hidden';
+  answerInput.style.flex = 'none';
   answerRow.appendChild(answerLabel);
   answerRow.appendChild(answerInput);
 

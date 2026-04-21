@@ -3,7 +3,7 @@
  * Command Center Integration Tests
  * 
  * Static analysis + headless browser smoke tests.
- * Run via: node tests/tests.js (from command-center/)
+ * Run via: node tests.js (from command-center-test/)
  * Or via: bash run_tests.sh (from command-center/)
  * 
  * Catches: missing functions, HTML entities in JS, broken ES module chains,
@@ -418,6 +418,33 @@ test('initItemHoverDelay rowSelector differs from itemSelector', () => {
       if (itemSel && rowSel) {
         assert(itemSel[1] !== rowSel[1],
           `${file}: rowSelector '${rowSel[1]}' must differ from itemSelector '${itemSel[1]}' — querySelector doesn't match self`);
+      }
+    }
+  }
+});
+
+// ===================================================================
+// 22. Inline edit textareas set flex:none (prevent flex-grow in column wrapper)
+// ===================================================================
+test('Inline edit textareas set flex:none to prevent column-flex height bug', () => {
+  // item-utils.js inlineEditText must set flex:none on the textarea
+  const itemUtils = jsFiles['item-utils.js'];
+  // Find the textarea creation block in inlineEditText
+  assert(itemUtils.includes("flex = 'none'") || itemUtils.includes('flex = "none"'),
+    'item-utils.js: inlineEditText textarea must set style.flex = "none" to prevent flex-grow overriding autoSize in column flex wrapper');
+
+  // Any other file creating task-edit-input textareas (e.g. flashcards answer) must also set flex:none
+  for (const [name, content] of Object.entries(jsFiles)) {
+    if (name === 'item-utils.js') continue;
+    // Find textarea elements with task-edit-input class
+    const creations = content.match(/\.className\s*=\s*['"][^'"]*task-edit-input[^'"]*['"]/g);
+    if (creations) {
+      // Check that flex:none is set nearby (within 5 lines after)
+      for (const creation of creations) {
+        const idx = content.indexOf(creation);
+        const nearby = content.substring(idx, idx + 400);
+        assert(nearby.includes("flex = 'none'") || nearby.includes('flex = "none"'),
+          `${name}: textarea with task-edit-input class must set style.flex = "none" for autoSize to work in column flex wrappers`);
       }
     }
   }
