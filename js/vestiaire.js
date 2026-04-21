@@ -304,7 +304,7 @@ function initVestiaireHoverDelay(listEl) {
     textSelector: '.vest-text',
     onDblClick: (item) => {
       const id = item.dataset.vestId;
-      if (id) editVestiaireInline(id);
+      if (id) editVestiaireInlineFull(id);
     },
   });
 }
@@ -364,6 +364,71 @@ async function editVestiaireBrandInline(id) {
       if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
       v.brand = newBrand || null;
       showToast(t('toast.updated'), 'success');
+    },
+    refreshFn: renderVestiaire,
+  });
+}
+
+/** Full inline edit on dblclick — name + brand + size + color + notes */
+function editVestiaireInlineFull(id) {
+  const v = (state.allVestiaire || []).find(x => x.id === id);
+  if (!v) return;
+  const nameEl = document.querySelector(`.vestiaire-item[data-vest-id="${id}"] .vest-text`);
+  if (!nameEl) return;
+
+  // Hide actions while editing
+  const actionsEl = nameEl.closest('.vestiaire-item')?.querySelector('.vest-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
+
+  const extras = document.createElement('div');
+  extras.className = 'inline-edit-extras';
+
+  function addRow(labelText, value, placeholder) {
+    const row = document.createElement('div');
+    row.className = 'inline-edit-row';
+    const label = document.createElement('label');
+    label.className = 'inline-edit-label';
+    label.textContent = labelText;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-edit-input';
+    input.value = value || '';
+    if (placeholder) input.placeholder = placeholder;
+    row.appendChild(label);
+    row.appendChild(input);
+    extras.appendChild(row);
+    return input;
+  }
+
+  const brandInput = addRow(t('vestiaire.brand'), v.brand);
+  const sizeInput = addRow(t('vestiaire.size'), v.size);
+  const colorInput = addRow(t('vestiaire.color'), v.color);
+  const noteInput = addRow(t('common.notes'), v.note, t('vestiaire.notes_placeholder'));
+
+  inlineEditText(nameEl, v.name, {
+    maxLength: 200,
+    extraEl: extras,
+    collectExtra: () => ({
+      brand: brandInput.value.trim(),
+      size: sizeInput.value.trim(),
+      color: colorInput.value.trim(),
+      note: noteInput.value.trim(),
+    }),
+    saveFn: async (newName, extra) => {
+      const updates = {};
+      if (newName !== v.name) updates.name = newName;
+      if (extra) {
+        if ((extra.brand || '') !== (v.brand || '')) updates.brand = extra.brand || null;
+        if ((extra.size || '') !== (v.size || '')) updates.size = extra.size || null;
+        if ((extra.color || '') !== (v.color || '')) updates.color = extra.color || null;
+        if ((extra.note || '') !== (v.note || '')) updates.note = extra.note || null;
+      }
+      if (Object.keys(updates).length > 0) {
+        updates.updated_at = new Date().toISOString();
+        const { error } = await state.sb.from('vestiaire').update(updates).eq('id', id);
+        if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
+        showToast(t('toast.updated'), 'success');
+      }
     },
     refreshFn: renderVestiaire,
   });

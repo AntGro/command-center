@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state, { CHORE_CATEGORIES_KEY } from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { initItemHoverDelay, scrollToAndHighlight } from './item-utils.js';
+import { initItemHoverDelay, scrollToAndHighlight, inlineEditText } from './item-utils.js';
 import { getCategoryColor } from './todos.js';
 import { t } from './i18n.js';
 
@@ -199,7 +199,7 @@ function initChoreHoverDelay(container) {
     textSelector: '.chore-name',
     onDblClick: (item) => {
       const id = item.dataset.choreId;
-      if (id) openEditChoreModal(id);
+      if (id) editChoreInline(id);
     },
   });
 }
@@ -402,6 +402,80 @@ async function saveNewChore() {
   closeAddChoreModal();
   showToast(t('chores.chore_added', name), 'success');
   await refreshChores();
+}
+
+function editChoreInline(choreId) {
+  const chore = state.allChores.find(c => c.id === choreId);
+  if (!chore) return;
+  const nameEl = document.querySelector(`.chore-item[data-chore-id="${choreId}"] .chore-name`);
+  if (!nameEl) return;
+
+  // Hide actions while editing
+  const actionsEl = nameEl.closest('.chore-item')?.querySelector('.chore-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
+
+  // Build extra fields
+  const extras = document.createElement('div');
+  extras.className = 'inline-edit-extras';
+
+  // Frequency rule row
+  const freqRow = document.createElement('div');
+  freqRow.className = 'inline-edit-row';
+  const freqLabel = document.createElement('label');
+  freqLabel.className = 'inline-edit-label';
+  freqLabel.textContent = t('chores.frequency_rule');
+  const freqInput = document.createElement('input');
+  freqInput.type = 'text';
+  freqInput.className = 'inline-edit-input';
+  freqInput.value = chore.frequency_rule || '';
+  freqRow.appendChild(freqLabel);
+  freqRow.appendChild(freqInput);
+
+  // Category row
+  const catRow = document.createElement('div');
+  catRow.className = 'inline-edit-row';
+  const catLabel = document.createElement('label');
+  catLabel.className = 'inline-edit-label';
+  catLabel.textContent = t('common.category');
+  const catSelect = document.createElement('select');
+  catSelect.className = 'inline-edit-input';
+  const cats = ['General', ...getChoreCategories()];
+  cats.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    if (c === (chore.category || 'General')) opt.selected = true;
+    catSelect.appendChild(opt);
+  });
+  catRow.appendChild(catLabel);
+  catRow.appendChild(catSelect);
+
+  extras.appendChild(freqRow);
+  extras.appendChild(catRow);
+
+  inlineEditText(nameEl, chore.name, {
+    maxLength: 200,
+    extraEl: extras,
+    collectExtra: () => ({
+      frequency_rule: freqInput.value.trim(),
+      category: catSelect.value || 'General',
+    }),
+    saveFn: async (newName, extra) => {
+      const updates = {};
+      if (newName !== chore.name) updates.name = newName;
+      if (extra) {
+        if (extra.frequency_rule && extra.frequency_rule !== chore.frequency_rule) updates.frequency_rule = extra.frequency_rule;
+        if (extra.category !== (chore.category || 'General')) updates.category = extra.category;
+      }
+      if (Object.keys(updates).length > 0) {
+        const { error } = await state.sb.from('chores').update(updates).eq('id', choreId);
+        if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
+        if (updates.frequency_rule) await clearChoreNextDue(choreId);
+        showToast(t('chores.chore_updated'), 'success');
+      }
+    },
+    refreshFn: renderChores,
+  });
 }
 
 function openEditChoreModal(choreId) {

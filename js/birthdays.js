@@ -1,7 +1,7 @@
 import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
-import { scrollToAndHighlight, initItemHoverDelay } from './item-utils.js';
+import { scrollToAndHighlight, initItemHoverDelay, inlineEditText } from './item-utils.js';
 import { t, getLang } from './i18n.js';
 
 // ===================================================================
@@ -181,7 +181,7 @@ function initBirthdayHoverDelay(container) {
     textSelector: '.birthday-name',
     onDblClick: (item) => {
       const id = item.dataset.id;
-      if (id) openEditBirthdayModal(id);
+      if (id) editBirthdayInline(id);
     },
   });
 }
@@ -309,6 +309,76 @@ async function saveNewBirthday() {
   closeAddBirthdayModal();
   showToast(t('birthdays.birthday_added', name), 'success');
   await refreshBirthdays();
+}
+
+function editBirthdayInline(id) {
+  const b = state.allBirthdays.find(x => x.id === id);
+  if (!b) return;
+  const nameEl = document.querySelector(`.birthday-card[data-id="${id}"] .birthday-name`);
+  if (!nameEl) return;
+
+  // Hide actions while editing
+  const actionsEl = nameEl.closest('.birthday-card')?.querySelector('.birthday-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
+
+  // Build extra fields
+  const extras = document.createElement('div');
+  extras.className = 'inline-edit-extras';
+
+  // Birthday date row
+  const dateRow = document.createElement('div');
+  dateRow.className = 'inline-edit-row';
+  const dateLabel = document.createElement('label');
+  dateLabel.className = 'inline-edit-label';
+  dateLabel.textContent = t('birthdays.birthday_label');
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.className = 'inline-edit-input';
+  dateInput.value = b.birthday || '';
+  dateRow.appendChild(dateLabel);
+  dateRow.appendChild(dateInput);
+
+  // Note row
+  const noteRow = document.createElement('div');
+  noteRow.className = 'inline-edit-row';
+  const noteLabel = document.createElement('label');
+  noteLabel.className = 'inline-edit-label';
+  noteLabel.textContent = t('common.note');
+  const noteInput = document.createElement('input');
+  noteInput.type = 'text';
+  noteInput.className = 'inline-edit-input';
+  noteInput.value = b.note || '';
+  noteInput.placeholder = t('birthdays.note_placeholder');
+  noteRow.appendChild(noteLabel);
+  noteRow.appendChild(noteInput);
+
+  extras.appendChild(dateRow);
+  extras.appendChild(noteRow);
+
+  inlineEditText(nameEl, b.name, {
+    maxLength: 200,
+    extraEl: extras,
+    collectExtra: () => ({
+      birthday: dateInput.value,
+      note: noteInput.value.trim(),
+    }),
+    saveFn: async (newName, extra) => {
+      const updates = {};
+      if (newName !== b.name) updates.name = newName;
+      if (extra) {
+        if (extra.birthday && extra.birthday !== b.birthday) updates.birthday = extra.birthday;
+        const oldNote = b.note || '';
+        if (extra.note !== oldNote) updates.note = extra.note || null;
+      }
+      if (Object.keys(updates).length > 0) {
+        updates.updated_at = new Date().toISOString();
+        const { error } = await state.sb.from('birthdays').update(updates).eq('id', id);
+        if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
+        showToast(t('birthdays.birthday_updated'), 'success');
+      }
+    },
+    refreshFn: renderBirthdays,
+  });
 }
 
 function openEditBirthdayModal(id) {

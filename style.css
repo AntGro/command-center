@@ -639,6 +639,13 @@ input,select,button{font-family:inherit;}
 .fc-inline-answer-row{display:flex;flex-direction:column;gap:2px;}
 .fc-inline-answer-label{font-size:0.72rem;color:var(--muted);margin:0 !important;}
 .fc-inline-answer{font-size:0.84rem !important;}
+/* Shared inline edit extra fields */
+.inline-edit-extras{display:flex;flex-direction:column;gap:5px;}
+.inline-edit-row{display:flex;align-items:center;gap:6px;}
+.inline-edit-label{font-size:0.72rem;color:var(--muted);white-space:nowrap;margin:0 !important;min-width:60px;}
+.inline-edit-input{flex:1;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:0.8rem;outline:none;font-family:inherit;box-sizing:border-box;}
+.inline-edit-input:focus{border-color:var(--accent);}
+select.inline-edit-input{appearance:auto;cursor:pointer;}
 /* Lucide inline SVG icons */
 .lucide-icon{display:inline-block;vertical-align:middle;flex-shrink:0;}
 button .lucide-icon,
