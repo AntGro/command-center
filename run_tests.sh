@@ -7,7 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEST_DIR="$SCRIPT_DIR/../command-center-test"
+TEST_DIR="$SCRIPT_DIR/tests"
 
 echo ""
 echo "🪶 Command Center — Integration Tests"
