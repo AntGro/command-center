@@ -2,7 +2,7 @@ import { lucideIcon } from './icons.js';
 import state from './supabase.js';
 import { esc, showToast, showDeleteConfirm } from './utils.js';
 import { scrollToAndHighlight, initItemHoverDelay } from './item-utils.js';
-import { t } from './i18n.js';
+import { t, getLang } from './i18n.js';
 
 // ===================================================================
 // BIRTHDAYS — DATA, CRUD & RENDERING
@@ -68,12 +68,12 @@ function getTurningAge(birthdayStr) {
 
 function formatBirthdayDate(birthdayStr) {
   const bd = new Date(birthdayStr + 'T00:00:00');
-  return bd.toLocaleDateString([], { month: 'long', day: 'numeric' });
+  return bd.toLocaleDateString(getLang(), { month: 'long', day: 'numeric' });
 }
 
 function formatBirthdayFull(birthdayStr) {
   const bd = new Date(birthdayStr + 'T00:00:00');
-  return bd.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+  return bd.toLocaleDateString(getLang(), { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 // ===================================================================
@@ -195,9 +195,9 @@ function renderBirthdayCard(b, isUpcoming) {
 
   let daysLabel;
   if (days === 0) {
-    daysLabel = `<span class="birthday-countdown today">${lucideIcon('party-popper', 14)} Today!</span>`;
+    daysLabel = `<span class="birthday-countdown today">${lucideIcon('party-popper', 14)} ${t('birthdays.today')}</span>`;
   } else if (days === 1) {
-    daysLabel = `<span class="birthday-countdown tomorrow">Tomorrow</span>`;
+    daysLabel = `<span class="birthday-countdown tomorrow">${t('birthdays.tomorrow')}</span>`;
   } else {
     daysLabel = `<span class="birthday-countdown ${isUpcoming ? 'soon' : ''}">${days}d</span>`;
   }

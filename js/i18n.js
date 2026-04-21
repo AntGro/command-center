@@ -119,7 +119,7 @@ const T = {
       name_placeholder: 'e.g. Yassin, Maman...',
       note_placeholder: 'e.g. Likes books, allergic to nuts...',
       note_label: 'Note (optional)', birthday_label: 'Birthday',
-      turning: 'Turning', soon: 'Soon',
+      turning: 'Turning', soon: 'Soon', today: 'Today!', tomorrow: 'Tomorrow',
       add_first: 'Add first birthday',
     },
     // ── Wardrobe ──
@@ -279,7 +279,7 @@ const T = {
       name_placeholder: 'ex. Yassin, Maman...',
       note_placeholder: 'ex. Aime les livres, allergique aux noix...',
       note_label: 'Note (optionnel)', birthday_label: 'Date de naissance',
-      turning: 'Aura', soon: 'Bientôt',
+      turning: 'Aura', soon: 'Bientôt', today: 'Aujourd\'hui !', tomorrow: 'Demain',
       add_first: 'Ajouter un premier anniversaire',
     },
     vestiaire: {
@@ -436,7 +436,7 @@ const T = {
       name_placeholder: 'ej. Yassin, Mamá...',
       note_placeholder: 'ej. Le gustan los libros, alérgico a nueces...',
       note_label: 'Nota (opcional)', birthday_label: 'Fecha de nacimiento',
-      turning: 'Cumplirá', soon: 'Pronto',
+      turning: 'Cumplirá', soon: 'Pronto', today: '¡Hoy!', tomorrow: 'Mañana',
       add_first: 'Añadir primer cumpleaños',
     },
     vestiaire: {
