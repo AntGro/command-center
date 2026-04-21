@@ -271,7 +271,7 @@ function updateStaticLabels() {
   const keyInput = document.getElementById('password');
   if (urlInput) urlInput.placeholder = t('login.url_placeholder');
   if (keyInput) keyInput.placeholder = t('login.key_placeholder');
-  const stayLabel = document.querySelector('label[for="stayConnected"]');
+  const stayLabel = document.querySelector('.stay-connected-label span');
   if (stayLabel) stayLabel.textContent = t('login.stay_connected');
   const connectBtn = document.querySelector('#loginForm button[type="submit"]');
   if (connectBtn) connectBtn.textContent = t('login.connect');

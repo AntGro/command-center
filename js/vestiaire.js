@@ -299,7 +299,7 @@ function getCategoryIcon(cat) {
 function initVestiaireHoverDelay(listEl) {
   initItemHoverDelay(listEl, {
     itemSelector: '.vestiaire-item',
-    rowSelector: '.vestiaire-item',
+    rowSelector: '.vest-row',
     actionsSelector: '.vest-actions',
     textSelector: '.vest-text',
     onDblClick: (item) => {
