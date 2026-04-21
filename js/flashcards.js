@@ -209,7 +209,7 @@ function initFlashcardHoverDelay(container) {
       if (draftId) {
         window.startInlineEditDraftById(draftId);
       } else if (cardId) {
-        window.openEditFlashcardModal(cardId);
+        window.editFlashcardInline(cardId);
       }
     },
   });
@@ -441,6 +441,51 @@ window.startInlineEditDraft = function(id, spanEl) {
 window.startInlineEditDraftById = function(id) {
   const el = document.querySelector(`[data-draft-id="${id}"] .todo-text`);
   if (el) window.startInlineEditDraft(id, el);
+};
+
+window.editFlashcardInline = function(id) {
+  const card = allCards.find(c => c.id === id);
+  if (!card) return;
+  const spanEl = document.querySelector(`[data-card-id="${id}"] .todo-text`);
+  if (!spanEl) return;
+
+  // Build answer row as extraEl
+  const answerRow = document.createElement('div');
+  answerRow.className = 'fc-inline-answer-row';
+  const answerLabel = document.createElement('label');
+  answerLabel.className = 'fc-inline-answer-label';
+  answerLabel.textContent = t('flashcards.answer');
+  const answerInput = document.createElement('textarea');
+  answerInput.className = 'task-edit-input fc-inline-answer';
+  answerInput.value = card.back;
+  answerInput.rows = Math.max(1, card.back.split('\n').length);
+  answerInput.style.resize = 'none';
+  answerInput.style.overflow = 'hidden';
+  answerRow.appendChild(answerLabel);
+  answerRow.appendChild(answerInput);
+
+  // Auto-size the answer textarea
+  function autoSizeAnswer() {
+    answerInput.style.height = 'auto';
+    answerInput.style.height = answerInput.scrollHeight + 'px';
+  }
+  answerInput.addEventListener('input', autoSizeAnswer);
+  requestAnimationFrame(autoSizeAnswer);
+
+  inlineEditText(spanEl, card.front, {
+    extraEl: answerRow,
+    collectExtra: () => ({ back: answerInput.value.trim() }),
+    saveFn: async (newFront, extra) => {
+      const updates = {};
+      if (newFront !== card.front) updates.front = newFront;
+      if (extra && extra.back && extra.back !== card.back) updates.back = extra.back;
+      if (Object.keys(updates).length > 0 && state.sb) {
+        await state.sb.from('flashcards').update(updates).eq('id', id);
+        showToast(t('flashcards.card_updated'));
+      }
+    },
+    refreshFn: refreshFlashcards,
+  });
 };
 
 window.deleteDraft = function(id) {
