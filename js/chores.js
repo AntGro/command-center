@@ -37,15 +37,406 @@ function promptChoreShortname(catName) {
 
 
 // ===================================================================
-// NEXT_DUE — delegated to heartbeat cron job
+// NEXT_DUE — structured rules computed client-side, custom rules by heartbeat
 // ===================================================================
-// When a chore is created, edited, or completed, we set next_due = null.
-// The heartbeat cron job detects null next_due values and computes the
-// correct date server-side based on frequency_rule and last completion.
+// Structured frequency_rule formats:
+//   daily, every_N_days:X, weekly:Mon,Wed,Fri, every_N_weeks:2:Mon,
+//   monthly:1, monthly_weekday:first:Mon, every_N_months:3:1, yearly:MM-DD
+// Custom (free-text) rules → next_due = null → heartbeat handles them.
+
+const STRUCTURED_PREFIXES = ['daily', 'every_N_days:', 'weekly:', 'every_N_weeks:', 'monthly:', 'monthly_weekday:', 'every_N_months:', 'yearly:'];
+const DOW_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DOW_JS   = [1, 2, 3, 4, 5, 6, 0]; // JS getDay(): Sun=0
+
+function isStructuredRule(rule) {
+  if (!rule) return false;
+  return STRUCTURED_PREFIXES.some(p => rule === p.replace(/:$/, '') || rule.startsWith(p));
+}
+
+function computeNextDue(frequencyRule, lastDoneDate) {
+  if (!frequencyRule || !isStructuredRule(frequencyRule)) return null;
+  const base = lastDoneDate ? new Date(lastDoneDate) : new Date();
+  const baseDay = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  if (frequencyRule === 'daily') {
+    const next = new Date(baseDay); next.setDate(next.getDate() + 1);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  if (frequencyRule.startsWith('every_N_days:')) {
+    const n = parseInt(frequencyRule.split(':')[1], 10) || 1;
+    const next = new Date(baseDay); next.setDate(next.getDate() + n);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  if (frequencyRule.startsWith('weekly:')) {
+    const days = frequencyRule.split(':')[1].split(',');
+    const dayIndices = days.map(d => DOW_JS[DOW_KEYS.indexOf(d)]).filter(d => d !== undefined);
+    if (dayIndices.length === 0) return null;
+    // Find next occurrence after base
+    for (let offset = 1; offset <= 7; offset++) {
+      const candidate = new Date(baseDay); candidate.setDate(candidate.getDate() + offset);
+      if (dayIndices.includes(candidate.getDay())) {
+        return candidate < today ? today.toISOString().slice(0,10) : candidate.toISOString().slice(0,10);
+      }
+    }
+    return null;
+  }
+
+  if (frequencyRule.startsWith('every_N_weeks:')) {
+    const parts = frequencyRule.split(':');
+    const n = parseInt(parts[1], 10) || 1;
+    const days = (parts[2] || '').split(',');
+    const dayIndices = days.map(d => DOW_JS[DOW_KEYS.indexOf(d)]).filter(d => d !== undefined);
+    if (dayIndices.length === 0) return null;
+    const next = new Date(baseDay); next.setDate(next.getDate() + n * 7);
+    // Find the first matching day in that week
+    const weekStart = new Date(next);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1)); // Monday
+    for (let offset = 0; offset < 7; offset++) {
+      const candidate = new Date(weekStart); candidate.setDate(candidate.getDate() + offset);
+      if (dayIndices.includes(candidate.getDay()) && candidate > baseDay) {
+        return candidate < today ? today.toISOString().slice(0,10) : candidate.toISOString().slice(0,10);
+      }
+    }
+    return null;
+  }
+
+  if (frequencyRule.startsWith('monthly:')) {
+    const dom = parseInt(frequencyRule.split(':')[1], 10);
+    if (!dom || dom < 1 || dom > 31) return null;
+    let next = new Date(baseDay.getFullYear(), baseDay.getMonth(), dom);
+    if (next <= baseDay) next = new Date(baseDay.getFullYear(), baseDay.getMonth() + 1, dom);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  if (frequencyRule.startsWith('monthly_weekday:')) {
+    const parts = frequencyRule.split(':');
+    const position = parts[1]; // 'first' or 'last'
+    const dayName = parts[2];
+    const dayIdx = DOW_JS[DOW_KEYS.indexOf(dayName)];
+    if (dayIdx === undefined) return null;
+    function findNthWeekday(year, month, targetDay, pos) {
+      if (pos === 'first') {
+        const d = new Date(year, month, 1);
+        while (d.getDay() !== targetDay) d.setDate(d.getDate() + 1);
+        return d;
+      } else {
+        const d = new Date(year, month + 1, 0); // last day
+        while (d.getDay() !== targetDay) d.setDate(d.getDate() - 1);
+        return d;
+      }
+    }
+    let next = findNthWeekday(baseDay.getFullYear(), baseDay.getMonth(), dayIdx, position);
+    if (next <= baseDay) next = findNthWeekday(baseDay.getFullYear(), baseDay.getMonth() + 1, dayIdx, position);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  if (frequencyRule.startsWith('every_N_months:')) {
+    const parts = frequencyRule.split(':');
+    const n = parseInt(parts[1], 10) || 1;
+    const dom = parseInt(parts[2], 10) || 1;
+    let next = new Date(baseDay.getFullYear(), baseDay.getMonth() + n, dom);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  if (frequencyRule.startsWith('yearly:')) {
+    const mmdd = frequencyRule.split(':')[1];
+    const [mm, dd] = mmdd.split('-').map(Number);
+    if (!mm || !dd) return null;
+    let next = new Date(baseDay.getFullYear(), mm - 1, dd);
+    if (next <= baseDay) next = new Date(baseDay.getFullYear() + 1, mm - 1, dd);
+    return next < today ? today.toISOString().slice(0,10) : next.toISOString().slice(0,10);
+  }
+
+  return null;
+}
+
+function formatFrequency(rule) {
+  if (!rule) return '';
+  if (!isStructuredRule(rule)) return rule; // legacy free-text: show as-is
+
+  if (rule === 'daily') return t('chores.freq_display_daily');
+
+  if (rule.startsWith('every_N_days:')) {
+    const n = rule.split(':')[1];
+    return t('chores.freq_display_every_n_days', n);
+  }
+
+  if (rule.startsWith('weekly:')) {
+    const days = rule.split(':')[1].split(',');
+    const dayLabels = days.map(d => t('chores.day_' + d.toLowerCase()));
+    return t('chores.freq_display_weekly', dayLabels.join(', '));
+  }
+
+  if (rule.startsWith('every_N_weeks:')) {
+    const parts = rule.split(':');
+    const n = parts[1];
+    const days = (parts[2] || '').split(',');
+    const dayLabels = days.map(d => t('chores.day_' + d.toLowerCase()));
+    return t('chores.freq_display_every_n_weeks', n, dayLabels.join(', '));
+  }
+
+  if (rule.startsWith('monthly:')) {
+    const dom = rule.split(':')[1];
+    return t('chores.freq_display_monthly', ordinalSuffix(parseInt(dom, 10)));
+  }
+
+  if (rule.startsWith('monthly_weekday:')) {
+    const parts = rule.split(':');
+    const pos = t('chores.freq_' + parts[1]);
+    const dayLabel = t('chores.day_' + parts[2].toLowerCase());
+    return t('chores.freq_display_monthly_weekday', pos, dayLabel);
+  }
+
+  if (rule.startsWith('every_N_months:')) {
+    const parts = rule.split(':');
+    return t('chores.freq_display_every_n_months', parts[1], ordinalSuffix(parseInt(parts[2], 10)));
+  }
+
+  if (rule.startsWith('yearly:')) {
+    const mmdd = rule.split(':')[1];
+    const [mm, dd] = mmdd.split('-').map(Number);
+    const d = new Date(2000, mm - 1, dd);
+    return t('chores.freq_display_yearly', d.toLocaleDateString([], { month: 'long', day: 'numeric' }));
+  }
+
+  return rule;
+}
+
+function ordinalSuffix(n) {
+  if (!n) return '';
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+async function updateChoreNextDue(choreId, frequencyRule, lastDoneDate) {
+  if (isStructuredRule(frequencyRule)) {
+    const nextDue = computeNextDue(frequencyRule, lastDoneDate);
+    const { error } = await state.sb.from('chores').update({ next_due: nextDue }).eq('id', choreId);
+    if (error) console.warn('Failed to update next_due:', error.message);
+  } else {
+    await clearChoreNextDue(choreId);
+  }
+}
 
 async function clearChoreNextDue(choreId) {
   const { error } = await state.sb.from('chores').update({ next_due: null }).eq('id', choreId);
   if (error) console.warn('Failed to clear next_due:', error.message);
+}
+
+// ===================================================================
+// FREQUENCY PICKER — shared UI builder for add/edit/inline
+// ===================================================================
+const FREQ_TYPES = [
+  'daily', 'every_N_days', 'weekly', 'every_N_weeks',
+  'monthly', 'monthly_weekday', 'every_N_months', 'yearly', 'custom'
+];
+
+function buildFrequencyPicker(container, currentRule) {
+  container.innerHTML = '';
+  container.className = (container.className.replace(/\bfreq-picker\b/, '') + ' freq-picker').trim();
+
+  // Detect current type from rule
+  let currentType = 'custom';
+  let parsed = {};
+  if (currentRule) {
+    if (currentRule === 'daily') { currentType = 'daily'; }
+    else if (currentRule.startsWith('every_N_days:')) { currentType = 'every_N_days'; parsed.n = currentRule.split(':')[1]; }
+    else if (currentRule.startsWith('weekly:')) { currentType = 'weekly'; parsed.days = currentRule.split(':')[1].split(','); }
+    else if (currentRule.startsWith('every_N_weeks:')) { currentType = 'every_N_weeks'; const p = currentRule.split(':'); parsed.n = p[1]; parsed.days = (p[2]||'').split(','); }
+    else if (currentRule.startsWith('monthly:')) { currentType = 'monthly'; parsed.dom = currentRule.split(':')[1]; }
+    else if (currentRule.startsWith('monthly_weekday:')) { currentType = 'monthly_weekday'; const p = currentRule.split(':'); parsed.position = p[1]; parsed.day = p[2]; }
+    else if (currentRule.startsWith('every_N_months:')) { currentType = 'every_N_months'; const p = currentRule.split(':'); parsed.n = p[1]; parsed.dom = p[2]; }
+    else if (currentRule.startsWith('yearly:')) { currentType = 'yearly'; parsed.mmdd = currentRule.split(':')[1]; }
+    else { currentType = 'custom'; parsed.text = currentRule; }
+  }
+
+  // Type selector
+  const sel = document.createElement('select');
+  sel.className = 'inline-edit-input freq-type-select';
+  FREQ_TYPES.forEach(ft => {
+    const opt = document.createElement('option');
+    opt.value = ft;
+    opt.textContent = t('chores.freq_' + ft);
+    if (ft === currentType) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  container.appendChild(sel);
+
+  // Options container
+  const opts = document.createElement('div');
+  opts.className = 'freq-options';
+  container.appendChild(opts);
+
+  function renderOptions() {
+    opts.innerHTML = '';
+    const type = sel.value;
+
+    if (type === 'every_N_days') {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.min = '2'; inp.max = '365'; inp.className = 'inline-edit-input freq-n-input';
+      inp.value = parsed.n || '2';
+      inp.dataset.freqField = 'n';
+      const label = document.createElement('span'); label.className = 'freq-option-label'; label.textContent = t('chores.freq_n_label');
+      opts.appendChild(label); opts.appendChild(inp);
+    }
+
+    if (type === 'weekly' || type === 'every_N_weeks') {
+      if (type === 'every_N_weeks') {
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.min = '2'; inp.max = '52'; inp.className = 'inline-edit-input freq-n-input';
+        inp.value = parsed.n || '2';
+        inp.dataset.freqField = 'n';
+        const label = document.createElement('span'); label.className = 'freq-option-label'; label.textContent = t('chores.freq_n_label');
+        opts.appendChild(label); opts.appendChild(inp);
+      }
+      const dayBar = document.createElement('div'); dayBar.className = 'freq-day-bar';
+      DOW_KEYS.forEach(d => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'freq-day-btn';
+        btn.textContent = t('chores.day_' + d.toLowerCase());
+        btn.dataset.day = d;
+        if (parsed.days && parsed.days.includes(d)) btn.classList.add('active');
+        btn.addEventListener('click', () => btn.classList.toggle('active'));
+        dayBar.appendChild(btn);
+      });
+      opts.appendChild(dayBar);
+    }
+
+    if (type === 'monthly' || type === 'every_N_months') {
+      if (type === 'every_N_months') {
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.min = '2'; inp.max = '12'; inp.className = 'inline-edit-input freq-n-input';
+        inp.value = parsed.n || '2';
+        inp.dataset.freqField = 'n';
+        const label = document.createElement('span'); label.className = 'freq-option-label'; label.textContent = t('chores.freq_n_label');
+        opts.appendChild(label); opts.appendChild(inp);
+      }
+      const domSel = document.createElement('select'); domSel.className = 'inline-edit-input freq-dom-select';
+      domSel.dataset.freqField = 'dom';
+      for (let i = 1; i <= 31; i++) {
+        const opt = document.createElement('option'); opt.value = i; opt.textContent = ordinalSuffix(i);
+        if (String(i) === String(parsed.dom || '1')) opt.selected = true;
+        domSel.appendChild(opt);
+      }
+      const domLabel = document.createElement('span'); domLabel.className = 'freq-option-label'; domLabel.textContent = t('chores.freq_day_of_month');
+      opts.appendChild(domLabel); opts.appendChild(domSel);
+    }
+
+    if (type === 'monthly_weekday') {
+      const posSel = document.createElement('select'); posSel.className = 'inline-edit-input freq-pos-select';
+      posSel.dataset.freqField = 'position';
+      ['first', 'last'].forEach(p => {
+        const opt = document.createElement('option'); opt.value = p; opt.textContent = t('chores.freq_' + p);
+        if (p === (parsed.position || 'first')) opt.selected = true;
+        posSel.appendChild(opt);
+      });
+      opts.appendChild(posSel);
+
+      const daySel = document.createElement('select'); daySel.className = 'inline-edit-input freq-weekday-select';
+      daySel.dataset.freqField = 'day';
+      DOW_KEYS.forEach(d => {
+        const opt = document.createElement('option'); opt.value = d; opt.textContent = t('chores.day_' + d.toLowerCase());
+        if (d === (parsed.day || 'Mon')) opt.selected = true;
+        daySel.appendChild(opt);
+      });
+      opts.appendChild(daySel);
+    }
+
+    if (type === 'yearly') {
+      const mSel = document.createElement('select'); mSel.className = 'inline-edit-input freq-month-select';
+      mSel.dataset.freqField = 'month';
+      for (let i = 1; i <= 12; i++) {
+        const opt = document.createElement('option'); opt.value = String(i).padStart(2, '0');
+        opt.textContent = new Date(2000, i - 1, 1).toLocaleString([], { month: 'long' });
+        const curM = parsed.mmdd ? parsed.mmdd.split('-')[0] : '01';
+        if (String(i).padStart(2, '0') === curM) opt.selected = true;
+        mSel.appendChild(opt);
+      }
+      opts.appendChild(mSel);
+
+      const dSel = document.createElement('select'); dSel.className = 'inline-edit-input freq-dom-select';
+      dSel.dataset.freqField = 'yearday';
+      for (let i = 1; i <= 31; i++) {
+        const opt = document.createElement('option'); opt.value = String(i).padStart(2, '0'); opt.textContent = String(i);
+        const curD = parsed.mmdd ? parsed.mmdd.split('-')[1] : '01';
+        if (String(i).padStart(2, '0') === curD) opt.selected = true;
+        dSel.appendChild(opt);
+      }
+      opts.appendChild(dSel);
+    }
+
+    if (type === 'custom') {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'inline-edit-input freq-custom-input';
+      inp.value = parsed.text || '';
+      inp.dataset.freqField = 'text';
+      inp.placeholder = 'e.g. "every other weekend"';
+      inp.maxLength = 300;
+      opts.appendChild(inp);
+    }
+  }
+
+  sel.addEventListener('change', () => { parsed = {}; renderOptions(); });
+  renderOptions();
+  return container;
+}
+
+function getFrequencyFromPicker(container) {
+  const sel = container.querySelector('.freq-type-select');
+  if (!sel) return container.querySelector('input')?.value?.trim() || '';
+  const type = sel.value;
+  const opts = container.querySelector('.freq-options');
+
+  if (type === 'daily') return 'daily';
+
+  if (type === 'every_N_days') {
+    const n = opts.querySelector('[data-freq-field="n"]')?.value || '2';
+    return 'every_N_days:' + n;
+  }
+
+  if (type === 'weekly') {
+    const days = Array.from(opts.querySelectorAll('.freq-day-btn.active')).map(b => b.dataset.day);
+    return days.length ? 'weekly:' + days.join(',') : '';
+  }
+
+  if (type === 'every_N_weeks') {
+    const n = opts.querySelector('[data-freq-field="n"]')?.value || '2';
+    const days = Array.from(opts.querySelectorAll('.freq-day-btn.active')).map(b => b.dataset.day);
+    return days.length ? 'every_N_weeks:' + n + ':' + days.join(',') : '';
+  }
+
+  if (type === 'monthly') {
+    const dom = opts.querySelector('[data-freq-field="dom"]')?.value || '1';
+    return 'monthly:' + dom;
+  }
+
+  if (type === 'monthly_weekday') {
+    const pos = opts.querySelector('[data-freq-field="position"]')?.value || 'first';
+    const day = opts.querySelector('[data-freq-field="day"]')?.value || 'Mon';
+    return 'monthly_weekday:' + pos + ':' + day;
+  }
+
+  if (type === 'every_N_months') {
+    const n = opts.querySelector('[data-freq-field="n"]')?.value || '2';
+    const dom = opts.querySelector('[data-freq-field="dom"]')?.value || '1';
+    return 'every_N_months:' + n + ':' + dom;
+  }
+
+  if (type === 'yearly') {
+    const m = opts.querySelector('[data-freq-field="month"]')?.value || '01';
+    const d = opts.querySelector('[data-freq-field="yearday"]')?.value || '01';
+    return 'yearly:' + m + '-' + d;
+  }
+
+  if (type === 'custom') {
+    return opts.querySelector('[data-freq-field="text"]')?.value?.trim() || '';
+  }
+
+  return '';
 }
 
 function getChoreCategories() {
@@ -281,7 +672,7 @@ function renderChoreItem(chore) {
     <div class="chore-row">
       <div class="chore-info">
         <span class="chore-name">${esc(chore.name)}</span>
-        <span class="chore-frequency">${esc(chore.frequency_rule)}</span>
+        <span class="chore-frequency">${esc(formatFrequency(chore.frequency_rule))}</span>
       </div>
       <div class="chore-actions">
         ${promoteBtn}
@@ -318,13 +709,13 @@ function initChoreModals() {
   // Add Chore Modal
   const m1 = document.createElement('div');
   m1.className = 'modal-overlay'; m1.id = 'addChoreModal';
-  m1.innerHTML = `<div class="modal"><h2>` + lucideIcon("brush",20) + ` ${t('chores.add_chore')}</h2><label>${t('common.name')}</label><input type="text" id="newChoreName" placeholder="${t('chores.chore_placeholder')}" maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}"><label>${t('chores.frequency_rule_label')}</label><input type="text" id="newChoreFrequency" placeholder='e.g. "every other weekend", "second Saturday of the month"' maxlength="300"><label>${t('common.category')}</label><select id="newChoreCategory"></select><label>${t('chores.last_done_optional')}</label><input type="date" id="newChoreLastDone"><label class="chore-draft-toggle"><input type="checkbox" id="newChoreDraft"><span>Save as draft (won\'t show due dates until promoted)</span></label><div class="modal-actions"><button class="modal-cancel" onclick="closeAddChoreModal()">${t('common.cancel')}</button><button class="modal-save" onclick="saveNewChore()">Create</button></div></div>`;
+  m1.innerHTML = `<div class="modal"><h2>` + lucideIcon("brush",20) + ` ${t('chores.add_chore')}</h2><label>${t('common.name')}</label><input type="text" id="newChoreName" placeholder="${t('chores.chore_placeholder')}" maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}"><label>${t('chores.frequency_rule_label')}</label><div id="newChoreFreqPicker"></div><label>${t('common.category')}</label><select id="newChoreCategory"></select><label>${t('chores.last_done_optional')}</label><input type="date" id="newChoreLastDone"><label class="chore-draft-toggle"><input type="checkbox" id="newChoreDraft"><span>Save as draft (won\'t show due dates until promoted)</span></label><div class="modal-actions"><button class="modal-cancel" onclick="closeAddChoreModal()">${t('common.cancel')}</button><button class="modal-save" onclick="saveNewChore()">Create</button></div></div>`;
   app.appendChild(m1);
 
   // Edit Chore Modal
   const m2 = document.createElement('div');
   m2.className = 'modal-overlay'; m2.id = 'editChoreModal';
-  m2.innerHTML = `<div class="modal"><h2>` + lucideIcon("pencil",20) + ` ${t('chores.edit_chore')}</h2><input type="hidden" id="editChoreId"><label>${t('common.name')}</label><input type="text" id="editChoreName" maxlength="200"><label>${t('chores.frequency_rule')}</label><input type="text" id="editChoreFrequency" maxlength="300"><label>${t('common.category')}</label><select id="editChoreCategory"></select><div class="modal-actions"><button class="modal-cancel" onclick="closeEditChoreModal()">${t('common.cancel')}</button><button class="modal-save" onclick="saveEditChore()">${t('common.save')}</button></div></div>`;
+  m2.innerHTML = `<div class="modal"><h2>` + lucideIcon("pencil",20) + ` ${t('chores.edit_chore')}</h2><input type="hidden" id="editChoreId"><label>${t('common.name')}</label><input type="text" id="editChoreName" maxlength="200"><label>${t('chores.frequency_rule')}</label><div id="editChoreFreqPicker"></div><label>${t('common.category')}</label><select id="editChoreCategory"></select><div class="modal-actions"><button class="modal-cancel" onclick="closeEditChoreModal()">${t('common.cancel')}</button><button class="modal-save" onclick="saveEditChore()">${t('common.save')}</button></div></div>`;
   app.appendChild(m2);
 
   // Chore History Modal
@@ -342,9 +733,9 @@ function initChoreModals() {
 
 function openAddChoreModal() {
   document.getElementById('newChoreName').value = '';
-  document.getElementById('newChoreFrequency').value = '';
   document.getElementById('newChoreLastDone').value = '';
   document.getElementById('newChoreDraft').checked = false;
+  buildFrequencyPicker(document.getElementById('newChoreFreqPicker'), '');
   populateChoreCategorySelect('newChoreCategory');
   document.getElementById('addChoreModal').classList.add('visible');
   setTimeout(() => document.getElementById('newChoreName').focus(), 100);
@@ -367,19 +758,19 @@ async function addChoreFromInput(inputEl) {
 
   // Quick-add: opens the full modal pre-filled with name + category
   document.getElementById('newChoreName').value = name;
-  document.getElementById('newChoreFrequency').value = '';
   document.getElementById('newChoreLastDone').value = '';
   document.getElementById('newChoreDraft').checked = false;
+  buildFrequencyPicker(document.getElementById('newChoreFreqPicker'), '');
   populateChoreCategorySelect('newChoreCategory');
   document.getElementById('newChoreCategory').value = category;
   document.getElementById('addChoreModal').classList.add('visible');
   inputEl.value = '';
-  setTimeout(() => document.getElementById('newChoreFrequency').focus(), 100);
+  setTimeout(() => document.getElementById('newChoreFreqPicker').querySelector('select')?.focus(), 100);
 }
 
 async function saveNewChore() {
   const name = document.getElementById('newChoreName').value.trim();
-  const freq = document.getElementById('newChoreFrequency').value.trim();
+  const freq = getFrequencyFromPicker(document.getElementById('newChoreFreqPicker'));
   const cat = document.getElementById('newChoreCategory').value || 'General';
   const lastDoneVal = document.getElementById('newChoreLastDone').value;
   const isDraft = document.getElementById('newChoreDraft').checked;
@@ -394,9 +785,9 @@ async function saveNewChore() {
   if (lastDoneVal && data && data.id) {
     await state.sb.from('chore_completions').insert({ chore_id: data.id, completed_at: new Date(lastDoneVal).toISOString() });
   }
-  // Signal heartbeat to compute next_due
+  // Compute next_due client-side for structured rules, else delegate to heartbeat
   if (data && data.id) {
-    await clearChoreNextDue(data.id);
+    await updateChoreNextDue(data.id, freq, lastDoneVal || null);
   }
 
   closeAddChoreModal();
@@ -418,18 +809,17 @@ function editChoreInline(choreId) {
   const extras = document.createElement('div');
   extras.className = 'inline-edit-extras';
 
-  // Frequency rule row
+  // Frequency picker row
   const freqRow = document.createElement('div');
-  freqRow.className = 'inline-edit-row';
+  freqRow.className = 'inline-edit-row inline-edit-row-freq';
   const freqLabel = document.createElement('label');
   freqLabel.className = 'inline-edit-label';
   freqLabel.textContent = t('chores.frequency_rule');
-  const freqInput = document.createElement('input');
-  freqInput.type = 'text';
-  freqInput.className = 'inline-edit-input';
-  freqInput.value = chore.frequency_rule || '';
+  const freqContainer = document.createElement('div');
+  freqContainer.className = 'freq-picker-inline';
+  buildFrequencyPicker(freqContainer, chore.frequency_rule || '');
   freqRow.appendChild(freqLabel);
-  freqRow.appendChild(freqInput);
+  freqRow.appendChild(freqContainer);
 
   // Category row
   const catRow = document.createElement('div');
@@ -457,7 +847,7 @@ function editChoreInline(choreId) {
     maxLength: 200,
     extraEl: extras,
     collectExtra: () => ({
-      frequency_rule: freqInput.value.trim(),
+      frequency_rule: getFrequencyFromPicker(freqContainer),
       category: catSelect.value || 'General',
     }),
     saveFn: async (newName, extra) => {
@@ -470,7 +860,10 @@ function editChoreInline(choreId) {
       if (Object.keys(updates).length > 0) {
         const { error } = await state.sb.from('chores').update(updates).eq('id', choreId);
         if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
-        if (updates.frequency_rule) await clearChoreNextDue(choreId);
+        if (updates.frequency_rule) {
+          const lastDone = getChoreLastDone(choreId);
+          await updateChoreNextDue(choreId, updates.frequency_rule, lastDone);
+        }
         showToast(t('chores.chore_updated'), 'success');
       }
     },
@@ -483,7 +876,7 @@ function openEditChoreModal(choreId) {
   if (!chore) return;
   document.getElementById('editChoreId').value = choreId;
   document.getElementById('editChoreName').value = chore.name;
-  document.getElementById('editChoreFrequency').value = chore.frequency_rule;
+  buildFrequencyPicker(document.getElementById('editChoreFreqPicker'), chore.frequency_rule);
   populateChoreCategorySelect('editChoreCategory');
   document.getElementById('editChoreCategory').value = chore.category || 'General';
   document.getElementById('editChoreModal').classList.add('visible');
@@ -497,7 +890,7 @@ function closeEditChoreModal() {
 async function saveEditChore() {
   const id = document.getElementById('editChoreId').value;
   const name = document.getElementById('editChoreName').value.trim();
-  const freq = document.getElementById('editChoreFrequency').value.trim();
+  const freq = getFrequencyFromPicker(document.getElementById('editChoreFreqPicker'));
   const cat = document.getElementById('editChoreCategory').value || 'General';
 
   if (!name) { showToast(t('chores.enter_chore_name'), 'error'); return; }
@@ -506,8 +899,9 @@ async function saveEditChore() {
   const { error } = await state.sb.from('chores').update({ name, frequency_rule: freq, category: cat }).eq('id', id);
   if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
 
-  // Signal heartbeat to recompute next_due
-  await clearChoreNextDue(id);
+  // Compute next_due client-side for structured rules, else delegate to heartbeat
+  const lastDone = getChoreLastDone(id);
+  await updateChoreNextDue(id, freq, lastDone);
 
   closeEditChoreModal();
   showToast(t('chores.chore_updated'), 'success');
@@ -542,14 +936,20 @@ async function promoteChore(choreId) {
 // ===================================================================
 async function markChoreDone(choreId) {
   if (!choreId) return;
+  const chore = state.allChores.find(c => c.id === choreId);
+  const now = new Date().toISOString();
 
-  const row = { chore_id: choreId, completed_at: new Date().toISOString() };
+  const row = { chore_id: choreId, completed_at: now };
 
   const { error } = await state.sb.from('chore_completions').insert(row);
   if (error) { showToast(t('chores.failed_record'), 'error'); return; }
 
-  // Signal heartbeat to recompute next_due based on this new completion
-  await clearChoreNextDue(choreId);
+  // Compute next_due for structured rules, delegate to heartbeat for custom
+  if (chore) {
+    await updateChoreNextDue(choreId, chore.frequency_rule, now);
+  } else {
+    await clearChoreNextDue(choreId);
+  }
 
   showToast(t('chores.chore_done'), 'success');
   await refreshChores();
@@ -571,7 +971,7 @@ function renderChoreHistoryList(choreId, chore) {
   if (!chore) chore = state.allChores.find(c => c.id === choreId);
   if (!chore) return;
   const completions = getChoreCompletions(choreId);
-  document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${chore.name} — ${chore.frequency_rule}`;
+  document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${chore.name} — ${formatFrequency(chore.frequency_rule)}`;
 
   if (completions.length === 0) {
     document.getElementById('choreHistoryList').innerHTML = '<p class="empty-msg">No completions recorded yet</p>';

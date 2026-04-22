@@ -366,8 +366,8 @@
       <h2><span data-icon="brush" data-size="20"></span> Add Chore</h2>
       <label>Name</label>
       <input type="text" id="newChoreName" placeholder="e.g. Hoovering, Laundry..." maxlength="200" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNewChore();}">
-      <label>Frequency Rule (natural language)</label>
-      <input type="text" id="newChoreFrequency" placeholder='e.g. "every other weekend", "second Saturday of the month"' maxlength="300">
+      <label>Frequency</label>
+      <div id="newChoreFreqPicker"></div>
       <label>Category</label>
       <select id="newChoreCategory"></select>
       <label>Last Done (optional)</label>
@@ -390,8 +390,8 @@
       <input type="hidden" id="editChoreId">
       <label>Name</label>
       <input type="text" id="editChoreName" maxlength="200">
-      <label>Frequency Rule</label>
-      <input type="text" id="editChoreFrequency" maxlength="300">
+      <label>Frequency</label>
+      <div id="editChoreFreqPicker"></div>
       <label>Category</label>
       <select id="editChoreCategory"></select>
       <div class="modal-actions">
