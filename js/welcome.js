@@ -134,9 +134,11 @@ function renderWelcome() {
   });
   choresDue.sort((a, b) => new Date(a.next_due) - new Date(b.next_due));
 
-  // ── 3. Flashcards due ──
+  // ── 3. Flashcards ──
   const dueCards = wFlashcards.filter(c => c.last_review && (!c.next_review || new Date(c.next_review) <= now));
   const newCards = wFlashcards.filter(c => !c.last_review);
+  // Did the user already practice today? Check if any card was reviewed today.
+  const practicedToday = wFlashcards.some(c => c.last_review && startOfDay(new Date(c.last_review)).getTime() === todayStart.getTime());
   let avgR = 0;
   const reviewedCards = wFlashcards.filter(c => c.last_review && c.stability);
   if (reviewedCards.length > 0) {
@@ -226,7 +228,18 @@ function renderWelcome() {
   // Flashcard reminder
   html += `<div class="welcome-section">`;
   html += `<div class="welcome-section-header">${lucideIcon('book-open', 18, '#06b6d4')} <span>${esc(t('welcome.flashcards'))}</span></div>`;
-  if (dueCards.length > 0 || newCards.length > 0) {
+  if (practicedToday) {
+    // Already practiced today — show positive state
+    const todayCount = wFlashcards.filter(c => c.last_review && startOfDay(new Date(c.last_review)).getTime() === todayStart.getTime()).length;
+    html += `<div class="welcome-flash-done">${lucideIcon('circle-check', 16, '#22c55e')} ${esc(t('welcome.practiced_today', todayCount))}</div>`;
+    if (dueCards.length > 0) {
+      html += `<div class="welcome-flash-summary">`;
+      html += `<span class="welcome-flash-due">${esc(t('welcome.cards_still_due', dueCards.length))}</span>`;
+      html += `<button class="welcome-flash-btn" onclick="switchView('flashcards')">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
+      html += `</div>`;
+    }
+  } else if (dueCards.length > 0 || newCards.length > 0) {
+    // Not practiced today and there are cards to review
     html += `<div class="welcome-flash-summary">`;
     if (dueCards.length > 0) {
       html += `<span class="welcome-flash-due">${esc(t('welcome.cards_due', dueCards.length))}</span>`;
@@ -236,14 +249,11 @@ function renderWelcome() {
     }
     html += `<button class="welcome-flash-btn" onclick="switchView('flashcards')">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
     html += `</div>`;
-    if (reviewedCards.length > 0) {
-      html += `<div class="welcome-flash-stats">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
-    }
   } else {
     html += `<div class="welcome-empty">${esc(t('welcome.up_to_date'))}</div>`;
-    if (reviewedCards.length > 0) {
-      html += `<div class="welcome-flash-stats">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
-    }
+  }
+  if (reviewedCards.length > 0) {
+    html += `<div class="welcome-flash-stats">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
   }
   html += `</div>`;
 
