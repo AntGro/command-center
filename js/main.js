@@ -9,6 +9,7 @@ import { refreshChores, renderChores } from './chores.js';
 import { refreshBirthdays, renderBirthdays, initBirthdayModals } from './birthdays.js';
 import { refreshVestiaire, renderVestiaire, initVestiaireModals } from './vestiaire.js';
 import { refreshFlashcards, renderFlashcards, initFlashcardModals, getFlashcardCounts } from './flashcards.js';
+import { refreshWelcome, renderWelcome } from './welcome.js';
 
 // ===================================================================
 // ICON HYDRATION — replace <span data-icon="..."> with SVGs from icons.js
@@ -185,16 +186,16 @@ async function connect(url, key) {
   markLastUpdated();
 
   // Restore last view — hash takes priority over localStorage
-  const validViews = ['projects', 'todos', 'chores', 'birthdays', 'vestiaire', 'flashcards'];
+  const validViews = ['welcome', 'projects', 'todos', 'chores', 'birthdays', 'vestiaire', 'flashcards'];
   const rawHash = location.hash.replace('#', '');
   const hashView = validViews.includes(rawHash) ? rawHash : null;
-  const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'projects';
+  const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'welcome';
   switchView(savedView);
 
   // Listen for back/forward navigation
   window.addEventListener('hashchange', () => {
     const raw = location.hash.replace('#', '');
-    const h = validViews.includes(raw) ? raw : 'projects';
+    const h = validViews.includes(raw) ? raw : 'welcome';
     if (h !== state.currentView) switchView(h);
   });
 }
@@ -245,7 +246,8 @@ function initLangPicker() {
 
 function reRenderCurrentView() {
   const view = state.currentView;
-  if (view === 'projects') refreshAll();
+  if (view === 'welcome') renderWelcome();
+  else if (view === 'projects') refreshAll();
   else if (view === 'todos') renderTodos();
   else if (view === 'chores') renderChores();
   else if (view === 'birthdays') renderBirthdays();
@@ -255,7 +257,7 @@ function reRenderCurrentView() {
 
 function updateStaticLabels() {
   // Nav tabs
-  const tabLabels = { tabProjects: 'nav.projects', tabTodos: 'nav.todos', tabChores: 'nav.chores',
+  const tabLabels = { tabWelcome: 'nav.today', tabProjects: 'nav.projects', tabTodos: 'nav.todos', tabChores: 'nav.chores',
     tabBirthdays: 'nav.birthdays', tabVestiaire: 'nav.wardrobe', tabFlashcards: 'nav.flashcards' };
   for (const [id, key] of Object.entries(tabLabels)) {
     const el = document.getElementById(id);
@@ -372,12 +374,14 @@ function switchView(view) {
   // Sync URL hash (no reload)
   const newHash = '#' + view;
   if (location.hash !== newHash) history.replaceState(null, '', newHash);
+  const welcomeView = document.getElementById('welcomeView');
   const projectsView = document.getElementById('projectsView');
   const todosView = document.getElementById('todosView');
   const choresView = document.getElementById('choresView');
   const birthdaysView = document.getElementById('birthdaysView');
   const vestiaireView = document.getElementById('vestiaireView');
   const flashcardsView = document.getElementById('flashcardsView');
+  const tabWelcome = document.getElementById('tabWelcome');
   const tabProjects = document.getElementById('tabProjects');
   const tabTodos = document.getElementById('tabTodos');
   const tabChores = document.getElementById('tabChores');
@@ -386,12 +390,14 @@ function switchView(view) {
   const tabFlashcards = document.getElementById('tabFlashcards');
 
   // Hide all
+  if (welcomeView) welcomeView.style.display = 'none';
   projectsView.style.display = 'none';
   todosView.style.display = 'none';
   if (choresView) choresView.style.display = 'none';
   if (birthdaysView) birthdaysView.style.display = 'none';
   if (vestiaireView) vestiaireView.style.display = 'none';
   if (flashcardsView) flashcardsView.style.display = 'none';
+  if (tabWelcome) tabWelcome.classList.remove('active');
   tabProjects.classList.remove('active');
   tabTodos.classList.remove('active');
   if (tabChores) tabChores.classList.remove('active');
@@ -399,7 +405,11 @@ function switchView(view) {
   if (tabVestiaire) tabVestiaire.classList.remove('active');
   if (tabFlashcards) tabFlashcards.classList.remove('active');
 
-  if (view === 'projects') {
+  if (view === 'welcome') {
+    if (welcomeView) welcomeView.style.display = '';
+    if (tabWelcome) tabWelcome.classList.add('active');
+    refreshWelcome().then(() => { renderWelcome(); markLastUpdated(); });
+  } else if (view === 'projects') {
     projectsView.style.display = '';
     tabProjects.classList.add('active');
     refreshAll().then(() => markLastUpdated());
@@ -439,6 +449,9 @@ function updateViewFooterStats() {
   const view = state.currentView;
   const icon = (name, sz = 14) => lucideIcon(name, sz);
   const viewCountsMap = {
+    welcome: () => [
+      `${icon('home')} ${t('nav.today')}`,
+    ],
     projects: () => [
       `${icon('folder')} Projects: ${state.PROJECTS.length}`,
       `${icon('list-checks')} Tasks: ${state.allTasks.length}`,

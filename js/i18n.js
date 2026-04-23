@@ -41,8 +41,25 @@ const T = {
     },
     // ── Nav tabs ──
     nav: {
-      projects: 'Projects', todos: 'TODOs', chores: 'Chores',
+      today: 'Today', projects: 'Projects', todos: 'TODOs', chores: 'Chores',
       birthdays: 'Birthdays', wardrobe: 'Wardrobe', flashcards: 'Flashcards',
+    },
+    // ── Welcome ──
+    welcome: {
+      good_morning: 'Good morning', good_afternoon: 'Good afternoon', good_evening: 'Good evening',
+      focus_todos: "Today's Focus", chores_due: 'Chores Due', flashcards: 'Flashcard Review',
+      upcoming_birthdays: 'Upcoming Birthdays', stats: 'Overview',
+      all_clear: 'All clear — nothing urgent', no_chores_due: 'No chores due today',
+      cards_due: '{0} cards due for review', new_cards: '{0} new cards',
+      up_to_date: "You're up to date!", in_days: 'in {0} days',
+      today_birthday: 'Today!', tomorrow_birthday: 'Tomorrow',
+      turning: 'Turning {0}',
+      todos_pending: 'TODOs pending', todos_done_week: 'Done this week',
+      chores_done_week: 'Chores this week', total_flashcards: 'Flashcards',
+      due_for_review: 'Due for review', wardrobe_items: 'Wardrobe items',
+      projects: 'Projects', avg_retrievability: 'Avg. retrievability',
+      overdue_1: '1 day overdue', overdue_n: '{0} days overdue',
+      due_today: 'Due today', go_to_flashcards: 'Practice now',
     },
     // ── Projects ──
     projects: {
@@ -227,8 +244,24 @@ const T = {
       log_out: 'Déconnexion',
     },
     nav: {
-      projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
+      today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
       birthdays: 'Anniversaires', wardrobe: 'Garde-robe', flashcards: 'Flashcards',
+    },
+    welcome: {
+      good_morning: 'Bonjour', good_afternoon: 'Bon après-midi', good_evening: 'Bonsoir',
+      focus_todos: 'Priorités du jour', chores_due: 'Corvées à faire', flashcards: 'Révision',
+      upcoming_birthdays: 'Anniversaires à venir', stats: 'Vue d\'ensemble',
+      all_clear: 'Tout est en ordre — rien d\'urgent', no_chores_due: 'Aucune corvée à faire aujourd\'hui',
+      cards_due: '{0} cartes à réviser', new_cards: '{0} nouvelles cartes',
+      up_to_date: 'Vous êtes à jour !', in_days: 'dans {0} jours',
+      today_birthday: 'Aujourd\'hui !', tomorrow_birthday: 'Demain',
+      turning: 'Aura {0} ans',
+      todos_pending: 'Tâches en cours', todos_done_week: 'Faites cette semaine',
+      chores_done_week: 'Corvées cette sem.', total_flashcards: 'Flashcards',
+      due_for_review: 'À réviser', wardrobe_items: 'Articles vestimentaires',
+      projects: 'Projets', avg_retrievability: 'Rétention moy.',
+      overdue_1: '1 jour de retard', overdue_n: '{0} jours de retard',
+      due_today: 'À faire aujourd\'hui', go_to_flashcards: 'Réviser',
     },
     projects: {
       add_project: 'Ajouter un projet', edit_project: 'Modifier le projet',
@@ -406,8 +439,24 @@ const T = {
       log_out: 'Cerrar sesión',
     },
     nav: {
-      projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',
+      today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',
       birthdays: 'Cumpleaños', wardrobe: 'Armario', flashcards: 'Flashcards',
+    },
+    welcome: {
+      good_morning: 'Buenos días', good_afternoon: 'Buenas tardes', good_evening: 'Buenas noches',
+      focus_todos: 'Prioridades de hoy', chores_due: 'Quehaceres pendientes', flashcards: 'Revisión',
+      upcoming_birthdays: 'Próximos cumpleaños', stats: 'Resumen',
+      all_clear: 'Todo en orden — nada urgente', no_chores_due: 'Sin quehaceres para hoy',
+      cards_due: '{0} tarjetas por revisar', new_cards: '{0} tarjetas nuevas',
+      up_to_date: '¡Estás al día!', in_days: 'en {0} días',
+      today_birthday: '¡Hoy!', tomorrow_birthday: 'Mañana',
+      turning: 'Cumplirá {0}',
+      todos_pending: 'Tareas pendientes', todos_done_week: 'Hechas esta semana',
+      chores_done_week: 'Quehaceres esta sem.', total_flashcards: 'Flashcards',
+      due_for_review: 'Por revisar', wardrobe_items: 'Artículos de armario',
+      projects: 'Proyectos', avg_retrievability: 'Retención prom.',
+      overdue_1: '1 día de retraso', overdue_n: '{0} días de retraso',
+      due_today: 'Para hoy', go_to_flashcards: 'Practicar',
     },
     projects: {
       add_project: 'Añadir proyecto', edit_project: 'Editar proyecto',
