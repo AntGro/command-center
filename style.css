@@ -874,12 +874,15 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 
 
 /* ===== WELCOME / TODAY VIEW ===== */
-.welcome-container{max-width:700px;margin:0 auto;padding:20px 16px 40px;}
-.welcome-header{margin-bottom:24px;text-align:center;}
-.welcome-greeting{font-size:1.4rem;font-weight:600;letter-spacing:-0.3px;}
+/* Welcome page */
+.welcome-container{max-width:860px;margin:0 auto;padding:28px 20px 40px;}
+.welcome-header{margin-bottom:28px;text-align:center;}
+.welcome-greeting{font-size:1.5rem;font-weight:600;letter-spacing:-0.3px;}
 .welcome-date{color:var(--muted);font-size:0.88rem;margin-top:4px;text-transform:capitalize;}
 
-.welcome-section{border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:16px;background:transparent;}
+.welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.welcome-section{border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.welcome-grid .welcome-section{margin-bottom:0;}
 .welcome-section-header{display:flex;align-items:center;gap:8px;font-weight:600;font-size:0.95rem;margin-bottom:12px;}
 .welcome-section-header svg{flex-shrink:0;}
 
@@ -907,14 +910,15 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 .welcome-flash-done{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:500;color:#22c55e;margin-bottom:6px;}
 
 /* Stats grid */
-.welcome-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
-.welcome-stat-card{border:1px solid var(--border);border-radius:8px;padding:14px 10px;text-align:center;background:transparent;}
+.welcome-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.welcome-stat-card{border:1px solid var(--border);border-radius:8px;padding:14px 10px;text-align:center;background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .welcome-stat-icon{margin-bottom:4px;}
 .welcome-stat-value{font-size:1.3rem;font-weight:700;letter-spacing:-0.5px;}
 .welcome-stat-label{font-size:0.74rem;color:var(--muted);margin-top:2px;}
 
 @media(max-width:600px){
-  .welcome-container{padding:12px 10px 32px;}
-  .welcome-greeting{font-size:1.15rem;}
+  .welcome-container{padding:14px 12px 32px;}
+  .welcome-greeting{font-size:1.2rem;}
+  .welcome-grid{grid-template-columns:1fr;}
   .welcome-stats-grid{grid-template-columns:repeat(2,1fr);}
 }

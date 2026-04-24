@@ -168,6 +168,9 @@ function renderWelcome() {
   html += `<div class="welcome-date">${esc(formatDateLocale())}</div>`;
   html += `</div>`;
 
+  // Focus TODOs + Chores due — side by side
+  html += `<div class="welcome-grid">`;
+
   // Focus TODOs section
   html += `<div class="welcome-section">`;
   html += `<div class="welcome-section-header">${lucideIcon('list-checks', 18, '#22c55e')} <span>${esc(t('welcome.focus_todos'))}</span></div>`;
@@ -224,6 +227,10 @@ function renderWelcome() {
     html += `</div>`;
   }
   html += `</div>`;
+  html += `</div>`; // close welcome-grid
+
+  // Flashcards + Birthdays — second row grid
+  html += `<div class="welcome-grid">`;
 
   // Flashcard reminder
   html += `<div class="welcome-section">`;
@@ -257,10 +264,10 @@ function renderWelcome() {
   }
   html += `</div>`;
 
-  // Upcoming birthdays (only if there are any)
+  // Upcoming birthdays
+  html += `<div class="welcome-section">`;
+  html += `<div class="welcome-section-header">${lucideIcon('cake', 18, '#f97316')} <span>${esc(t('welcome.upcoming_birthdays'))}</span></div>`;
   if (upcomingBDs.length > 0) {
-    html += `<div class="welcome-section">`;
-    html += `<div class="welcome-section-header">${lucideIcon('cake', 18, '#f97316')} <span>${esc(t('welcome.upcoming_birthdays'))}</span></div>`;
     html += `<div class="welcome-items">`;
     for (const b of upcomingBDs) {
       const dayLabel = b.daysUntil === 0 ? t('welcome.today_birthday')
@@ -277,8 +284,11 @@ function renderWelcome() {
       html += `</div>`;
     }
     html += `</div>`;
-    html += `</div>`;
+  } else {
+    html += `<div class="welcome-empty">${esc(t('welcome.no_birthdays'))}</div>`;
   }
+  html += `</div>`;
+  html += `</div>`; // close second welcome-grid
 
   // Stats overview
   html += `<div class="welcome-section">`;
