@@ -16,7 +16,7 @@
 }
 /* Light theme overrides */
 [data-theme="light"] {
-  --bg: #f4f3f1;
+  --bg: #edeeed;
   --surface: rgba(255,255,255,0.88);
   --surface2: rgba(238,238,240,0.9);
   --border: rgba(212,212,216,0.7);
@@ -28,31 +28,31 @@
 [data-theme="light"] .gate-box{box-shadow:0 20px 60px rgba(0,0,0,0.08);}
 [data-theme="light"] #gate{background:radial-gradient(ellipse at 50% 40%,rgba(79,70,229,0.04),transparent 60%);}
 [data-theme="light"] body{background:
-  radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,102,241,0.07), transparent 55%),
-  radial-gradient(ellipse 60% 80% at 80% 15%, rgba(168,85,247,0.05), transparent 50%),
-  radial-gradient(ellipse 70% 40% at 60% 85%, rgba(139,92,246,0.04), transparent 50%),
-  radial-gradient(ellipse 40% 60% at 10% 70%, rgba(99,102,241,0.03), transparent 45%),
-  radial-gradient(ellipse 50% 30% at 90% 50%, rgba(168,85,247,0.03), transparent 40%),
-  radial-gradient(circle 600px at 35% 45%, rgba(220,215,210,0.25), transparent),
-  radial-gradient(circle 400px at 70% 30%, rgba(230,225,218,0.15), transparent),
-  var(--bg);background-attachment:fixed;}
+  radial-gradient(ellipse 88% 71% at 20% 17%, rgba(57,167,68,0.054), transparent 53%),
+  radial-gradient(ellipse 52% 60% at 24% 36%, rgba(76,228,73,0.073), transparent 64%),
+  radial-gradient(ellipse 62% 67% at 65% 80%, rgba(27,21,193,0.097), transparent 37%),
+  radial-gradient(ellipse 50% 50% at 8% 52%, rgba(84,105,227,0.096), transparent 75%),
+  radial-gradient(circle 892px at 45% 47%, rgba(219,225,222,0.35), transparent),
+  radial-gradient(circle 690px at 61% 12%, rgba(226,228,226,0.25), transparent),
+  radial-gradient(circle 642px at 74% 60%, rgba(218,226,220,0.24), transparent),
+  #edeeed;background-attachment:fixed;}
 
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;
   background:
-    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(100,108,255,0.10), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(100,104,255,0.1), transparent 55%),
     radial-gradient(ellipse 60% 80% at 85% 20%, rgba(168,85,247,0.07), transparent 50%),
     radial-gradient(ellipse 70% 40% at 55% 90%, rgba(139,92,246,0.06), transparent 50%),
-    radial-gradient(ellipse 40% 60% at 5% 65%, rgba(100,108,255,0.04), transparent 45%),
+    radial-gradient(ellipse 40% 60% at 5% 65%, rgba(100,104,255,0.04), transparent 45%),
     radial-gradient(ellipse 50% 30% at 95% 55%, rgba(168,85,247,0.04), transparent 40%),
-    radial-gradient(circle 600px at 30% 40%, rgba(20,22,30,0.4), transparent),
+    radial-gradient(circle 600px at 30% 40%, rgba(20,30,30,0.4), transparent),
     radial-gradient(circle 400px at 75% 25%, rgba(25,20,35,0.25), transparent),
-    var(--bg);
+    #08090d;
   background-attachment:fixed;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.03;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat:repeat;background-size:400px 400px;}
-[data-theme="light"] body::after{opacity:0.025;}
+[data-theme="light"] body::after{opacity:0.027;}
 ::selection{background:var(--accent);color:#fff;}
 input,select,button{font-family:inherit;}
 
