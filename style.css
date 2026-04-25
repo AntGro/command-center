@@ -59,7 +59,7 @@ input,select,button{font-family:inherit;}
 /* ===== GATE ===== */
 #gate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(100,108,255,0.06),transparent 60%);position:relative;z-index:1;}
 .gate-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4),0 0 80px rgba(100,108,255,0.06);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
-.gate-box .logo{font-size:3rem;margin-bottom:4px;}
+.gate-box .logo{margin-bottom:4px;color:var(--accent);}
 .gate-box h1{font-size:1.2rem;font-weight:600;margin-bottom:4px;letter-spacing:-0.3px;}
 .gate-box .subtitle{color:var(--muted);margin-bottom:28px;font-size:0.82rem;}
 .gate-box input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.92rem;margin-bottom:10px;outline:none;transition:border-color 0.2s;}
@@ -440,7 +440,7 @@ input,select,button{font-family:inherit;}
 
   /* Gate */
   .gate-box{padding:32px 20px;border-radius:14px;}
-  .gate-box .logo{font-size:2.4rem;}
+  .gate-box .logo{}
   .gate-box h1{font-size:1.05rem;}
 
   /* Header */
