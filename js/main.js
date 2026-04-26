@@ -432,7 +432,7 @@ function switchView(view) {
   } else if (view === 'flashcards') {
     if (flashcardsView) flashcardsView.style.display = '';
     if (tabFlashcards) tabFlashcards.classList.add('active');
-    refreshFlashcards().then(() => { renderFlashcards(); markLastUpdated(); });
+    refreshFlashcards().then(() => { renderFlashcards(); markLastUpdated(); if (window._pendingPracticeStart) { delete window._pendingPracticeStart; if (typeof window.startPractice === 'function') window.startPractice('__all'); } });
   }
 
   // Scroll active tab into view on mobile (horizontal carousel)

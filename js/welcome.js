@@ -242,7 +242,7 @@ function renderWelcome() {
     if (dueCards.length > 0) {
       html += `<div class="welcome-flash-summary">`;
       html += `<span class="welcome-flash-due">${esc(t('welcome.cards_still_due', dueCards.length))}</span>`;
-      html += `<button class="welcome-flash-btn" onclick="switchView('flashcards')">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
+      html += `<button class="welcome-flash-btn" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
       html += `</div>`;
     }
   } else if (dueCards.length > 0 || newCards.length > 0) {
@@ -254,7 +254,7 @@ function renderWelcome() {
     if (newCards.length > 0) {
       html += `<span class="welcome-flash-new">${esc(t('welcome.new_cards', newCards.length))}</span>`;
     }
-    html += `<button class="welcome-flash-btn" onclick="switchView('flashcards')">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
+    html += `<button class="welcome-flash-btn" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
     html += `</div>`;
   } else {
     html += `<div class="welcome-empty">${esc(t('welcome.up_to_date'))}</div>`;
@@ -316,3 +316,11 @@ function renderWelcome() {
 }
 
 export { refreshWelcome, renderWelcome };
+
+// ── Go to Flashcards tab AND auto-start practice ──
+function goToPractice() {
+  window['_pendingPracticeStart'] = 1;
+  if (typeof switchView === 'function') switchView('flashcards');
+  else window.switchView('flashcards');
+}
+window.goToPractice = goToPractice;
