@@ -78,7 +78,7 @@ async function refreshWelcome() {
     state.sb.from('chore_completions').select('completed_at').gte('completed_at', weekAgoISO),
     state.sb.from('flashcards').select('*'),
     state.sb.from('birthdays').select('*'),
-    state.sb.from('projects').select('id').eq('archived', false),
+    state.sb.from('projects').select('id'),
     state.sb.from('vestiaire').select('id'),
   ]);
 
@@ -87,7 +87,8 @@ async function refreshWelcome() {
   wChoreCompletionsWeek = (completionsRes.data || []).length;
   wFlashcards = flashRes.data || [];
   wBirthdays = bdRes.data || [];
-  wProjectCount = (projRes.data || []).length;
+  const archivedIds = (() => { try { return JSON.parse(localStorage.getItem('claw_cc_archived_projects') || '[]'); } catch { return []; } })();
+  wProjectCount = (projRes.data || []).filter(p => !archivedIds.includes(p.id)).length;
   wVestiaireCount = (vestRes.data || []).length;
 }
 
