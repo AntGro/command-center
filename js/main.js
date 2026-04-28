@@ -475,8 +475,10 @@ function renderTabConfigList() {
   const list = document.getElementById('tabConfigList');
   if (!list) return;
   list.innerHTML = ALL_TABS.map(tab => {
-    const checked = _tabConfigState[tab.key] ? 'checked' : '';
-    return `<div class="tab-config-item ${checked}" data-tab-key="${tab.key}" onclick="toggleTabConfigItem('${tab.key}')">
+    const locked = tab.key === 'welcome';
+    const checked = locked || _tabConfigState[tab.key] ? 'checked' : '';
+    const lockedClass = locked ? ' locked' : '';
+    return `<div class="tab-config-item ${checked}${lockedClass}" data-tab-key="${tab.key}"${locked ? '' : ` onclick="toggleTabConfigItem('${tab.key}')"`}>
       <span class="tab-config-icon">${lucideIcon(tab.icon, 18, tab.color)}</span>
       <span class="tab-config-label">${t(tab.labelKey)}</span>
       <span class="tab-config-toggle"></span>
@@ -485,8 +487,9 @@ function renderTabConfigList() {
 }
 
 function toggleTabConfigItem(key) {
+  if (key === 'welcome') return;
   _tabConfigState[key] = !_tabConfigState[key];
-  // Ensure at least one tab remains visible
+  // Ensure at least one tab remains visible (besides Today which is always on)
   const anyVisible = Object.values(_tabConfigState).some(v => v);
   if (!anyVisible) {
     _tabConfigState[key] = true;
