@@ -380,6 +380,28 @@ function updateStaticLabels() {
 // Init lang and header menu on page load
 (function() { applyLang(); initHeaderMenu(); })();
 
+// Auto-collapse title when tabs overflow
+(function() {
+  const header = document.querySelector('.app-header');
+  const switcher = document.querySelector('.view-switcher');
+  if (!header || !switcher) return;
+  function checkOverflow() {
+    // First, uncollapse to measure natural width
+    header.classList.remove('title-collapsed');
+    // Force layout
+    void switcher.scrollWidth;
+    if (switcher.scrollWidth > switcher.clientWidth + 1) {
+      header.classList.add('title-collapsed');
+    }
+  }
+  const ro = new ResizeObserver(checkOverflow);
+  ro.observe(switcher);
+  // Also re-check when tabs are toggled (DOM mutations)
+  const mo = new MutationObserver(checkOverflow);
+  mo.observe(switcher, { childList: true, subtree: true, attributes: true });
+  checkOverflow();
+})();
+
 
 // ===================================================================
 // THEME
