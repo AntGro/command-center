@@ -102,7 +102,7 @@ input,select,button{font-family:inherit;}
 .header-menu{position:relative;}
 .header-menu-dropdown{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:200;min-width:180px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:4px 0;}
 .header-menu.open .header-menu-dropdown{display:block;}
-.header-menu-section{padding:6px 12px;}
+.header-menu-section{padding:6px 12px;background:var(--surface);border-radius:6px;margin:4px 6px;}
 .header-menu-label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
 .header-menu-lang-options{display:flex;gap:4px;}
 .header-menu-lang-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;}
