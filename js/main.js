@@ -3,6 +3,7 @@ import { t, getLang, setLang, nextLang } from './i18n.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_VISIBILITY_KEY } from './supabase.js';
 import db from './db.js';
 import { createSupabaseAdapter } from './adapters/supabase.js';
+import { VERSION, REPO_URL } from './version.js';
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
@@ -143,6 +144,10 @@ async function connect(url, key) {
   // Set Supabase dashboard link
   const projectRef = url.replace('https://', '').replace('.supabase.co', '');
   document.getElementById('supabaseDashLink').href = `https://supabase.com/dashboard/project/${projectRef}`;
+
+  // Set version
+  const versionEl = document.getElementById('footerVersion');
+  if (versionEl) versionEl.innerHTML = `version: <a href="${REPO_URL}/commit/${VERSION}" target="_blank">${VERSION}</a>`;
 
   await loadProjects();
   buildProjectCards();
