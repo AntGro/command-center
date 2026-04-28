@@ -325,6 +325,8 @@ function updateStaticLabels() {
     if (view) {
       const input = view.querySelector('.page-search');
       if (input) input.placeholder = t(key) + '…';
+      const toggle = view.querySelector('.search-toggle');
+      if (toggle) toggle.title = t('common.search');
     }
   }
   // Todo filters
@@ -667,7 +669,27 @@ function renderLastUpdated() {
   el.textContent = `Updated ${label}`;
 }
 
+// ===================================================================
+// SEARCH TOGGLE — collapsible search input
+// ===================================================================
+function toggleSearch(btn) {
+  const wrapper = btn.closest('.search-wrapper');
+  wrapper.classList.add('expanded');
+  const input = wrapper.querySelector('.page-search');
+  input.focus();
+  if (!input.dataset.searchBlur) {
+    input.dataset.searchBlur = '1';
+    input.addEventListener('blur', function() {
+      if (!input.value.trim()) {
+        wrapper.classList.remove('expanded');
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+      }
+    });
+  }
+}
 
 window.switchView = switchView;
 window.toggleTheme = toggleTheme;
 window.disconnect = disconnect;
+window.toggleSearch = toggleSearch;
