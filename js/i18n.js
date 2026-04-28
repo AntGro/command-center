@@ -39,6 +39,12 @@ const T = {
       supabase_dashboard: 'Supabase Dashboard',
       log_out: 'Log out',
     },
+    // ── Header Menu ──
+    menu: {
+      language: 'Language', toggle_theme: 'Toggle theme', tab_settings: 'Tab settings',
+      disconnect: 'Disconnect', tab_config_title: 'Tab Settings',
+      tab_config_hint: 'Choose which tabs to display. At least one tab must remain visible.',
+    },
     // ── Nav tabs ──
     nav: {
       today: 'Today', projects: 'Projects', todos: 'TODOs', chores: 'Chores',
@@ -244,7 +250,11 @@ const T = {
       supabase_dashboard: 'Tableau de bord Supabase',
       log_out: 'Déconnexion',
     },
-    nav: {
+    menu: {
+      language: 'Langue', toggle_theme: 'Changer le thème', tab_settings: 'Onglets',
+      disconnect: 'Déconnexion', tab_config_title: 'Paramètres des onglets',
+      tab_config_hint: 'Choisissez les onglets à afficher. Au moins un onglet doit rester visible.',
+    },
       today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
       birthdays: 'Anniversaires', wardrobe: 'Garde-robe', flashcards: 'Flashcards',
     },
@@ -440,7 +450,11 @@ const T = {
       supabase_dashboard: 'Panel de Supabase',
       log_out: 'Cerrar sesión',
     },
-    nav: {
+    menu: {
+      language: 'Idioma', toggle_theme: 'Cambiar tema', tab_settings: 'Pestañas',
+      disconnect: 'Desconectar', tab_config_title: 'Configurar pestañas',
+      tab_config_hint: 'Elige qué pestañas mostrar. Al menos una pestaña debe estar visible.',
+    },
       today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',
       birthdays: 'Cumpleaños', wardrobe: 'Armario', flashcards: 'Flashcards',
     },

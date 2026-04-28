@@ -48,16 +48,23 @@
       <button class="view-tab" id="tabFlashcards" onclick="switchView('flashcards')"><span data-icon="book-open" data-size="16" data-color="#06b6d4"></span> Flashcards</button>
     </div>
     <div class="header-actions">
-      <div class="lang-picker" id="langPicker">
-        <button class="btn" id="langToggle" title="Language"><span data-icon="globe" data-size="16"></span></button>
-        <div class="lang-dropdown" id="langDropdown">
-          <button class="lang-option" data-lang="en">English</button>
-          <button class="lang-option" data-lang="fr">Français</button>
-          <button class="lang-option" data-lang="es">Español</button>
+      <div class="header-menu" id="headerMenu">
+        <button class="btn" id="headerMenuToggle" title="Menu"><span data-icon="more-vertical" data-size="16"></span></button>
+        <div class="header-menu-dropdown" id="headerMenuDropdown">
+          <div class="header-menu-section">
+            <div class="header-menu-label" id="menuLangLabel">Language</div>
+            <div class="header-menu-lang-options" id="menuLangOptions">
+              <button class="header-menu-lang-btn" data-lang="en">EN</button>
+              <button class="header-menu-lang-btn" data-lang="fr">FR</button>
+              <button class="header-menu-lang-btn" data-lang="es">ES</button>
+            </div>
+          </div>
+          <button class="header-menu-item" id="menuThemeToggle"><span class="header-menu-icon" id="menuThemeIcon"></span><span id="menuThemeLabel">Toggle theme</span></button>
+          <button class="header-menu-item" id="menuTabConfig"><span class="header-menu-icon" data-icon="settings" data-size="16"></span><span id="menuTabConfigLabel">Tab settings</span></button>
+          <div class="header-menu-divider"></div>
+          <button class="header-menu-item header-menu-disconnect" id="menuDisconnect"><span class="header-menu-icon" data-icon="log-out" data-size="16"></span><span id="menuDisconnectLabel">Disconnect</span></button>
         </div>
       </div>
-      <button class="btn" onclick="toggleTheme()" id="themeToggle" title="Toggle theme"></button>
-      <button class="btn btn-disconnect" onclick="disconnect()" id="logoutBtn" title="Disconnect &amp; log out"><span data-icon="log-out" data-size="16"></span></button>
     </div>
   </header>
 
@@ -428,6 +435,19 @@
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeAddChoreCategoryModal()">Cancel</button>
         <button class="modal-save" onclick="saveNewChoreCategory()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Config Modal -->
+  <div class="modal-overlay" id="tabConfigModal">
+    <div class="modal tab-config-modal">
+      <h2><span data-icon="settings" data-size="20"></span> <span id="tabConfigTitle">Tab Settings</span></h2>
+      <p class="modal-hint" id="tabConfigHint">Choose which tabs to display. At least one tab must remain visible.</p>
+      <div id="tabConfigList" class="tab-config-list"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeTabConfig()">Cancel</button>
+        <button class="modal-save" onclick="saveTabConfig()">Save</button>
       </div>
     </div>
   </div>

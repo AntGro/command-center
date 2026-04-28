@@ -87,7 +87,7 @@ input,select,button{font-family:inherit;}
 .header-actions .btn{padding:8px;border:none;background:transparent;border-radius:50%;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;backdrop-filter:none;}
 .header-actions .btn:hover{background:var(--surface2);color:var(--text);transform:none;box-shadow:none;border:none;}
 .header-actions .btn:active{transform:scale(0.92);}
-#langToggle{border-radius:50%;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;}
+#headerMenuToggle{border-radius:50%;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;}
 .lang-picker{position:relative;}
 .lang-dropdown{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100;min-width:110px;box-shadow:0 4px 16px rgba(0,0,0,0.2);}
 .lang-picker.open .lang-dropdown{display:block;}
@@ -98,6 +98,33 @@ input,select,button{font-family:inherit;}
 .header-actions .btn.btn-active:hover{background:rgba(100,108,255,0.18);color:var(--accent);}
 .header-actions .btn.btn-disconnect{opacity:0.4;}
 .header-actions .btn.btn-disconnect:hover{opacity:1;background:rgba(239,68,68,0.1);color:var(--red);}
+/* ── Header 3-dot menu ── */
+.header-menu{position:relative;}
+.header-menu-dropdown{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:200;min-width:180px;box-shadow:0 4px 20px rgba(0,0,0,0.25);padding:4px 0;}
+.header-menu.open .header-menu-dropdown{display:block;}
+.header-menu-section{padding:6px 12px;}
+.header-menu-label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.header-menu-lang-options{display:flex;gap:4px;}
+.header-menu-lang-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.header-menu-lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+.header-menu-lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.header-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:none;background:none;color:var(--text);font-size:0.82rem;cursor:pointer;font-family:inherit;transition:background 0.15s;}
+.header-menu-item:hover{background:var(--surface);}
+.header-menu-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;color:var(--muted);}
+.header-menu-divider{height:1px;background:var(--border);margin:4px 0;}
+.header-menu-disconnect{color:var(--red);opacity:0.7;}
+.header-menu-disconnect:hover{opacity:1;background:rgba(239,68,68,0.08);}
+.header-menu-disconnect .header-menu-icon{color:var(--red);}
+/* ── Tab config modal ── */
+.tab-config-list{display:flex;flex-direction:column;gap:2px;margin:12px 0;}
+.tab-config-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;user-select:none;}
+.tab-config-item:hover{background:var(--surface2);}
+.tab-config-item .tab-config-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;}
+.tab-config-item .tab-config-label{flex:1;font-size:0.88rem;font-weight:500;}
+.tab-config-item .tab-config-toggle{position:relative;width:36px;height:20px;border-radius:10px;background:var(--border);transition:background 0.2s;flex-shrink:0;}
+.tab-config-item .tab-config-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;}
+.tab-config-item.checked .tab-config-toggle{background:var(--accent);}
+.tab-config-item.checked .tab-config-toggle::after{transform:translateX(16px);}
 .btn-active{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(100,108,255,0.3);}
 .btn-active:hover{opacity:0.85;background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 4px 16px rgba(100,108,255,0.35);}
 

@@ -1,6 +1,6 @@
 import { lucideIcon } from './icons.js';
 import { t, getLang, setLang, nextLang } from './i18n.js';
-import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY } from './supabase.js';
+import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_VISIBILITY_KEY } from './supabase.js';
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
@@ -185,11 +185,19 @@ async function connect(url, key) {
 
   markLastUpdated();
 
+  // Apply tab visibility
+  applyTabVisibility();
+
   // Restore last view — hash takes priority over localStorage
   const validViews = ['welcome', 'projects', 'todos', 'chores', 'birthdays', 'vestiaire', 'flashcards'];
   const rawHash = location.hash.replace('#', '');
   const hashView = validViews.includes(rawHash) ? rawHash : null;
-  const savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'welcome';
+  let savedView = hashView || localStorage.getItem(CURRENT_VIEW_KEY) || 'welcome';
+  // If saved view is hidden, fall back to first visible tab
+  if (!isTabVisible(savedView)) {
+    const firstVisible = getVisibleTabs()[0];
+    savedView = firstVisible ? firstVisible.key : 'welcome';
+  }
   switchView(savedView);
 
   // Listen for back/forward navigation
@@ -202,46 +210,72 @@ async function connect(url, key) {
 
 
 // ===================================================================
-// LANGUAGE TOGGLE
+// HEADER MENU (3-dot dropdown)
 // ===================================================================
 function applyLang() {
-  // Highlight active language in dropdown
-  const dropdown = document.getElementById('langDropdown');
-  if (dropdown) {
-    const lang = getLang();
-    dropdown.querySelectorAll('.lang-option').forEach(opt => {
-      opt.classList.toggle('active', opt.dataset.lang === lang);
-    });
-  }
+  // Highlight active language in menu
+  const lang = getLang();
+  document.querySelectorAll('.header-menu-lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
   updateStaticLabels();
 }
 
-function initLangPicker() {
-  const picker = document.getElementById('langPicker');
-  const toggle = document.getElementById('langToggle');
-  const dropdown = document.getElementById('langDropdown');
-  if (!picker || !toggle || !dropdown) return;
+function initHeaderMenu() {
+  const menu = document.getElementById('headerMenu');
+  const toggle = document.getElementById('headerMenuToggle');
+  const dropdown = document.getElementById('headerMenuDropdown');
+  if (!menu || !toggle || !dropdown) return;
 
+  // Toggle dropdown
   toggle.addEventListener('click', (e) => {
     e.stopPropagation();
-    picker.classList.toggle('open');
+    menu.classList.toggle('open');
+    // Update theme icon/label when opening
+    if (menu.classList.contains('open')) updateMenuThemeItem();
   });
 
-  dropdown.addEventListener('click', (e) => {
-    const opt = e.target.closest('.lang-option');
-    if (!opt) return;
-    const lang = opt.dataset.lang;
-    if (lang && lang !== getLang()) {
-      setLang(lang);
-      applyLang();
-      reRenderCurrentView();
-    }
-    picker.classList.remove('open');
+  // Language buttons
+  dropdown.querySelectorAll('.header-menu-lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const lang = btn.dataset.lang;
+      if (lang && lang !== getLang()) {
+        setLang(lang);
+        applyLang();
+        reRenderCurrentView();
+      }
+    });
+  });
+
+  // Theme toggle
+  document.getElementById('menuThemeToggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleTheme();
+    updateMenuThemeItem();
+  });
+
+  // Tab config
+  document.getElementById('menuTabConfig').addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.remove('open');
+    openTabConfig();
+  });
+
+  // Disconnect
+  document.getElementById('menuDisconnect').addEventListener('click', () => {
+    disconnect();
   });
 
   // Close on outside click
-  document.addEventListener('click', () => picker.classList.remove('open'));
-  picker.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', () => menu.classList.remove('open'));
+  menu.addEventListener('click', (e) => e.stopPropagation());
+}
+
+function updateMenuThemeItem() {
+  const current = document.documentElement.getAttribute('data-theme') || getSystemTheme();
+  const iconEl = document.getElementById('menuThemeIcon');
+  if (iconEl) iconEl.innerHTML = current === 'light' ? lucideIcon('sun', 16) : lucideIcon('moon', 16);
 }
 
 function reRenderCurrentView() {
@@ -325,12 +359,24 @@ function updateStaticLabels() {
   // Footer
   const dashLink = document.getElementById('supabaseDashLink');
   if (dashLink) dashLink.textContent = t('login.supabase_dashboard') + ' ↗';
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.innerHTML = lucideIcon('log-out', 16);
+  // Header menu labels
+  const menuLangLabel = document.getElementById('menuLangLabel');
+  if (menuLangLabel) menuLangLabel.textContent = t('menu.language');
+  const menuThemeLabel = document.getElementById('menuThemeLabel');
+  if (menuThemeLabel) menuThemeLabel.textContent = t('menu.toggle_theme');
+  const menuTabConfigLabel = document.getElementById('menuTabConfigLabel');
+  if (menuTabConfigLabel) menuTabConfigLabel.textContent = t('menu.tab_settings');
+  const menuDisconnectLabel = document.getElementById('menuDisconnectLabel');
+  if (menuDisconnectLabel) menuDisconnectLabel.textContent = t('menu.disconnect');
+  // Tab config modal
+  const tabConfigTitle = document.getElementById('tabConfigTitle');
+  if (tabConfigTitle) tabConfigTitle.textContent = t('menu.tab_config_title');
+  const tabConfigHint = document.getElementById('tabConfigHint');
+  if (tabConfigHint) tabConfigHint.textContent = t('menu.tab_config_hint');
 }
 
-// Init lang on page load
-(function() { applyLang(); initLangPicker(); })();
+// Init lang and header menu on page load
+(function() { applyLang(); initHeaderMenu(); })();
 
 
 // ===================================================================
@@ -342,8 +388,7 @@ function getSystemTheme() {
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
-  const btn = document.getElementById('themeToggle');
-  if (btn) btn.innerHTML = theme === 'light' ? lucideIcon('sun', 16) : lucideIcon('moon', 16);
+  updateMenuThemeItem();
 }
 
 function toggleTheme() {
@@ -362,6 +407,111 @@ function toggleTheme() {
   });
 })();
 
+
+// ===================================================================
+// TAB VISIBILITY
+// ===================================================================
+const ALL_TABS = [
+  { key: 'welcome', tabId: 'tabWelcome', icon: 'home', color: '#3b82f6', labelKey: 'nav.today' },
+  { key: 'projects', tabId: 'tabProjects', icon: 'layout-grid', color: '#6366f1', labelKey: 'nav.projects' },
+  { key: 'todos', tabId: 'tabTodos', icon: 'list-checks', color: '#22c55e', labelKey: 'nav.todos' },
+  { key: 'chores', tabId: 'tabChores', icon: 'brush', color: '#ec4899', labelKey: 'nav.chores' },
+  { key: 'birthdays', tabId: 'tabBirthdays', icon: 'cake', color: '#f97316', labelKey: 'nav.birthdays' },
+  { key: 'vestiaire', tabId: 'tabVestiaire', icon: 'shirt', color: '#8b5cf6', labelKey: 'nav.wardrobe' },
+  { key: 'flashcards', tabId: 'tabFlashcards', icon: 'book-open', color: '#06b6d4', labelKey: 'nav.flashcards' },
+];
+
+function getTabVisibility() {
+  try {
+    const raw = localStorage.getItem(TAB_VISIBILITY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveTabVisibility(vis) {
+  localStorage.setItem(TAB_VISIBILITY_KEY, JSON.stringify(vis));
+}
+
+function isTabVisible(key) {
+  const vis = getTabVisibility();
+  if (!vis) return true; // all visible by default
+  return vis[key] !== false;
+}
+
+function applyTabVisibility() {
+  const vis = getTabVisibility();
+  ALL_TABS.forEach(tab => {
+    const el = document.getElementById(tab.tabId);
+    if (el) {
+      const visible = !vis || vis[tab.key] !== false;
+      el.style.display = visible ? '' : 'none';
+    }
+  });
+}
+
+function getVisibleTabs() {
+  return ALL_TABS.filter(t => isTabVisible(t.key));
+}
+
+// ── Tab Config Modal ──
+let _tabConfigState = {};
+
+function openTabConfig() {
+  const vis = getTabVisibility() || {};
+  _tabConfigState = {};
+  ALL_TABS.forEach(tab => {
+    _tabConfigState[tab.key] = vis[tab.key] !== false;
+  });
+  renderTabConfigList();
+  document.getElementById('tabConfigModal').classList.add('visible');
+}
+
+function closeTabConfig() {
+  document.getElementById('tabConfigModal').classList.remove('visible');
+}
+
+function renderTabConfigList() {
+  const list = document.getElementById('tabConfigList');
+  if (!list) return;
+  list.innerHTML = ALL_TABS.map(tab => {
+    const checked = _tabConfigState[tab.key] ? 'checked' : '';
+    return `<div class="tab-config-item ${checked}" data-tab-key="${tab.key}" onclick="toggleTabConfigItem('${tab.key}')">
+      <span class="tab-config-icon">${lucideIcon(tab.icon, 18, tab.color)}</span>
+      <span class="tab-config-label">${t(tab.labelKey)}</span>
+      <span class="tab-config-toggle"></span>
+    </div>`;
+  }).join('');
+}
+
+function toggleTabConfigItem(key) {
+  _tabConfigState[key] = !_tabConfigState[key];
+  // Ensure at least one tab remains visible
+  const anyVisible = Object.values(_tabConfigState).some(v => v);
+  if (!anyVisible) {
+    _tabConfigState[key] = true;
+    showToast(t('menu.tab_config_hint'));
+    return;
+  }
+  renderTabConfigList();
+}
+
+function saveTabConfig() {
+  saveTabVisibility(_tabConfigState);
+  applyTabVisibility();
+  closeTabConfig();
+  // If current view is now hidden, switch to the first visible tab
+  if (!_tabConfigState[state.currentView]) {
+    const firstVisible = ALL_TABS.find(t => _tabConfigState[t.key]);
+    if (firstVisible) switchView(firstVisible.key);
+  }
+  showToast(t('toast.updated'));
+}
+
+window.openTabConfig = openTabConfig;
+window.closeTabConfig = closeTabConfig;
+window.toggleTabConfigItem = toggleTabConfigItem;
+window.saveTabConfig = saveTabConfig;
 
 // ===================================================================
 // VIEW SWITCHER (Projects / TODOs / Chores)
