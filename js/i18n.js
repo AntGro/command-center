@@ -255,6 +255,7 @@ const T = {
       disconnect: 'Déconnexion', tab_config_title: 'Paramètres des onglets',
       tab_config_hint: 'Choisissez les onglets à afficher. Au moins un onglet doit rester visible.',
     },
+    nav: {
       today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
       birthdays: 'Anniversaires', wardrobe: 'Garde-robe', flashcards: 'Flashcards',
     },
@@ -455,6 +456,7 @@ const T = {
       disconnect: 'Desconectar', tab_config_title: 'Configurar pestañas',
       tab_config_hint: 'Elige qué pestañas mostrar. Al menos una pestaña debe estar visible.',
     },
+    nav: {
       today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',
       birthdays: 'Cumpleaños', wardrobe: 'Armario', flashcards: 'Flashcards',
     },
