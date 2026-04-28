@@ -2,8 +2,11 @@
 // SHARED STATE — mutable state accessible by all modules
 // ===================================================================
 
+import db from './db.js';
+
 const state = {
-  sb: null,
+  /** @type {import('./db.js').default} */
+  db,
   PROJECTS: [],
   allTasks: [],
   allChores: [],

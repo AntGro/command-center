@@ -204,8 +204,8 @@ function updateFooterStats(viewCountsGetter) {
     document.getElementById('supabaseDashLink').href = `https://supabase.com/dashboard/project/${projectRef}`;
   }
   // Fetch DB size via RPC
-  if (state.sb) {
-    state.sb.rpc('db_size_mb').then(({ data, error }) => {
+  if (state.db.connected) {
+    state.db.rpc('db_size_mb').then(({ data, error }) => {
       const el = document.getElementById('dbSizeMb');
       if (el) el.textContent = error ? '?' : `${data} MB`;
     });

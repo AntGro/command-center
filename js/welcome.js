@@ -67,19 +67,19 @@ function getAge(birthdayStr) {
 
 // ── Data fetch ──
 async function refreshWelcome() {
-  if (!state.sb) return;
+  if (!state.db.connected) return;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
   const weekAgoISO = weekAgo.toISOString();
 
   const [todosRes, choresRes, completionsRes, flashRes, bdRes, projRes, vestRes] = await Promise.all([
-    state.sb.from('todos').select('*'),
-    state.sb.from('chores').select('*'),
-    state.sb.from('chore_completions').select('completed_at').gte('completed_at', weekAgoISO),
-    state.sb.from('flashcards').select('*'),
-    state.sb.from('birthdays').select('*'),
-    state.sb.from('projects').select('id'),
-    state.sb.from('vestiaire').select('id'),
+    state.db.from('todos').select('*'),
+    state.db.from('chores').select('*'),
+    state.db.from('chore_completions').select('completed_at').gte('completed_at', weekAgoISO),
+    state.db.from('flashcards').select('*'),
+    state.db.from('birthdays').select('*'),
+    state.db.from('projects').select('id'),
+    state.db.from('vestiaire').select('id'),
   ]);
 
   wTodos = todosRes.data || [];

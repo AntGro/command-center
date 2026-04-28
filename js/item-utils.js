@@ -4,6 +4,7 @@
 
 import { showToast } from './utils.js';
 import { t } from './i18n.js';
+import db from './db.js';
 
 // ===================================================================
 // SHARED DRAG STATE
@@ -185,7 +186,6 @@ export async function reorderItems({
   itemSelector,
   idAttr,
   tableName,
-  sb,
   reinitFn,
 }) {
   const draggedIdx = items.findIndex(t => t.id === draggedId);
@@ -209,7 +209,7 @@ export async function reorderItems({
   showToast(t('toast.reordered'), 'success');
 
   Promise.all(items.map((t, i) =>
-    sb.from(tableName).update({ sort_order: i }).eq('id', t.id)
+    db.from(tableName).update({ sort_order: i }).eq('id', t.id)
   )).catch(e => console.error(`${tableName} reorder sync failed:`, e));
 }
 

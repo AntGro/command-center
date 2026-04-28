@@ -97,7 +97,7 @@ async function saveEditCategory() {
     const todosToUpdate = allTodos.filter(t => (t.category || 'General') === oldName);
     if (todosToUpdate.length > 0) {
       await Promise.all(todosToUpdate.map(t =>
-        state.sb.from('todos').update({ category: newName }).eq('id', t.id)
+        state.db.from('todos').update({ category: newName }).eq('id', t.id)
       ));
       todosToUpdate.forEach(t => { t.category = newName; });
     }
@@ -150,8 +150,8 @@ function migrateBucketsToCategories() {
 }
 
 async function refreshTodos() {
-  if (!state.sb) return;
-  const { data, error } = await state.sb.from('todos').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+  if (!state.db.connected) return;
+  const { data, error } = await state.db.from('todos').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) {
     if (error.code === '42P01' || error.message?.includes('does not exist')) return;
     showToast(t('toast.failed_to_load'), 'error');
@@ -463,7 +463,7 @@ async function cycleTodoPriority(id) {
   if (!todo) return;
   const cycle = { normal: 'high', high: 'urgent', urgent: 'normal' };
   const next = cycle[todo.priority] || 'high';
-  const { error } = await state.sb.from('todos').update({ priority: next }).eq('id', id);
+  const { error } = await state.db.from('todos').update({ priority: next }).eq('id', id);
   if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   const labels = { high: t('todos.flag_to_high'), urgent: t('todos.flag_to_urgent'), normal: t('todos.unflag') };
   showToast(labels[next] || `Priority: ${next}`, 'success');
@@ -479,7 +479,7 @@ async function addTodoToCategory(inputEl) {
   const pendingTodos = allTodos.filter(t => !t.done && (t.category || '') === category);
   const maxOrder = pendingTodos.length > 0 ? Math.max(...pendingTodos.map(t => t.sort_order || 0)) + 1 : 0;
 
-  const { error } = await state.sb.from('todos').insert({ text, priority: 'normal', category, sort_order: maxOrder });
+  const { error } = await state.db.from('todos').insert({ text, priority: 'normal', category, sort_order: maxOrder });
   if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
   inputEl.value = '';
   showToast(t('toast.added'), 'success');
@@ -487,7 +487,7 @@ async function addTodoToCategory(inputEl) {
 }
 
 async function toggleTodo(id, done) {
-  const { error } = await state.sb.from('todos').update({ done }).eq('id', id);
+  const { error } = await state.db.from('todos').update({ done }).eq('id', id);
   if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   showToast(done ? t('common.done') + '!' : t('common.reopen'), 'success');
   await refreshTodos();
@@ -498,7 +498,7 @@ async function deleteTodo(id) {
     t('common.delete'),
     'Delete this TODO? This cannot be undone.',
     async () => {
-      const { error } = await state.sb.from('todos').delete().eq('id', id);
+      const { error } = await state.db.from('todos').delete().eq('id', id);
       if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
       showToast(t('toast.deleted'), 'info');
       await refreshTodos();
@@ -522,7 +522,7 @@ async function deleteAllDoneTodos(category) {
     `Delete all ${doneTodos.length} completed TODO${doneTodos.length > 1 ? 's' : ''} in "${catName}"? This cannot be undone.`,
     async () => {
       for (const td of doneTodos) {
-        await state.sb.from('todos').delete().eq('id', td.id);
+        await state.db.from('todos').delete().eq('id', td.id);
       }
       showToast(t('toast.deleted'), 'info');
       await refreshTodos();
@@ -580,7 +580,7 @@ async function editTodoInline(id) {
         if (extra.due_date !== oldDeadline) updates.due_date = extra.due_date;
       }
       if (Object.keys(updates).length > 0) {
-        const { error } = await state.sb.from('todos').update(updates).eq('id', id);
+        const { error } = await state.db.from('todos').update(updates).eq('id', id);
         if (error) showToast(t('toast.update_failed'), 'error');
         else showToast(t('todos.todo_updated'), 'success');
       }
@@ -645,7 +645,7 @@ async function deleteCategory(name) {
   showDeleteConfirm(t('common.delete'), msg, async () => {
     // Move todos to General
     for (const t of todosInCat) {
-      await state.sb.from('todos').update({ category: '' }).eq('id', t.id);
+      await state.db.from('todos').update({ category: '' }).eq('id', t.id);
     }
     const categories = getCategories();
     const idx = categories.findIndex(c => c === name);
@@ -701,7 +701,7 @@ async function submitSnooze() {
 async function doSnooze(snoozeUntil) {
   const taskId = document.getElementById('snoozeTaskId').value;
   if (!taskId) return;
-  const { error } = await state.sb.from('todos').update({ snooze_until: snoozeUntil.toISOString() }).eq('id', taskId);
+  const { error } = await state.db.from('todos').update({ snooze_until: snoozeUntil.toISOString() }).eq('id', taskId);
   if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   closeSnoozeModal();
   showToast(`${t('todos.snoozed_until')} ${snoozeUntil.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 'success');
@@ -735,7 +735,6 @@ function initTodoDragDropForCard(catId) {
         itemSelector: '.todo-item',
         idAttr: 'todoId',
         tableName: 'todos',
-        sb: state.sb,
         reinitFn: () => initTodoDragDropForCard(catId),
       });
     },

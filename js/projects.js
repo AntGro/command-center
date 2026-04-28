@@ -55,7 +55,7 @@ function updateArchiveToggleBtn() {
 }
 
 async function loadProjects() {
-  const { data, error } = await state.sb.from('projects').select('*').order('sort_order', { ascending: true });
+  const { data, error } = await state.db.from('projects').select('*').order('sort_order', { ascending: true });
   if (error) { showToast(t('toast.failed_to_load'), 'error'); return; }
   state.PROJECTS = (data || []).map(p => ({
     ...p,
@@ -90,9 +90,9 @@ async function deleteProject(id, name) {
     t('common.delete'),
     `Delete "${name}"? This cannot be undone.`,
     async () => {
-      await state.sb.from('tasks').delete().eq('project', id);
-      await state.sb.from('prompts').delete().eq('key', id);
-      const { error } = await state.sb.from('projects').delete().eq('id', id);
+      await state.db.from('tasks').delete().eq('project', id);
+      await state.db.from('prompts').delete().eq('key', id);
+      const { error } = await state.db.from('projects').delete().eq('id', id);
       if (error) { showToast(t('toast.failed_to_delete') + ': ' + error.message, 'error'); return; }
       const ids = getArchivedProjectIds().filter(i => i !== id);
       saveArchivedProjectIds(ids);
@@ -201,8 +201,8 @@ function updateCharCounter(input) {
 // (state managed in supabase.js)
 
 async function refreshAll() {
-  if (!state.sb || isDragging) return;
-  const { data, error } = await state.sb.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+  if (!state.db.connected || isDragging) return;
+  const { data, error } = await state.db.from('tasks').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true });
   if (error) { showToast(t('toast.failed_to_load'), 'error'); return; }
   const all = data || [];
   state.allTasks = all;
@@ -277,7 +277,7 @@ async function deleteAllArchivedTasks(projectId) {
     `Delete all ${archivedTasks.length} archived task${archivedTasks.length > 1 ? 's' : ''} in "${name}"? This cannot be undone.`,
     async () => {
       for (const task of archivedTasks) {
-        await state.sb.from('tasks').delete().eq('id', task.id);
+        await state.db.from('tasks').delete().eq('id', task.id);
       }
       showToast(t('projects.deleted_tasks', archivedTasks.length), 'info');
       await refreshAll();
@@ -360,7 +360,6 @@ function initDragDrop(container, projectId) {
         itemSelector: '.task-item',
         idAttr: 'taskId',
         tableName: 'tasks',
-        sb: state.sb,
         reinitFn: () => initDragDrop(container, projectId),
       });
     },
@@ -381,13 +380,13 @@ async function addTask(projectId) {
   const projectTasks = state.allTasks.filter(t => t.project === projectId && t.status !== 'approved');
   const maxOrder = projectTasks.length > 0 ? Math.max(...projectTasks.map(t => t.sort_order || 0)) + 1 : 0;
   const status = isDraft ? 'draft' : 'todo';
-  const { error } = await state.sb.from('tasks').insert({ project: projectId, text, status, sort_order: maxOrder });
+  const { error } = await state.db.from('tasks').insert({ project: projectId, text, status, sort_order: maxOrder });
   if (error) showToast(t('toast.failed_to_add'), 'error');
   else { showToast(t('toast.added'), 'success'); await refreshAll(); }
 }
 
 async function updateTaskStatus(id, status) {
-  const { error } = await state.sb.from('tasks').update({ status }).eq('id', id);
+  const { error } = await state.db.from('tasks').update({ status }).eq('id', id);
   if (error) showToast(t('toast.update_failed'), 'error');
   else { showToast(t('toast.updated'), 'success'); await refreshAll(); }
 }
@@ -425,7 +424,7 @@ async function promptEditTask(id) {
       }
     },
     saveFn: async (trimmed) => {
-      const { error } = await state.sb.from('tasks').update({ text: trimmed }).eq('id', id);
+      const { error } = await state.db.from('tasks').update({ text: trimmed }).eq('id', id);
       if (error) showToast(t('toast.update_failed'), 'error');
       else showToast(t('projects.task_updated'), 'success');
     },
@@ -438,7 +437,7 @@ async function deleteTask(id) {
     t('common.delete'),
     'Delete this task? This cannot be undone.',
     async () => {
-      const { error } = await state.sb.from('tasks').delete().eq('id', id);
+      const { error } = await state.db.from('tasks').delete().eq('id', id);
       if (error) showToast(t('toast.delete_failed'), 'error');
       else { showToast(t('toast.deleted'), 'success'); await refreshAll(); }
     }
@@ -489,7 +488,7 @@ async function saveNewProject() {
 
   const maxOrder = state.PROJECTS.length > 0 ? Math.max(...state.PROJECTS.map(p => p.sort_order || 0)) + 1 : 0;
 
-  const { error } = await state.sb.from('projects').insert({ id, name, shortname, color, tech, links, sort_order: maxOrder });
+  const { error } = await state.db.from('projects').insert({ id, name, shortname, color, tech, links, sort_order: maxOrder });
   if (error) { showToast(t('toast.failed_to_add') + ': ' + (error.message || ''), 'error'); return; }
 
   closeAddProjectModal();
@@ -617,7 +616,7 @@ async function reorderProjects(draggedId, targetId) {
 
   // Background Supabase sync
   Promise.all(visible.map((p, i) =>
-    state.sb.from('projects').update({ sort_order: i }).eq('id', p.id)
+    state.db.from('projects').update({ sort_order: i }).eq('id', p.id)
   )).catch(e => console.error('Project reorder sync failed:', e));
 }
 
@@ -656,7 +655,7 @@ async function saveEditProject() {
   const links = [];
   if (github) links.push({ label: 'GitHub', url: github });
   if (live) links.push({ label: 'Live', url: live });
-  const { error } = await state.sb.from('projects').update({ name, shortname, color, tech, links }).eq('id', id);
+  const { error } = await state.db.from('projects').update({ name, shortname, color, tech, links }).eq('id', id);
   if (error) { showToast(t('toast.update_failed') + ': ' + (error.message || ''), 'error'); return; }
   closeEditProjectModal();
   await loadProjects();
@@ -762,7 +761,7 @@ async function submitRevision() {
     updates.plan_note = `[REVISION FEEDBACK]: ${feedback}\n\n${existing}`.slice(0, 5000);
   }
 
-  const { error } = await state.sb.from('tasks').update(updates).eq('id', taskId);
+  const { error } = await state.db.from('tasks').update(updates).eq('id', taskId);
   if (error) { showToast(t('toast.update_failed'), 'error'); return; }
   closeRevisionModal();
   showToast(t('toast.updated'), 'success');
@@ -777,8 +776,8 @@ async function submitRevision() {
 let promptsCache = {};
 
 async function loadPrompts() {
-  if (!state.sb) return;
-  const { data, error } = await state.sb.from('prompts').select('*');
+  if (!state.db.connected) return;
+  const { data, error } = await state.db.from('prompts').select('*');
   if (error) return;
   promptsCache = {};
   (data || []).forEach(p => { promptsCache[p.key] = p.text; });
@@ -798,7 +797,7 @@ function closePromptEditor() {
 
 async function saveGlobalPrompt() {
   const text = document.getElementById('promptGlobalText').value;
-  await state.sb.from('prompts').upsert({ key: 'global', text }, { onConflict: 'key' });
+  await state.db.from('prompts').upsert({ key: 'global', text }, { onConflict: 'key' });
   promptsCache['global'] = text;
   closePromptEditor();
   showToast(t('toast.updated'), 'success');
@@ -823,10 +822,10 @@ async function saveProjectPrompt() {
   const projectId = document.getElementById('promptProjectId').value;
   const text = document.getElementById('promptProjectText').value;
   if (text.trim()) {
-    await state.sb.from('prompts').upsert({ key: projectId, text }, { onConflict: 'key' });
+    await state.db.from('prompts').upsert({ key: projectId, text }, { onConflict: 'key' });
     promptsCache[projectId] = text;
   } else {
-    await state.sb.from('prompts').delete().eq('key', projectId);
+    await state.db.from('prompts').delete().eq('key', projectId);
     delete promptsCache[projectId];
   }
   closeProjectPrompt();

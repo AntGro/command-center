@@ -215,7 +215,7 @@ function ordinalSuffix(n) {
 async function updateChoreNextDue(choreId, frequencyRule, lastDoneDate) {
   if (isStructuredRule(frequencyRule)) {
     const nextDue = computeNextDue(frequencyRule, lastDoneDate);
-    const { error } = await state.sb.from('chores').update({ next_due: nextDue }).eq('id', choreId);
+    const { error } = await state.db.from('chores').update({ next_due: nextDue }).eq('id', choreId);
     if (error) console.warn('Failed to update next_due:', error.message);
   } else {
     await clearChoreNextDue(choreId);
@@ -223,7 +223,7 @@ async function updateChoreNextDue(choreId, frequencyRule, lastDoneDate) {
 }
 
 async function clearChoreNextDue(choreId) {
-  const { error } = await state.sb.from('chores').update({ next_due: null }).eq('id', choreId);
+  const { error } = await state.db.from('chores').update({ next_due: null }).eq('id', choreId);
   if (error) console.warn('Failed to clear next_due:', error.message);
 }
 
@@ -457,8 +457,8 @@ function syncChoreCategoriesFromData() {
 }
 
 async function refreshChores() {
-  if (!state.sb) return;
-  const { data: chores, error: chErr } = await state.sb.from('chores').select('*').order('created_at', { ascending: true });
+  if (!state.db.connected) return;
+  const { data: chores, error: chErr } = await state.db.from('chores').select('*').order('created_at', { ascending: true });
   if (chErr) {
     if (chErr.code === '42P01' || chErr.message?.includes('does not exist')) return;
     showToast(t('toast.failed_to_load'), 'error');
@@ -466,7 +466,7 @@ async function refreshChores() {
   }
   state.allChores = chores || [];
 
-  const { data: completions, error: compErr } = await state.sb.from('chore_completions').select('*').order('completed_at', { ascending: false });
+  const { data: completions, error: compErr } = await state.db.from('chore_completions').select('*').order('completed_at', { ascending: false });
   if (!compErr) state.allChoreCompletions = completions || [];
 
   syncChoreCategoriesFromData();
@@ -778,12 +778,12 @@ async function saveNewChore() {
   if (!name) { showToast(t('chores.enter_chore_name'), 'error'); return; }
   if (!freq) { showToast(t('chores.enter_frequency'), 'error'); return; }
 
-  const { data, error } = await state.sb.from('chores').insert({ name, frequency_rule: freq, category: cat, is_draft: isDraft }).select().single();
+  const { data, error } = await state.db.from('chores').insert({ name, frequency_rule: freq, category: cat, is_draft: isDraft }).select().single();
   if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
 
   // If lastDone was provided, create an initial completion
   if (lastDoneVal && data && data.id) {
-    await state.sb.from('chore_completions').insert({ chore_id: data.id, completed_at: new Date(lastDoneVal).toISOString() });
+    await state.db.from('chore_completions').insert({ chore_id: data.id, completed_at: new Date(lastDoneVal).toISOString() });
   }
   // Compute next_due client-side for structured rules, else delegate to heartbeat
   if (data && data.id) {
@@ -858,7 +858,7 @@ function editChoreInline(choreId) {
         if (extra.category !== (chore.category || 'General')) updates.category = extra.category;
       }
       if (Object.keys(updates).length > 0) {
-        const { error } = await state.sb.from('chores').update(updates).eq('id', choreId);
+        const { error } = await state.db.from('chores').update(updates).eq('id', choreId);
         if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
         if (updates.frequency_rule) {
           const lastDone = getChoreLastDone(choreId);
@@ -896,7 +896,7 @@ async function saveEditChore() {
   if (!name) { showToast(t('chores.enter_chore_name'), 'error'); return; }
   if (!freq) { showToast(t('chores.enter_frequency'), 'error'); return; }
 
-  const { error } = await state.sb.from('chores').update({ name, frequency_rule: freq, category: cat }).eq('id', id);
+  const { error } = await state.db.from('chores').update({ name, frequency_rule: freq, category: cat }).eq('id', id);
   if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
 
   // Compute next_due client-side for structured rules, else delegate to heartbeat
@@ -915,7 +915,7 @@ async function deleteChore(choreId) {
     t('common.delete'),
     `Delete "${chore.name}"? All completion history will be lost.`,
     async () => {
-      const { error } = await state.sb.from('chores').delete().eq('id', choreId);
+      const { error } = await state.db.from('chores').delete().eq('id', choreId);
       if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
       showToast(t('chores.chore_deleted'), 'info');
       await refreshChores();
@@ -924,7 +924,7 @@ async function deleteChore(choreId) {
 }
 
 async function promoteChore(choreId) {
-  const { error } = await state.sb.from('chores').update({ is_draft: false }).eq('id', choreId);
+  const { error } = await state.db.from('chores').update({ is_draft: false }).eq('id', choreId);
   if (error) { showToast(t('chores.failed_promote'), 'error'); return; }
   showToast(t('chores.chore_activated'), 'success');
   await refreshChores();
@@ -941,7 +941,7 @@ async function markChoreDone(choreId) {
 
   const row = { chore_id: choreId, completed_at: now };
 
-  const { error } = await state.sb.from('chore_completions').insert(row);
+  const { error } = await state.db.from('chore_completions').insert(row);
   if (error) { showToast(t('chores.failed_record'), 'error'); return; }
 
   // Compute next_due for structured rules, delegate to heartbeat for custom
@@ -1000,7 +1000,7 @@ async function deleteChoreCompletion(compId) {
     t('common.delete'),
     'Are you sure you want to delete this completion record?',
     async () => {
-      const { error } = await state.sb.from('chore_completions').delete().eq('id', compId);
+      const { error } = await state.db.from('chore_completions').delete().eq('id', compId);
       if (error) { showToast(t('toast.failed_to_delete'), 'error'); return; }
       showToast(t('chores.completion_deleted'), 'success');
       await refreshChores();
@@ -1044,7 +1044,7 @@ async function saveChoreCompletion(compId) {
   const updates = { completed_at: newDate };
   if (newNote !== null) updates.note = newNote || null;
 
-  const { error } = await state.sb.from('chore_completions').update(updates).eq('id', compId);
+  const { error } = await state.db.from('chore_completions').update(updates).eq('id', compId);
   if (error) { showToast(t('toast.failed_to_update'), 'error'); return; }
   showToast(t('chores.completion_updated'), 'success');
   await refreshChores();
@@ -1097,7 +1097,7 @@ async function deleteChoreCategory(name) {
 
   showDeleteConfirm(t('common.delete'), msg, async () => {
     for (const c of choresInCat) {
-      await state.sb.from('chores').update({ category: 'General' }).eq('id', c.id);
+      await state.db.from('chores').update({ category: 'General' }).eq('id', c.id);
     }
     const cats = getChoreCategories();
     const idx = cats.findIndex(c => c === name);

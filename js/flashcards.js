@@ -130,10 +130,10 @@ function getDeckColor(deck) {
 
 // ── Data Loading ──
 async function refreshFlashcards() {
-  if (!state.sb) return;
-  const { data } = await state.sb.from('flashcards').select('*').order('created_at');
+  if (!state.db.connected) return;
+  const { data } = await state.db.from('flashcards').select('*').order('created_at');
   allCards = data || [];
-  const { data: drafts } = await state.sb.from('flashcard_notes').select('*').order('created_at');
+  const { data: drafts } = await state.db.from('flashcard_notes').select('*').order('created_at');
   allDrafts = drafts || [];
   if (state.currentView === 'flashcards') renderFlashcards();
 }
@@ -402,7 +402,7 @@ window.closeAddDraftModal = function() {
 window.saveNewDraft = async function() {
   const content = document.getElementById('newDraftContent').value.trim();
   if (!content) { showToast(t('toast.content_required')); return; }
-  if (state.sb) await state.sb.from('flashcard_notes').insert({ content });
+  if (state.db.connected) await state.db.from('flashcard_notes').insert({ content });
   closeAddDraftModal();
   await refreshFlashcards();
   showToast(t('flashcards.draft_added'));
@@ -417,7 +417,7 @@ window.quickAddDraft = async function() {
   if (!input) return;
   const content = input.value.trim();
   if (!content) return;
-  if (state.sb) await state.sb.from('flashcard_notes').insert({ content });
+  if (state.db.connected) await state.db.from('flashcard_notes').insert({ content });
   input.value = '';
   await refreshFlashcards();
   showToast(t('flashcards.draft_added'));
@@ -429,8 +429,8 @@ window.startInlineEditDraft = function(id, spanEl) {
   if (!draft) return;
   inlineEditText(spanEl, draft.content, {
     saveFn: async (content) => {
-      if (state.sb) {
-        await state.sb.from('flashcard_notes').update({ content }).eq('id', id);
+      if (state.db.connected) {
+        await state.db.from('flashcard_notes').update({ content }).eq('id', id);
         showToast(t('flashcards.draft_updated'));
       }
     },
@@ -479,8 +479,8 @@ window.editFlashcardInline = function(id) {
       const updates = {};
       if (newFront !== card.front) updates.front = newFront;
       if (extra && extra.back && extra.back !== card.back) updates.back = extra.back;
-      if (Object.keys(updates).length > 0 && state.sb) {
-        await state.sb.from('flashcards').update(updates).eq('id', id);
+      if (Object.keys(updates).length > 0 && state.db.connected) {
+        await state.db.from('flashcards').update(updates).eq('id', id);
         showToast(t('flashcards.card_updated'));
       }
     },
@@ -492,7 +492,7 @@ window.deleteDraft = function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft) return;
   showDeleteConfirm('Delete Draft', 'Are you sure?', async () => {
-    if (state.sb) await state.sb.from('flashcard_notes').delete().eq('id', id);
+    if (state.db.connected) await state.db.from('flashcard_notes').delete().eq('id', id);
     await refreshFlashcards();
     showToast(t('flashcards.draft_deleted'));
   });
@@ -500,8 +500,8 @@ window.deleteDraft = function(id) {
 
 // ── Proposal Workflow ──
 window.requestProposal = async function(id) {
-  if (!state.sb) return;
-  await state.sb.from('flashcard_notes').update({ proposal_status: 'pending' }).eq('id', id);
+  if (!state.db.connected) return;
+  await state.db.from('flashcard_notes').update({ proposal_status: 'pending' }).eq('id', id);
   const draft = allDrafts.find(d => d.id === id);
   if (draft) draft.proposal_status = 'pending';
   renderAllBuckets();
@@ -512,17 +512,17 @@ window.acceptProposal = async function(id) {
   const draft = allDrafts.find(d => d.id === id);
   if (!draft || !draft.proposed_front || !draft.proposed_back) return;
   const deck = draft.proposed_deck || 'General';
-  if (state.sb) {
-    await state.sb.from('flashcards').insert({ deck, front: draft.proposed_front, back: draft.proposed_back });
-    await state.sb.from('flashcard_notes').delete().eq('id', id);
+  if (state.db.connected) {
+    await state.db.from('flashcards').insert({ deck, front: draft.proposed_front, back: draft.proposed_back });
+    await state.db.from('flashcard_notes').delete().eq('id', id);
   }
   await refreshFlashcards();
   showToast(t('flashcards.card_added_to', deck));
 };
 
 window.rejectProposal = async function(id) {
-  if (!state.sb) return;
-  await state.sb.from('flashcard_notes').update({
+  if (!state.db.connected) return;
+  await state.db.from('flashcard_notes').update({
     proposal_status: null, proposed_front: null, proposed_back: null
   }).eq('id', id);
   const draft = allDrafts.find(d => d.id === id);
@@ -566,8 +566,8 @@ window.saveEditedProposal = async function(id) {
   const back = document.getElementById('editProposalBack').value.trim();
   const deck = document.getElementById('editProposalDeck').value;
   if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
-  if (state.sb) {
-    await state.sb.from('flashcard_notes').update({ proposed_front: front, proposed_back: back, proposed_deck: deck }).eq('id', id);
+  if (state.db.connected) {
+    await state.db.from('flashcard_notes').update({ proposed_front: front, proposed_back: back, proposed_deck: deck }).eq('id', id);
   }
   const draft = allDrafts.find(d => d.id === id);
   if (draft) { draft.proposed_front = front; draft.proposed_back = back; draft.proposed_deck = deck; }
@@ -577,8 +577,8 @@ window.saveEditedProposal = async function(id) {
 };
 
 window.updateProposedDeck = async function(id, deck) {
-  if (state.sb) {
-    await state.sb.from('flashcard_notes').update({ proposed_deck: deck }).eq('id', id);
+  if (state.db.connected) {
+    await state.db.from('flashcard_notes').update({ proposed_deck: deck }).eq('id', id);
   }
   const draft = allDrafts.find(d => d.id === id);
   if (draft) draft.proposed_deck = deck;
@@ -614,7 +614,7 @@ window.saveNewFlashcard = async function() {
   const front = document.getElementById('newFlashFront').value.trim();
   const back = document.getElementById('newFlashBack').value.trim();
   if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
-  if (state.sb) await state.sb.from('flashcards').insert({ deck, front, back });
+  if (state.db.connected) await state.db.from('flashcards').insert({ deck, front, back });
   closeAddFlashcardModal();
   await refreshFlashcards();
   showToast(t('flashcards.card_added'));
@@ -655,7 +655,7 @@ window.saveEditFlashcard = async function() {
   const front = document.getElementById('editFlashFront').value.trim();
   const back = document.getElementById('editFlashBack').value.trim();
   if (!front || !back) { showToast(t('toast.both_fields_required')); return; }
-  if (state.sb) await state.sb.from('flashcards').update({ deck, front, back }).eq('id', id);
+  if (state.db.connected) await state.db.from('flashcards').update({ deck, front, back }).eq('id', id);
   closeEditFlashcardModal();
   await refreshFlashcards();
   showToast(t('flashcards.card_updated'));
@@ -665,7 +665,7 @@ window.deleteFlashcard = function(id) {
   const card = allCards.find(c => c.id === id);
   if (!card) return;
   showDeleteConfirm('Delete Flashcard', 'Are you sure?', async () => {
-    if (state.sb) await state.sb.from('flashcards').delete().eq('id', id);
+    if (state.db.connected) await state.db.from('flashcards').delete().eq('id', id);
     await refreshFlashcards();
     showToast(t('flashcards.card_deleted'));
   });
@@ -809,7 +809,7 @@ window.rateCard = async function(rating) {
   Object.assign(card, updates);
   const idx = allCards.findIndex(c => c.id === card.id);
   if (idx >= 0) Object.assign(allCards[idx], updates);
-  if (state.sb) await state.sb.from('flashcards').update(updates).eq('id', card.id);
+  if (state.db.connected) await state.db.from('flashcards').update(updates).eq('id', card.id);
   sessionDone++;
   if (rating >= 3) sessionCorrect++;
   showNextCard();

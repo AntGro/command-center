@@ -1,6 +1,8 @@
 import { lucideIcon } from './icons.js';
 import { t, getLang, setLang, nextLang } from './i18n.js';
 import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_VISIBILITY_KEY } from './supabase.js';
+import db from './db.js';
+import { createSupabaseAdapter } from './adapters/supabase.js';
 import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
@@ -128,10 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // UNLOCK & INIT APP
 // ===================================================================
 async function connect(url, key) {
-  state.sb = window.supabase.createClient(url, key);
+  const adapter = createSupabaseAdapter(url, key);
+  db.setAdapter(adapter);
 
   // Test connection with a simple query
-  const { error } = await state.sb.from('projects').select('id').limit(1);
+  const { error } = await state.db.from('projects').select('id').limit(1);
   if (error) throw new Error('Connection failed');
 
   document.getElementById('gate').style.display = 'none';
@@ -152,7 +155,7 @@ async function connect(url, key) {
   localStorage.removeItem(IDEAS_KEY);
 
   // Realtime subscription
-  state.sb.channel('tasks-realtime')
+  state.db.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => { if (!isEditing()) { refreshAll().then(() => markLastUpdated()); } })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => { if (isEditing()) return; await loadProjects(); buildProjectCards(); initProjectDragDrop(); await refreshAll(); markLastUpdated(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'prompts' }, () => loadPrompts())

@@ -11,8 +11,8 @@ import { t, getLang } from './i18n.js';
 let birthdaySearchQuery = '';
 
 async function refreshBirthdays() {
-  if (!state.sb) return;
-  const { data, error } = await state.sb
+  if (!state.db.connected) return;
+  const { data, error } = await state.db
     .from('birthdays')
     .select('*')
     .order('birthday', { ascending: true });
@@ -303,7 +303,7 @@ async function saveNewBirthday() {
   const row = { name, birthday: date };
   if (note) row.note = note;
 
-  const { error } = await state.sb.from('birthdays').insert(row);
+  const { error } = await state.db.from('birthdays').insert(row);
   if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
 
   closeAddBirthdayModal();
@@ -372,7 +372,7 @@ function editBirthdayInline(id) {
       }
       if (Object.keys(updates).length > 0) {
         updates.updated_at = new Date().toISOString();
-        const { error } = await state.sb.from('birthdays').update(updates).eq('id', id);
+        const { error } = await state.db.from('birthdays').update(updates).eq('id', id);
         if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
         showToast(t('birthdays.birthday_updated'), 'success');
       }
@@ -405,7 +405,7 @@ async function saveEditBirthday() {
   if (!name) { showToast(t('birthdays.enter_name'), 'error'); return; }
   if (!date) { showToast(t('birthdays.enter_date'), 'error'); return; }
 
-  const { error } = await state.sb.from('birthdays').update({
+  const { error } = await state.db.from('birthdays').update({
     name, birthday: date, note: note || null, updated_at: new Date().toISOString()
   }).eq('id', id);
   if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
@@ -422,7 +422,7 @@ async function deleteBirthday(id) {
     'Delete Birthday',
     `Remove ${b.name}'s birthday?`,
     async () => {
-      const { error } = await state.sb.from('birthdays').delete().eq('id', id);
+      const { error } = await state.db.from('birthdays').delete().eq('id', id);
       if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
       showToast(t('birthdays.birthday_removed'), 'info');
       await refreshBirthdays();

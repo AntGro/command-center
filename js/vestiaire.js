@@ -78,8 +78,8 @@ function saveVestiaireCategories(cats) {
 // ===================================================================
 
 async function refreshVestiaire() {
-  if (!state.sb) return;
-  const { data, error } = await state.sb
+  if (!state.db.connected) return;
+  const { data, error } = await state.db
     .from('vestiaire')
     .select('*')
     .order('sort_order', { ascending: true })
@@ -315,7 +315,7 @@ function initVestiaireDragDrop(category, listEl) {
     itemSelector: '.vestiaire-item',
     idAttr: 'data-vest-id',
     onReorder: async (orderedIds) => {
-      await reorderItems(state.sb, 'vestiaire', orderedIds);
+      await reorderItems(state.db, 'vestiaire', orderedIds);
       // update local state to match new order
       const catItems = (state.allVestiaire || []).filter(v => v.category === category);
       orderedIds.forEach((id, i) => {
@@ -336,7 +336,7 @@ async function editVestiaireInline(id) {
   inlineEditText(el, v.name, {
     maxLength: 200,
     saveFn: async (newName) => {
-      const { error } = await state.sb.from('vestiaire').update({
+      const { error } = await state.db.from('vestiaire').update({
         name: newName,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
@@ -357,7 +357,7 @@ async function editVestiaireBrandInline(id) {
   inlineEditText(el, v.brand || '', {
     maxLength: 200,
     saveFn: async (newBrand) => {
-      const { error } = await state.sb.from('vestiaire').update({
+      const { error } = await state.db.from('vestiaire').update({
         brand: newBrand || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id);
@@ -425,7 +425,7 @@ function editVestiaireInlineFull(id) {
       }
       if (Object.keys(updates).length > 0) {
         updates.updated_at = new Date().toISOString();
-        const { error } = await state.sb.from('vestiaire').update(updates).eq('id', id);
+        const { error } = await state.db.from('vestiaire').update(updates).eq('id', id);
         if (error) { showToast(t('toast.update_failed') + ': ' + error.message, 'error'); return; }
         showToast(t('toast.updated'), 'success');
       }
@@ -441,7 +441,7 @@ async function cycleVestiaireStatus(id) {
   const cycle = [null, 'essaye', 'achete'];
   const idx = cycle.indexOf(v.purchase_status || null);
   const next = cycle[(idx + 1) % cycle.length];
-  const { error } = await state.sb.from('vestiaire').update({
+  const { error } = await state.db.from('vestiaire').update({
     purchase_status: next,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
@@ -586,7 +586,7 @@ async function saveNewVestiaire() {
   if (notes) row.note = notes;
   if (purchaseStatus) row.purchase_status = purchaseStatus;
 
-  const { error } = await state.sb.from('vestiaire').insert(row);
+  const { error } = await state.db.from('vestiaire').insert(row);
   if (error) { showToast(t('toast.failed_to_add') + ': ' + error.message, 'error'); return; }
 
   closeAddVestiaireModal();
@@ -625,7 +625,7 @@ async function saveEditVestiaire() {
 
   if (!name) { showToast(t('toast.enter_name'), 'error'); return; }
 
-  const { error } = await state.sb.from('vestiaire').update({
+  const { error } = await state.db.from('vestiaire').update({
     name, brand: brand || null, size: size || null, category,
     color: color || null, note: notes || null,
     purchase_status: purchaseStatus || null,
@@ -645,7 +645,7 @@ async function deleteVestiaire(id) {
     t('common.delete'),
     `Remove "${v.name}" from your wardrobe?`,
     async () => {
-      const { error } = await state.sb.from('vestiaire').delete().eq('id', id);
+      const { error } = await state.db.from('vestiaire').delete().eq('id', id);
       if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
       showToast(t('toast.removed'), 'info');
       await refreshVestiaire();
