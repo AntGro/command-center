@@ -21,6 +21,15 @@ function startOfDay(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+/** Flashcard "day" runs 06:00→06:00 instead of midnight→midnight. */
+function flashcardDayStart(d) {
+  const s = new Date(d);
+  if (s.getHours() < 6) s.setDate(s.getDate() - 1);
+  return new Date(s.getFullYear(), s.getMonth(), s.getDate(), 6, 0, 0, 0);
+}
+
+const FLASHCARD_PRACTICE_THRESHOLD = 10;
+
 function retrievability(S, lastReview, nowStr) {
   if (!S || !lastReview) return 0;
   const elapsed = (new Date(nowStr) - new Date(lastReview)) / 86400000;
@@ -339,7 +348,10 @@ function renderWelcome() {
   const dueCards = wFlashcards.filter(c => c.last_review && (!c.next_review || new Date(c.next_review) <= now));
   const newCards = wFlashcards.filter(c => !c.last_review);
   // Did the user already practice today? Check if any card was reviewed today.
-  const practicedToday = wFlashcards.some(c => c.last_review && startOfDay(new Date(c.last_review)).getTime() === todayStart.getTime());
+  // Flashcard "day" runs 06:00→06:00; require ≥10 cards to count as practiced
+  const fcDayStart = flashcardDayStart(now);
+  const todayReviewedCards = wFlashcards.filter(c => c.last_review && new Date(c.last_review) >= fcDayStart);
+  const practicedToday = todayReviewedCards.length >= FLASHCARD_PRACTICE_THRESHOLD;
   let avgR = 0;
   const reviewedCards = wFlashcards.filter(c => c.last_review && c.stability);
   if (reviewedCards.length > 0) {
@@ -421,7 +433,7 @@ function renderWelcome() {
   html += `<div class="welcome-section-header">${lucideIcon('book-open', 18, '#06b6d4')} <span>${esc(t('welcome.flashcards'))}</span></div>`;
   if (practicedToday) {
     // Already practiced today — show positive state
-    const todayCount = wFlashcards.filter(c => c.last_review && startOfDay(new Date(c.last_review)).getTime() === todayStart.getTime()).length;
+    const todayCount = todayReviewedCards.length;
     html += `<div class="welcome-flash-done">${lucideIcon('circle-check', 16, '#22c55e')} ${esc(t('welcome.practiced_today', todayCount))}</div>`;
     if (dueCards.length > 0) {
       html += `<div class="welcome-flash-summary">`;
