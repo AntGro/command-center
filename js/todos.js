@@ -163,6 +163,8 @@ async function refreshTodos() {
   if (state.currentView === 'todos') {
     renderTodos();
   }
+  // Notify other views (e.g. Today) that todo data changed
+  document.dispatchEvent(new CustomEvent('todos-changed'));
 }
 
 function setTodoFilter(filter) {

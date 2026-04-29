@@ -4,6 +4,8 @@
 import { lucideIcon } from './icons.js';
 import { t, getLang } from './i18n.js';
 import state from './supabase.js';
+import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
+import { initItemHoverDelay, inlineEditText } from './item-utils.js';
 
 // ── Local data cache ──
 let wTodos = [];
@@ -15,8 +17,6 @@ let wProjectCount = 0;
 let wVestiaireCount = 0;
 
 // ── Helpers ──
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
 function startOfDay(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -66,30 +66,230 @@ function getAge(birthdayStr) {
 }
 
 // ── Data fetch ──
+let _refreshingWelcome = false;
+
 async function refreshWelcome() {
-  if (!state.db.connected) return;
+  if (!state.db.connected || _refreshingWelcome) return;
+  _refreshingWelcome = true;
+  try {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 86400000);
+    const weekAgoISO = weekAgo.toISOString();
+
+    const [todosRes, choresRes, completionsRes, flashRes, bdRes, projRes, vestRes] = await Promise.all([
+      state.db.from('todos').select('*'),
+      state.db.from('chores').select('*'),
+      state.db.from('chore_completions').select('completed_at').gte('completed_at', weekAgoISO),
+      state.db.from('flashcards').select('*'),
+      state.db.from('birthdays').select('*'),
+      state.db.from('projects').select('id'),
+      state.db.from('vestiaire').select('id'),
+    ]);
+
+    wTodos = todosRes.data || [];
+    wChores = choresRes.data || [];
+    wChoreCompletionsWeek = (completionsRes.data || []).length;
+    wFlashcards = flashRes.data || [];
+    wBirthdays = bdRes.data || [];
+    const archivedIds = (() => { try { return JSON.parse(localStorage.getItem('claw_cc_archived_projects') || '[]'); } catch { return []; } })();
+    wProjectCount = (projRes.data || []).filter(p => !archivedIds.includes(p.id)).length;
+    wVestiaireCount = (vestRes.data || []).length;
+  } finally {
+    _refreshingWelcome = false;
+  }
+}
+
+// ── Listen for todo mutations from the TODOs module ──
+document.addEventListener('todos-changed', () => {
+  if (state.currentView === 'welcome') {
+    refreshWelcome().then(renderWelcome);
+  }
+});
+
+// ── Welcome-specific TODO action handlers ──
+
+async function welcomeToggleTodo(id, done) {
+  const { error } = await state.db.from('todos').update({ done }).eq('id', id);
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
+  showToast(done ? t('common.done') + '!' : t('common.reopen'), 'success');
+  await refreshWelcome();
+  renderWelcome();
+}
+
+async function welcomeDeleteTodo(id) {
+  showDeleteConfirm(
+    t('common.delete'),
+    'Delete this TODO? This cannot be undone.',
+    async () => {
+      const { error } = await state.db.from('todos').delete().eq('id', id);
+      if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
+      showToast(t('toast.deleted'), 'info');
+      await refreshWelcome();
+      renderWelcome();
+    }
+  );
+}
+
+async function welcomeCyclePriority(id) {
+  const todo = wTodos.find(t => t.id === id);
+  if (!todo) return;
+  const cycle = { normal: 'high', high: 'urgent', urgent: 'normal' };
+  const next = cycle[todo.priority] || 'high';
+  const { error } = await state.db.from('todos').update({ priority: next }).eq('id', id);
+  if (error) { showToast(t('toast.update_failed'), 'error'); return; }
+  const labels = { high: t('todos.flag_to_high'), urgent: t('todos.flag_to_urgent'), normal: t('todos.unflag') };
+  showToast(labels[next] || `Priority: ${next}`, 'success');
+  await refreshWelcome();
+  renderWelcome();
+}
+
+function welcomeSnooze(id) {
+  // Reuse the snooze modal from todos — its doSnooze calls refreshTodos
+  // which dispatches 'todos-changed', and our listener refreshes welcome
+  if (typeof window.openSnoozeModal === 'function') {
+    window.openSnoozeModal(id);
+  }
+}
+
+async function welcomeEditTodo(id) {
+  const todo = wTodos.find(t => t.id === id);
+  if (!todo) return;
+  const itemEl = document.querySelector(`#welcomeView .todo-item[data-todo-id="${id}"]`);
+  if (!itemEl) return;
+  const textEl = itemEl.querySelector('.todo-text');
+  if (!textEl || textEl.dataset.editing) return;
+
+  // Hide action buttons while editing
+  const actionsEl = itemEl.querySelector('.todo-actions');
+  if (actionsEl) actionsEl.classList.remove('visible');
+
+  // Build deadline date input as extra element
+  const deadlineRow = document.createElement('div');
+  deadlineRow.className = 'todo-edit-deadline-row';
+  const deadlineLabel = document.createElement('label');
+  deadlineLabel.innerHTML = lucideIcon('calendar') + ' ' + t('todos.deadline') + ':';
+  deadlineLabel.className = 'todo-edit-deadline-label';
+  const deadlineInput = document.createElement('input');
+  deadlineInput.type = 'datetime-local';
+  deadlineInput.className = 'todo-edit-deadline-input';
+  if (todo.due_date) {
+    const d = new Date(todo.due_date);
+    deadlineInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'todo-edit-deadline-clear';
+  clearBtn.textContent = '✕';
+  clearBtn.title = t('common.close');
+  clearBtn.onclick = (e) => { e.stopPropagation(); deadlineInput.value = ''; };
+  deadlineRow.appendChild(deadlineLabel);
+  deadlineRow.appendChild(deadlineInput);
+  deadlineRow.appendChild(clearBtn);
+
+  inlineEditText(textEl, todo.text, {
+    maxLength: 2000,
+    extraEl: deadlineRow,
+    collectExtra: () => {
+      const newDeadline = deadlineInput.value ? new Date(deadlineInput.value).toISOString() : null;
+      return { due_date: newDeadline };
+    },
+    saveFn: async (newText, extra) => {
+      const updates = {};
+      if (newText !== todo.text) updates.text = newText;
+      if (extra) {
+        const oldDeadline = todo.due_date || null;
+        if (extra.due_date !== oldDeadline) updates.due_date = extra.due_date;
+      }
+      if (Object.keys(updates).length > 0) {
+        const { error } = await state.db.from('todos').update(updates).eq('id', id);
+        if (error) showToast(t('toast.update_failed'), 'error');
+        else showToast(t('todos.todo_updated'), 'success');
+      }
+    },
+    refreshFn: async () => { await refreshWelcome(); renderWelcome(); },
+  });
+}
+
+// Register welcome action functions on window for onclick handlers
+window.welcomeToggleTodo = welcomeToggleTodo;
+window.welcomeDeleteTodo = welcomeDeleteTodo;
+window.welcomeCyclePriority = welcomeCyclePriority;
+window.welcomeSnooze = welcomeSnooze;
+window.welcomeEditTodo = welcomeEditTodo;
+
+// ── Render a focus TODO item (same structure as todos.js) ──
+function renderFocusTodoItem(td) {
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 86400000);
-  const weekAgoISO = weekAgo.toISOString();
+  const todayStart = startOfDay(now);
+  const isOverdue = td.due_date && !td.done && new Date(td.due_date) < now;
+  const isSnoozed = td.snooze_until && new Date(td.snooze_until) > now;
+  const isFlagged = td.priority && td.priority !== 'normal';
 
-  const [todosRes, choresRes, completionsRes, flashRes, bdRes, projRes, vestRes] = await Promise.all([
-    state.db.from('todos').select('*'),
-    state.db.from('chores').select('*'),
-    state.db.from('chore_completions').select('completed_at').gte('completed_at', weekAgoISO),
-    state.db.from('flashcards').select('*'),
-    state.db.from('birthdays').select('*'),
-    state.db.from('projects').select('id'),
-    state.db.from('vestiaire').select('id'),
-  ]);
+  const flagIcon = td.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444')
+    : td.priority === 'high' ? lucideIcon('flag', 14, '#f97316')
+    : lucideIcon('flag', 14);
+  const flagTitle = td.priority === 'urgent' ? t('todos.unflag')
+    : td.priority === 'high' ? t('todos.flag_to_urgent')
+    : t('todos.flag_to_high');
+  const flagBtn = `<button class="todo-flag-btn ${isFlagged ? 'flagged' : ''}" onclick="welcomeCyclePriority('${td.id}')" title="${flagTitle}">${flagIcon}</button>`;
 
-  wTodos = todosRes.data || [];
-  wChores = choresRes.data || [];
-  wChoreCompletionsWeek = (completionsRes.data || []).length;
-  wFlashcards = flashRes.data || [];
-  wBirthdays = bdRes.data || [];
-  const archivedIds = (() => { try { return JSON.parse(localStorage.getItem('claw_cc_archived_projects') || '[]'); } catch { return []; } })();
-  wProjectCount = (projRes.data || []).filter(p => !archivedIds.includes(p.id)).length;
-  wVestiaireCount = (vestRes.data || []).length;
+  let dueDateStr = '';
+  if (td.due_date) {
+    const d = new Date(td.due_date);
+    const diffMs = d - now;
+    const diffH = Math.round(diffMs / (1000 * 60 * 60));
+    if (isOverdue) {
+      dueDateStr = `<span class="todo-due overdue">${lucideIcon('alert-triangle', 14)} ${t('todos.overdue')} (${formatRelativeDate(d)})</span>`;
+    } else if (diffH < 24) {
+      dueDateStr = `<span class="todo-due due-soon">${lucideIcon("bell", 16)} ${t('todos.due')} ${formatRelativeDate(d)}</span>`;
+    } else {
+      dueDateStr = `<span class="todo-due">${lucideIcon("calendar", 16)} ${formatRelativeDate(d)}</span>`;
+    }
+  }
+
+  let snoozeInfo = '';
+  if (isSnoozed) {
+    snoozeInfo = `<span class="todo-snoozed">${lucideIcon("moon", 16)} ${t('todos.snoozed_until')} ${new Date(td.snooze_until).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`;
+  }
+
+  const classes = [
+    'bucket-item',
+    'todo-item',
+    isOverdue ? 'todo-overdue' : '',
+    isFlagged ? 'todo-flagged' : ''
+  ].filter(Boolean).join(' ');
+
+  return `<div class="${classes}" data-todo-id="${td.id}">
+    <div class="todo-row">
+      ${flagBtn}
+      <span class="todo-text">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
+      ${td.category ? `<span class="welcome-badge">${esc(td.category)}</span>` : ''}
+      <div class="todo-actions">
+        <button onclick="welcomeToggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check", 16)}</button>
+        <button onclick="welcomeSnooze('${td.id}')" title="${t('todos.snooze')}">${lucideIcon("moon", 16)}</button>
+        <button onclick="welcomeEditTodo('${td.id}')" title="${t('common.edit')}">${lucideIcon("pencil", 16)}</button>
+        <button onclick="welcomeDeleteTodo('${td.id}')" title="${t('common.delete')}">${lucideIcon("trash-2", 16)}</button>
+      </div>
+    </div>
+    ${dueDateStr || snoozeInfo ? `<div class="todo-meta">${dueDateStr}${snoozeInfo}</div>` : ''}
+  </div>`;
+}
+
+// ── Init hover delay for focus items after render ──
+function initWelcomeFocusHover() {
+  const container = document.querySelector('#welcomeView .welcome-focus-todos');
+  if (!container) return;
+  initItemHoverDelay(container, {
+    itemSelector: '.todo-item',
+    actionsSelector: '.todo-actions',
+    rowSelector: '.todo-row',
+    textSelector: '.todo-text',
+    editingSelector: '.task-edit-input, .todo-edit-wrapper',
+    onDblClick: (item) => {
+      const id = item.dataset.todoId;
+      if (id) welcomeEditTodo(id);
+    },
+  });
 }
 
 // ── Render ──
@@ -178,26 +378,9 @@ function renderWelcome() {
   if (focusTodos.length === 0) {
     html += `<div class="welcome-empty">${esc(t('welcome.all_clear'))}</div>`;
   } else {
-    html += `<div class="welcome-items">`;
+    html += `<div class="welcome-items welcome-focus-todos">`;
     for (const td of focusTodos) {
-      const flagClass = td.priority === 'urgent' ? 'flag-urgent' : td.priority === 'high' ? 'flag-high' : '';
-      const flagIcon = td.priority === 'urgent' ? lucideIcon('flag', 14, '#ef4444') : td.priority === 'high' ? lucideIcon('flag', 14, '#f97316') : '';
-      let meta = '';
-      if (td.due_date) {
-        const dueDate = startOfDay(new Date(td.due_date));
-        const diffDays = Math.round((todayStart - dueDate) / 86400000);
-        if (diffDays === 0) meta = `<span class="welcome-due-today">${esc(t('welcome.due_today'))}</span>`;
-        else if (diffDays === 1) meta = `<span class="welcome-overdue">${esc(t('welcome.overdue_1'))}</span>`;
-        else if (diffDays > 1) meta = `<span class="welcome-overdue">${esc(t('welcome.overdue_n', diffDays))}</span>`;
-      }
-      html += `<div class="welcome-item" onclick="switchView('todos')">`;
-      html += `<div class="welcome-item-main">`;
-      if (flagIcon) html += `<span class="welcome-flag ${flagClass}">${flagIcon}</span>`;
-      html += `<span class="welcome-item-text">${esc(td.text)}</span>`;
-      if (td.category) html += `<span class="welcome-badge">${esc(td.category)}</span>`;
-      html += `</div>`;
-      if (meta) html += `<div class="welcome-item-meta">${meta}</div>`;
-      html += `</div>`;
+      html += renderFocusTodoItem(td);
     }
     html += `</div>`;
   }
@@ -314,6 +497,9 @@ function renderWelcome() {
   html += `</div>`;
 
   container.innerHTML = html;
+
+  // Init hover delay for focus TODO items (action buttons appear on hover/long-press)
+  initWelcomeFocusHover();
 }
 
 export { refreshWelcome, renderWelcome };
