@@ -6,6 +6,7 @@ import { t, getLang } from './i18n.js';
 import state from './supabase.js';
 import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
 import { initItemHoverDelay, inlineEditText } from './item-utils.js';
+import { formatFrequency, formatChoreDue, choreDueStatus, getChoreLastDone, formatChoreRelative, getChoreCompletionCount, updateChoreNextDue } from './chores.js';
 
 // ── Local data cache ──
 let wTodos = [];
@@ -110,6 +111,13 @@ async function refreshWelcome() {
 
 // ── Listen for todo mutations from the TODOs module ──
 document.addEventListener('todos-changed', () => {
+  if (state.currentView === 'welcome') {
+    refreshWelcome().then(renderWelcome);
+  }
+});
+
+// ── Listen for chore mutations from the Chores module ──
+document.addEventListener('chores-changed', () => {
   if (state.currentView === 'welcome') {
     refreshWelcome().then(renderWelcome);
   }
@@ -301,6 +309,103 @@ function initWelcomeFocusHover() {
   });
 }
 
+// ===================================================================
+// WELCOME — Chore action handlers (mirrors Chores page actions)
+// ===================================================================
+
+async function welcomeMarkChoreDone(choreId) {
+  if (!choreId) return;
+  const chore = (state.allChores || []).find(c => c.id === choreId);
+  const now = new Date().toISOString();
+  const { error } = await state.db.from('chore_completions').insert({ chore_id: choreId, completed_at: now });
+  if (error) { showToast(t('chores.failed_record'), 'error'); return; }
+  if (chore) await updateChoreNextDue(choreId, chore.frequency_rule, now);
+  showToast(t('chores.chore_done'), 'success');
+  await refreshWelcome();
+  renderWelcome();
+}
+
+async function welcomeDeleteChore(choreId) {
+  const chore = (state.allChores || []).find(c => c.id === choreId);
+  if (!chore) return;
+  showDeleteConfirm(
+    t('common.delete'),
+    `Delete "${chore.name}"? All completion history will be lost.`,
+    async () => {
+      const { error } = await state.db.from('chores').delete().eq('id', choreId);
+      if (error) { showToast(t('toast.delete_failed'), 'error'); return; }
+      showToast(t('chores.chore_deleted'), 'info');
+      await refreshWelcome();
+      renderWelcome();
+    }
+  );
+}
+
+function welcomeEditChore(choreId) {
+  // Re-use the existing edit modal from chores.js (registered on window)
+  if (typeof window.openEditChoreModal === 'function') {
+    window.openEditChoreModal(choreId);
+  }
+}
+
+function welcomeOpenChoreHistory(choreId) {
+  if (typeof window.openChoreHistory === 'function') {
+    window.openChoreHistory(choreId);
+  }
+}
+
+window.welcomeMarkChoreDone = welcomeMarkChoreDone;
+window.welcomeDeleteChore = welcomeDeleteChore;
+window.welcomeEditChore = welcomeEditChore;
+window.welcomeOpenChoreHistory = welcomeOpenChoreHistory;
+
+// ── Render a focus chore item (same structure as chores.js renderChoreItem) ──
+function renderFocusChoreItem(chore) {
+  const lastDone = getChoreLastDone(chore.id);
+  const completionCount = getChoreCompletionCount(chore.id);
+  const status = choreDueStatus(chore);
+  const dueHtml = formatChoreDue(chore);
+
+  const lastDoneStr = lastDone
+    ? `${t('chores.last_done')}: ${lastDone.toLocaleDateString([], { month: 'short', day: 'numeric' })} (${formatChoreRelative(lastDone)})`
+    : 'Never done';
+
+  return `<div class="bucket-item chore-item chore-status-${status}" data-chore-id="${chore.id}">
+    <div class="chore-row">
+      <div class="chore-info">
+        <span class="chore-name">${esc(chore.name)}</span>
+        <span class="chore-frequency">${esc(formatFrequency(chore.frequency_rule))}</span>
+      </div>
+      <div class="chore-actions">
+        <button onclick="welcomeMarkChoreDone('${chore.id}')" title="${t('chores.mark_done')}" class="chore-done-btn">${lucideIcon("circle-check", 16)}</button>
+        <button onclick="welcomeOpenChoreHistory('${chore.id}')" title="${t('chores.chore_history')} (${completionCount})" class="chore-history-btn">${lucideIcon("clipboard-list", 16)} ${completionCount}</button>
+        <button onclick="welcomeEditChore('${chore.id}')" title="${t('common.edit')}">${lucideIcon("pencil", 16)}</button>
+        <button onclick="welcomeDeleteChore('${chore.id}')" title="${t('common.delete')}">${lucideIcon("trash-2", 16)}</button>
+      </div>
+    </div>
+    <div class="chore-meta">
+      ${dueHtml}
+      <span class="chore-last-done">${lastDoneStr}</span>
+    </div>
+  </div>`;
+}
+
+// ── Init hover delay for chore items after render ──
+function initWelcomeFocusChoreHover() {
+  const container = document.querySelector('#welcomeView .welcome-focus-chores');
+  if (!container) return;
+  initItemHoverDelay(container, {
+    itemSelector: '.chore-item',
+    actionsSelector: '.chore-actions',
+    rowSelector: '.chore-row',
+    textSelector: '.chore-name',
+    onDblClick: (item) => {
+      const id = item.dataset.choreId;
+      if (id) welcomeEditChore(id);
+    },
+  });
+}
+
 // ── Render ──
 function renderWelcome() {
   const container = document.getElementById('welcomeView');
@@ -404,21 +509,9 @@ function renderWelcome() {
   if (choresDue.length === 0) {
     html += `<div class="welcome-empty">${esc(t('welcome.no_chores_due'))}</div>`;
   } else {
-    html += `<div class="welcome-items">`;
+    html += `<div class="welcome-items welcome-focus-chores">`;
     for (const ch of choresDue) {
-      const dueDate = startOfDay(new Date(ch.next_due));
-      const diffDays = Math.round((todayStart - dueDate) / 86400000);
-      let label = '';
-      if (diffDays === 0) label = t('welcome.due_today');
-      else if (diffDays === 1) label = t('welcome.overdue_1');
-      else label = t('welcome.overdue_n', diffDays);
-      html += `<div class="welcome-item" onclick="switchView('chores')">`;
-      html += `<div class="welcome-item-main">`;
-      html += `<span class="welcome-item-text">${esc(ch.name)}</span>`;
-      if (ch.category) html += `<span class="welcome-badge">${esc(ch.category)}</span>`;
-      html += `</div>`;
-      html += `<div class="welcome-item-meta"><span class="${diffDays > 0 ? 'welcome-overdue' : 'welcome-due-today'}">${esc(label)}</span></div>`;
-      html += `</div>`;
+      html += renderFocusChoreItem(ch);
     }
     html += `</div>`;
   }
@@ -512,6 +605,9 @@ function renderWelcome() {
 
   // Init hover delay for focus TODO items (action buttons appear on hover/long-press)
   initWelcomeFocusHover();
+
+  // Init hover delay for focus chore items (same behavior)
+  initWelcomeFocusChoreHover();
 }
 
 export { refreshWelcome, renderWelcome };

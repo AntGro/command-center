@@ -473,6 +473,7 @@ async function refreshChores() {
   if (state.currentView === 'chores') {
     renderChores();
   }
+  document.dispatchEvent(new CustomEvent('chores-changed'));
 }
 
 function getChoreLastDone(choreId) {
@@ -1108,7 +1109,7 @@ async function deleteChoreCategory(name) {
 }
 
 
-export { refreshChores, renderChores, initChoreModals };
+export { refreshChores, renderChores, initChoreModals, formatFrequency, formatChoreDue, choreDueStatus, getChoreLastDone, formatChoreRelative, getChoreCompletionCount, updateChoreNextDue, initChoreHoverDelay };
 
 window.setChoreFilter = setChoreFilter;
 window.openAddChoreModal = openAddChoreModal;
