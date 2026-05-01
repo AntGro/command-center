@@ -974,7 +974,7 @@ function renderChoreHistoryList(choreId, chore) {
   if (!chore) chore = state.allChores.find(c => c.id === choreId);
   if (!chore) return;
   const completions = getChoreCompletions(choreId);
-  document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${chore.name} — ${formatFrequency(chore.frequency_rule)}`;
+  document.getElementById('choreHistoryName').innerHTML = `${lucideIcon("brush",16)} ${esc(chore.name)} — ${esc(formatFrequency(chore.frequency_rule))}`;
 
   if (completions.length === 0) {
     document.getElementById('choreHistoryList').innerHTML = '<p class="empty-msg">No completions recorded yet</p>';

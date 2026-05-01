@@ -807,7 +807,7 @@ async function saveGlobalPrompt() {
 async function openProjectPrompt(projectId) {
   await loadPrompts();
   const project = state.PROJECTS.find(p => p.id === projectId);
-  document.getElementById('projectPromptTitle').innerHTML = `${lucideIcon("file-text",20)} ${project ? project.name : projectId} — ${t('projects.project_prompt')}`;
+  document.getElementById('projectPromptTitle').innerHTML = `${lucideIcon("file-text",20)} ${esc(project ? project.name : projectId)} — ${t('projects.project_prompt')}`;
   document.getElementById('promptProjectId').value = projectId;
   document.getElementById('promptProjectText').value = promptsCache[projectId] || '';
   document.getElementById('projectPromptModal').classList.add('visible');
