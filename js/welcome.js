@@ -401,7 +401,9 @@ function initWelcomeFocusChoreHover() {
     textSelector: '.chore-name',
     onDblClick: (item) => {
       const id = item.dataset.choreId;
-      if (id) welcomeEditChore(id);
+      if (id && typeof window.editChoreInline === 'function') {
+        window.editChoreInline(id, item);
+      }
     },
   });
 }

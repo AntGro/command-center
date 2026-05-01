@@ -591,7 +591,7 @@ function initChoreHoverDelay(container) {
     textSelector: '.chore-name',
     onDblClick: (item) => {
       const id = item.dataset.choreId;
-      if (id) editChoreInline(id);
+      if (id) editChoreInline(id, item);
     },
   });
 }
@@ -796,10 +796,12 @@ async function saveNewChore() {
   await refreshChores();
 }
 
-function editChoreInline(choreId) {
+function editChoreInline(choreId, itemEl) {
   const chore = state.allChores.find(c => c.id === choreId);
   if (!chore) return;
-  const nameEl = document.querySelector(`.chore-item[data-chore-id="${choreId}"] .chore-name`);
+  const nameEl = itemEl
+    ? itemEl.querySelector('.chore-name')
+    : document.querySelector(`.chore-item[data-chore-id="${choreId}"] .chore-name`);
   if (!nameEl) return;
 
   // Hide actions while editing
@@ -868,7 +870,7 @@ function editChoreInline(choreId) {
         showToast(t('chores.chore_updated'), 'success');
       }
     },
-    refreshFn: renderChores,
+    refreshFn: refreshChores,
   });
 }
 
@@ -1134,6 +1136,7 @@ window.deleteChoreCategory = deleteChoreCategory;
 window.addChoreFromInput = addChoreFromInput;
 window.renderChores = renderChores;
 window.navigateToChoreCategory = navigateToChoreCategory;
+window.editChoreInline = editChoreInline;
 
 window.promptChoreShortname = promptChoreShortname;
 window.filterChores = function(e) { choreSearchQuery = e.target.value; renderChores(); };
