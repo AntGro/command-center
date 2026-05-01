@@ -451,6 +451,83 @@ test('Inline edit textareas set flex:none to prevent column-flex height bug', ()
 });
 
 // ===================================================================
+// 23. Welcome chore dblclick calls canonical window.editChoreInline (not a local duplicate)
+// ===================================================================
+test('Welcome chore dblclick calls canonical window.editChoreInline', () => {
+  const welcome = jsFiles['welcome.js'];
+  // Find the initItemHoverDelay call for chores in welcome.js (the one with .chore-item)
+  const hoverCalls = welcome.match(/initItemHoverDelay\([^)]*\{[\s\S]*?\}\s*\)/g) || [];
+  const choreCall = hoverCalls.find(c => c.includes("'.chore-item'") || c.includes('".chore-item"'));
+  assert(choreCall, 'welcome.js: should have initItemHoverDelay call for .chore-item');
+  // Must call window.editChoreInline, not welcomeEditChore or a local function
+  assert(choreCall.includes('window.editChoreInline'),
+    'welcome.js: chore onDblClick must call window.editChoreInline (canonical), not a local welcomeEditChore duplicate');
+  assert(!choreCall.includes('welcomeEditChore'),
+    'welcome.js: chore onDblClick must NOT reference welcomeEditChore — use canonical window.editChoreInline');
+});
+
+// ===================================================================
+// 24. Welcome TODO dblclick calls canonical window.editTodoInline (not a local duplicate)
+// ===================================================================
+test('Welcome TODO dblclick calls canonical window.editTodoInline', () => {
+  const welcome = jsFiles['welcome.js'];
+  // Find the initItemHoverDelay call for todos in welcome.js (the one with .todo-item)
+  const hoverCalls = welcome.match(/initItemHoverDelay\([^)]*\{[\s\S]*?\}\s*\)/g) || [];
+  const todoCall = hoverCalls.find(c => c.includes("'.todo-item'") || c.includes('".todo-item"'));
+  assert(todoCall, 'welcome.js: should have initItemHoverDelay call for .todo-item');
+  // Must call window.editTodoInline, not welcomeEditTodo or a local function
+  assert(todoCall.includes('window.editTodoInline'),
+    'welcome.js: todo onDblClick must call window.editTodoInline (canonical), not a local welcomeEditTodo duplicate');
+  assert(!todoCall.includes('welcomeEditTodo'),
+    'welcome.js: todo onDblClick must NOT reference welcomeEditTodo — use canonical window.editTodoInline');
+});
+
+// ===================================================================
+// 25. edit*Inline functions accept optional itemEl parameter (scoped querySelector)
+// ===================================================================
+test('edit*Inline functions accept optional itemEl parameter for scoped querySelector', () => {
+  // editChoreInline in chores.js must have itemEl parameter
+  const chores = jsFiles['chores.js'];
+  const choreMatch = chores.match(/function\s+editChoreInline\s*\(([^)]*)\)/);
+  assert(choreMatch, 'chores.js: editChoreInline function not found');
+  assert(choreMatch[1].includes('itemEl'),
+    'chores.js: editChoreInline must accept itemEl parameter for scoped querySelector');
+
+  // editTodoInline in todos.js must have itemEl parameter
+  const todos = jsFiles['todos.js'];
+  const todoMatch = todos.match(/function\s+editTodoInline\s*\(([^)]*)\)/);
+  assert(todoMatch, 'todos.js: editTodoInline function not found');
+  assert(todoMatch[1].includes('itemEl'),
+    'todos.js: editTodoInline must accept itemEl parameter for scoped querySelector');
+});
+
+// ===================================================================
+// 26. Inline edit callbacks use refreshFn (not renderFn) for data refresh
+// ===================================================================
+test('Inline edit callbacks use refreshFn (not renderFn) for data refresh', () => {
+  // For each module with inlineEditText calls, verify they pass refreshFn, not renderFn
+  const files = {
+    'todos.js': 'refreshTodos',
+    'chores.js': 'refreshChores',
+    'flashcards.js': 'refreshFlashcards',
+  };
+  for (const [file, expectedRefresh] of Object.entries(files)) {
+    const content = jsFiles[file];
+    if (!content) continue;
+    // Find all refreshFn: lines in inlineEditText options
+    const refreshFnMatches = content.match(/refreshFn:\s*(\w+)/g) || [];
+    assert(refreshFnMatches.length > 0,
+      `${file}: should have at least one refreshFn in inlineEditText options`);
+    for (const match of refreshFnMatches) {
+      const fnName = match.replace(/refreshFn:\s*/, '');
+      // Must not be a render-only function (renderChores, renderTodos, etc.)
+      assert(!fnName.startsWith('render'),
+        `${file}: refreshFn should not be a render function ('${fnName}') — use a refresh function like ${expectedRefresh} that fetches data`);
+    }
+  }
+});
+
+// ===================================================================
 // SUMMARY
 // ===================================================================
 console.log(`\n${'═'.repeat(50)}`);

@@ -168,71 +168,11 @@ function welcomeSnooze(id) {
   }
 }
 
-async function welcomeEditTodo(id) {
-  const todo = wTodos.find(t => t.id === id);
-  if (!todo) return;
-  const itemEl = document.querySelector(`#welcomeView .todo-item[data-todo-id="${id}"]`);
-  if (!itemEl) return;
-  const textEl = itemEl.querySelector('.todo-text');
-  if (!textEl || textEl.dataset.editing) return;
-
-  // Hide action buttons while editing
-  const actionsEl = itemEl.querySelector('.todo-actions');
-  if (actionsEl) actionsEl.classList.remove('visible');
-
-  // Build deadline date input as extra element
-  const deadlineRow = document.createElement('div');
-  deadlineRow.className = 'todo-edit-deadline-row';
-  const deadlineLabel = document.createElement('label');
-  deadlineLabel.innerHTML = lucideIcon('calendar') + ' ' + t('todos.deadline') + ':';
-  deadlineLabel.className = 'todo-edit-deadline-label';
-  const deadlineInput = document.createElement('input');
-  deadlineInput.type = 'datetime-local';
-  deadlineInput.className = 'todo-edit-deadline-input';
-  if (todo.due_date) {
-    const d = new Date(todo.due_date);
-    deadlineInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  }
-  const clearBtn = document.createElement('button');
-  clearBtn.type = 'button';
-  clearBtn.className = 'todo-edit-deadline-clear';
-  clearBtn.textContent = '✕';
-  clearBtn.title = t('common.close');
-  clearBtn.onclick = (e) => { e.stopPropagation(); deadlineInput.value = ''; };
-  deadlineRow.appendChild(deadlineLabel);
-  deadlineRow.appendChild(deadlineInput);
-  deadlineRow.appendChild(clearBtn);
-
-  inlineEditText(textEl, todo.text, {
-    maxLength: 2000,
-    extraEl: deadlineRow,
-    collectExtra: () => {
-      const newDeadline = deadlineInput.value ? new Date(deadlineInput.value).toISOString() : null;
-      return { due_date: newDeadline };
-    },
-    saveFn: async (newText, extra) => {
-      const updates = {};
-      if (newText !== todo.text) updates.text = newText;
-      if (extra) {
-        const oldDeadline = todo.due_date || null;
-        if (extra.due_date !== oldDeadline) updates.due_date = extra.due_date;
-      }
-      if (Object.keys(updates).length > 0) {
-        const { error } = await state.db.from('todos').update(updates).eq('id', id);
-        if (error) showToast(t('toast.update_failed'), 'error');
-        else showToast(t('todos.todo_updated'), 'success');
-      }
-    },
-    refreshFn: async () => { await refreshWelcome(); renderWelcome(); },
-  });
-}
-
 // Register welcome action functions on window for onclick handlers
 window.welcomeToggleTodo = welcomeToggleTodo;
 window.welcomeDeleteTodo = welcomeDeleteTodo;
 window.welcomeCyclePriority = welcomeCyclePriority;
 window.welcomeSnooze = welcomeSnooze;
-window.welcomeEditTodo = welcomeEditTodo;
 
 // ── Render a focus TODO item (same structure as todos.js) ──
 function renderFocusTodoItem(td) {
@@ -284,7 +224,7 @@ function renderFocusTodoItem(td) {
       <div class="todo-actions">
         <button onclick="welcomeToggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check", 16)}</button>
         <button onclick="welcomeSnooze('${td.id}')" title="${t('todos.snooze')}">${lucideIcon("moon", 16)}</button>
-        <button onclick="welcomeEditTodo('${td.id}')" title="${t('common.edit')}">${lucideIcon("pencil", 16)}</button>
+        <button onclick="window.editTodoInline('${td.id}')" title="${t('common.edit')}">${lucideIcon("pencil", 16)}</button>
         <button onclick="welcomeDeleteTodo('${td.id}')" title="${t('common.delete')}">${lucideIcon("trash-2", 16)}</button>
       </div>
     </div>
@@ -304,7 +244,9 @@ function initWelcomeFocusHover() {
     editingSelector: '.task-edit-input, .todo-edit-wrapper',
     onDblClick: (item) => {
       const id = item.dataset.todoId;
-      if (id) welcomeEditTodo(id);
+      if (id && typeof window.editTodoInline === 'function') {
+        window.editTodoInline(id, item);
+      }
     },
   });
 }

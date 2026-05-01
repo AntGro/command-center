@@ -532,10 +532,10 @@ async function deleteAllDoneTodos(category) {
   );
 }
 
-async function editTodoInline(id) {
+async function editTodoInline(id, itemEl) {
   const todo = allTodos.find(t => t.id === id);
   if (!todo) return;
-  const itemEl = document.querySelector(`.todo-item[data-todo-id="${id}"]`);
+  if (!itemEl) itemEl = document.querySelector(`.todo-item[data-todo-id="${id}"]`);
   if (!itemEl) return;
   const textEl = itemEl.querySelector('.todo-text');
   if (!textEl || textEl.dataset.editing) return;
@@ -870,7 +870,7 @@ function initTodoHoverDelay(container) {
     editingSelector: '.task-edit-input, .todo-edit-wrapper',
     onDblClick: (item) => {
       const id = item.dataset.todoId;
-      if (id) editTodoInline(id);
+      if (id) editTodoInline(id, item);
     },
   });
 }
