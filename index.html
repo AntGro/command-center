@@ -60,7 +60,7 @@
             </div>
           </div>
           <button class="header-menu-item" id="menuThemeToggle"><span class="header-menu-icon" id="menuThemeIcon"></span><span id="menuThemeLabel">Toggle theme</span></button>
-          <button class="header-menu-item" id="menuTabConfig"><span class="header-menu-icon" data-icon="settings" data-size="16"></span><span id="menuTabConfigLabel">Tab settings</span></button>
+          <button class="header-menu-item" id="menuSettings"><span class="header-menu-icon" data-icon="settings" data-size="16"></span><span id="menuSettingsLabel">Settings</span></button>
           <div class="header-menu-divider"></div>
           <button class="header-menu-item header-menu-disconnect" id="menuDisconnect"><span class="header-menu-icon" data-icon="log-out" data-size="16"></span><span id="menuDisconnectLabel">Disconnect</span></button>
         </div>
@@ -460,14 +460,16 @@
   </div>
 
   <!-- Tab Config Modal -->
-  <div class="modal-overlay" id="tabConfigModal">
-    <div class="modal tab-config-modal">
-      <h2><span data-icon="settings" data-size="20"></span> <span id="tabConfigTitle">Tab Settings</span></h2>
-      <p class="modal-hint" id="tabConfigHint">Choose which tabs to display. At least one tab must remain visible.</p>
-      <div id="tabConfigList" class="tab-config-list"></div>
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal settings-modal">
+      <h2><span data-icon="settings" data-size="20"></span> <span id="settingsTitle">Settings</span></h2>
+      <div class="settings-section">
+        <div class="settings-section-label" id="settingsTabsLabel">Tabs</div>
+        <p class="modal-hint" id="settingsTabsHint">Choose which tabs to display. At least one tab must remain visible.</p>
+        <div id="tabConfigList" class="tab-config-list"></div>
+      </div>
       <div class="modal-actions">
-        <button class="modal-cancel" onclick="closeTabConfig()">Cancel</button>
-        <button class="modal-save" onclick="saveTabConfig()">Save</button>
+        <button class="modal-cancel" onclick="closeSettings()">Close</button>
       </div>
     </div>
   </div>

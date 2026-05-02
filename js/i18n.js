@@ -41,9 +41,9 @@ const T = {
     },
     // ── Header Menu ──
     menu: {
-      language: 'Language', toggle_theme: 'Toggle theme', tab_settings: 'Tab settings',
-      disconnect: 'Disconnect', tab_config_title: 'Tab Settings',
-      tab_config_hint: 'Choose which tabs to display. At least one tab must remain visible.',
+      language: 'Language', toggle_theme: 'Toggle theme', settings: 'Settings',
+      disconnect: 'Disconnect', settings_title: 'Settings', settings_tabs: 'Tabs',
+      settings_tabs_hint: 'Choose which tabs to display. At least one tab must remain visible.',
     },
     // ── Nav tabs ──
     nav: {
@@ -251,9 +251,9 @@ const T = {
       log_out: 'Déconnexion',
     },
     menu: {
-      language: 'Langue', toggle_theme: 'Changer le thème', tab_settings: 'Onglets',
-      disconnect: 'Déconnexion', tab_config_title: 'Paramètres des onglets',
-      tab_config_hint: 'Choisissez les onglets à afficher. Au moins un onglet doit rester visible.',
+      language: 'Langue', toggle_theme: 'Changer le thème', settings: 'Paramètres',
+      disconnect: 'Déconnexion', settings_title: 'Paramètres', settings_tabs: 'Onglets',
+      settings_tabs_hint: 'Choisissez les onglets à afficher. Au moins un onglet doit rester visible.',
     },
     nav: {
       today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
@@ -452,9 +452,9 @@ const T = {
       log_out: 'Cerrar sesión',
     },
     menu: {
-      language: 'Idioma', toggle_theme: 'Cambiar tema', tab_settings: 'Pestañas',
-      disconnect: 'Desconectar', tab_config_title: 'Configurar pestañas',
-      tab_config_hint: 'Elige qué pestañas mostrar. Al menos una pestaña debe estar visible.',
+      language: 'Idioma', toggle_theme: 'Cambiar tema', settings: 'Ajustes',
+      disconnect: 'Desconectar', settings_title: 'Ajustes', settings_tabs: 'Pestañas',
+      settings_tabs_hint: 'Elige qué pestañas mostrar. Al menos una pestaña debe estar visible.',
     },
     nav: {
       today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',

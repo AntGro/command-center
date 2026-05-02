@@ -121,7 +121,9 @@ input,select,button{font-family:inherit;}
 .header-menu-disconnect:hover{opacity:1;background:rgba(239,68,68,0.08);}
 .header-menu-disconnect .header-menu-icon{color:var(--red);}
 /* ── Tab config modal ── */
-.tab-config-list{display:flex;flex-direction:column;gap:2px;margin:12px 0;}
+.settings-section{margin:16px 0 8px;}
+.settings-section-label{font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:8px;}
+.tab-config-list{display:flex;flex-direction:column;gap:2px;margin:4px 0 0;}
 .tab-config-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;user-select:none;}
 .tab-config-item:hover{background:var(--surface2);}
 .tab-config-item .tab-config-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;}

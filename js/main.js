@@ -263,11 +263,11 @@ function initHeaderMenu() {
     updateMenuThemeItem();
   });
 
-  // Tab config
-  document.getElementById('menuTabConfig').addEventListener('click', (e) => {
+  // Settings
+  document.getElementById('menuSettings').addEventListener('click', (e) => {
     e.stopPropagation();
     menu.classList.remove('open');
-    openTabConfig();
+    openSettings();
   });
 
   // Disconnect
@@ -374,15 +374,17 @@ function updateStaticLabels() {
   if (menuLangLabel) menuLangLabel.textContent = t('menu.language');
   const menuThemeLabel = document.getElementById('menuThemeLabel');
   if (menuThemeLabel) menuThemeLabel.textContent = t('menu.toggle_theme');
-  const menuTabConfigLabel = document.getElementById('menuTabConfigLabel');
-  if (menuTabConfigLabel) menuTabConfigLabel.textContent = t('menu.tab_settings');
+  const menuSettingsLabel = document.getElementById('menuSettingsLabel');
+  if (menuSettingsLabel) menuSettingsLabel.textContent = t('menu.settings');
   const menuDisconnectLabel = document.getElementById('menuDisconnectLabel');
   if (menuDisconnectLabel) menuDisconnectLabel.textContent = t('menu.disconnect');
-  // Tab config modal
-  const tabConfigTitle = document.getElementById('tabConfigTitle');
-  if (tabConfigTitle) tabConfigTitle.textContent = t('menu.tab_config_title');
-  const tabConfigHint = document.getElementById('tabConfigHint');
-  if (tabConfigHint) tabConfigHint.textContent = t('menu.tab_config_hint');
+  // Settings modal
+  const settingsTitle = document.getElementById('settingsTitle');
+  if (settingsTitle) settingsTitle.textContent = t('menu.settings_title');
+  const settingsTabsLabel = document.getElementById('settingsTabsLabel');
+  if (settingsTabsLabel) settingsTabsLabel.textContent = t('menu.settings_tabs');
+  const settingsTabsHint = document.getElementById('settingsTabsHint');
+  if (settingsTabsHint) settingsTabsHint.textContent = t('menu.settings_tabs_hint');
 }
 
 // Init lang and header menu on page load
@@ -486,21 +488,21 @@ function getVisibleTabs() {
   return ALL_TABS.filter(t => isTabVisible(t.key));
 }
 
-// ── Tab Config Modal ──
+// ── Settings Modal ──
 let _tabConfigState = {};
 
-function openTabConfig() {
+function openSettings() {
   const vis = getTabVisibility() || {};
   _tabConfigState = {};
   ALL_TABS.forEach(tab => {
     _tabConfigState[tab.key] = vis[tab.key] !== false;
   });
   renderTabConfigList();
-  document.getElementById('tabConfigModal').classList.add('visible');
+  document.getElementById('settingsModal').classList.add('visible');
 }
 
-function closeTabConfig() {
-  document.getElementById('tabConfigModal').classList.remove('visible');
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('visible');
 }
 
 function renderTabConfigList() {
@@ -525,28 +527,22 @@ function toggleTabConfigItem(key) {
   const anyVisible = Object.values(_tabConfigState).some(v => v);
   if (!anyVisible) {
     _tabConfigState[key] = true;
-    showToast(t('menu.tab_config_hint'));
+    showToast(t('menu.settings_tabs_hint'));
     return;
   }
   renderTabConfigList();
-}
-
-function saveTabConfig() {
+  // Apply immediately
   saveTabVisibility(_tabConfigState);
   applyTabVisibility();
-  closeTabConfig();
-  // If current view is now hidden, switch to the first visible tab
   if (!_tabConfigState[state.currentView]) {
     const firstVisible = ALL_TABS.find(t => _tabConfigState[t.key]);
     if (firstVisible) switchView(firstVisible.key);
   }
-  showToast(t('toast.updated'));
 }
 
-window.openTabConfig = openTabConfig;
-window.closeTabConfig = closeTabConfig;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
 window.toggleTabConfigItem = toggleTabConfigItem;
-window.saveTabConfig = saveTabConfig;
 
 // ===================================================================
 // VIEW SWITCHER (Projects / TODOs / Chores)
