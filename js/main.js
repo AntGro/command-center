@@ -545,7 +545,7 @@ function switchSettingsPane(paneKey) {
   document.querySelectorAll('.settings-pane').forEach(pane => {
     pane.classList.toggle('active', pane.id === `settingsPane-${paneKey}`);
   });
-  if (paneKey === 'ai') fetchNvidiaModels();
+  if (paneKey === 'ai') populateNvidiaModels();
 }
 
 function renderTabConfigList() {
@@ -654,24 +654,29 @@ async function saveNvidiaModel() {
   } catch (e) { console.error('Failed to save model:', e); }
 }
 
-const NVIDIA_API_BASE = 'https://integrate.api.nvidia.com/v1';
+const NVIDIA_CHAT_MODELS = [
+  'meta/llama-3.1-8b-instruct',
+  'meta/llama-3.1-70b-instruct',
+  'meta/llama-3.1-405b-instruct',
+  'meta/llama-3.3-70b-instruct',
+  'meta/llama-4-maverick-17b-128e-instruct',
+  'mistralai/mistral-7b-instruct-v0.3',
+  'mistralai/mistral-large-2-instruct',
+  'mistralai/mistral-medium-3.5-128b',
+  'mistralai/mixtral-8x7b-instruct-v0.1',
+  'nv-mistralai/mistral-nemo-12b-instruct',
+  'nvidia/llama-3.1-nemotron-70b-instruct',
+  'google/gemma-3-27b-it',
+  'deepseek-ai/deepseek-v3.2',
+  'qwen/qwen3.5-122b-a10b',
+];
 
-async function fetchNvidiaModels() {
+function populateNvidiaModels() {
   const sel = document.getElementById('settingsNvidiaModel');
   if (!sel) return;
-  try {
-    const res = await fetch(`${NVIDIA_API_BASE}/models`);
-    if (!res.ok) return;
-    const json = await res.json();
-    const chatModels = (json.data || [])
-      .map(m => m.id)
-      .filter(id => /instruct|chat/i.test(id) && !/guard|safety|embed|retriever/i.test(id))
-      .sort();
-    if (chatModels.length === 0) return;
-    sel.innerHTML = chatModels.map(id =>
-      `<option value="${esc(id)}"${id === state.nvidiaModel ? ' selected' : ''}>${esc(id)}</option>`
-    ).join('');
-  } catch (e) { console.warn('Could not fetch NVIDIA models:', e.message); }
+  sel.innerHTML = NVIDIA_CHAT_MODELS.map(id =>
+    `<option value="${esc(id)}"${id === state.nvidiaModel ? ' selected' : ''}>${esc(id)}</option>`
+  ).join('');
 }
 
 async function testNvidiaApi() {
@@ -693,18 +698,24 @@ async function testNvidiaApi() {
   resultEl.className = 'settings-test-result';
   resultEl.textContent = '...';
   try {
-    const res = await fetch(`${NVIDIA_API_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], max_tokens: 256 }),
+    const { data, error } = await state.db.rpc('nvidia_chat', {
+      p_api_key: apiKey,
+      p_model: model,
+      p_prompt: prompt,
     });
-    const json = await res.json();
-    if (!res.ok) {
+    if (error) {
       resultEl.className = 'settings-test-result error';
-      resultEl.textContent = json.detail || json.error?.message || `HTTP ${res.status}`;
+      resultEl.textContent = error.message || 'RPC error';
+      return;
+    }
+    const status = data?.status;
+    const body = data?.body;
+    if (status && status >= 400) {
+      resultEl.className = 'settings-test-result error';
+      resultEl.textContent = body?.detail || body?.error?.message || `HTTP ${status}`;
     } else {
       resultEl.className = 'settings-test-result success';
-      resultEl.textContent = json.choices?.[0]?.message?.content || JSON.stringify(json);
+      resultEl.textContent = body?.choices?.[0]?.message?.content || JSON.stringify(body);
     }
   } catch (e) {
     resultEl.className = 'settings-test-result error';
