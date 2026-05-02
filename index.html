@@ -506,9 +506,15 @@
             </div>
             <div class="setting-item">
               <label for="settingsNvidiaModel" id="settingsNvidiaModelLabel">Model</label>
-              <select id="settingsNvidiaModel" class="settings-select" onchange="saveNvidiaModel()">
+              <select id="settingsNvidiaModel" class="settings-select" onchange="handleModelChange()">
                 <option value="meta/llama-3.1-8b-instruct">meta/llama-3.1-8b-instruct</option>
               </select>
+              <div id="settingsCustomModelRow" class="settings-api-key-row" style="display:none;margin-top:6px">
+                <input type="text" id="settingsCustomModel" class="settings-select" placeholder="org/model-name" spellcheck="false">
+                <button type="button" class="settings-key-btn settings-key-save" onclick="applyCustomModel()">
+                  <span data-icon="check" data-size="16"></span>
+                </button>
+              </div>
             </div>
             <div class="setting-item nvidia-test-section">
               <label id="settingsTestLabel">Test</label>

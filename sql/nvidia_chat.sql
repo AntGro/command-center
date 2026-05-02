@@ -2,7 +2,6 @@
 CREATE EXTENSION IF NOT EXISTS http WITH SCHEMA extensions;
 
 -- Proxy function: calls NVIDIA chat completions API from Supabase
--- Avoids CORS issues since the request is made server-side.
 CREATE OR REPLACE FUNCTION nvidia_chat(p_api_key text, p_model text, p_prompt text)
 RETURNS json
 LANGUAGE plpgsql
@@ -24,5 +23,26 @@ BEGIN
   )::extensions.http_request);
 
   RETURN json_build_object('status', resp.status, 'body', resp.content::json);
+END;
+$$;
+
+-- List available NVIDIA models (no auth required)
+CREATE OR REPLACE FUNCTION nvidia_list_models()
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  resp record;
+BEGIN
+  SELECT * INTO resp FROM extensions.http((
+    'GET',
+    'https://integrate.api.nvidia.com/v1/models',
+    ARRAY[]::extensions.http_header[],
+    NULL,
+    NULL
+  )::extensions.http_request);
+
+  RETURN resp.content::json;
 END;
 $$;

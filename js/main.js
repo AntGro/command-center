@@ -654,29 +654,99 @@ async function saveNvidiaModel() {
   } catch (e) { console.error('Failed to save model:', e); }
 }
 
-const NVIDIA_CHAT_MODELS = [
+const NVIDIA_POPULAR_MODELS = [
   'meta/llama-3.1-8b-instruct',
-  'meta/llama-3.1-70b-instruct',
-  'meta/llama-3.1-405b-instruct',
   'meta/llama-3.3-70b-instruct',
   'meta/llama-4-maverick-17b-128e-instruct',
-  'mistralai/mistral-7b-instruct-v0.3',
   'mistralai/mistral-large-2-instruct',
-  'mistralai/mistral-medium-3.5-128b',
-  'mistralai/mixtral-8x7b-instruct-v0.1',
-  'nv-mistralai/mistral-nemo-12b-instruct',
-  'nvidia/llama-3.1-nemotron-70b-instruct',
   'google/gemma-3-27b-it',
   'deepseek-ai/deepseek-v3.2',
-  'qwen/qwen3.5-122b-a10b',
+  'nvidia/llama-3.1-nemotron-70b-instruct',
 ];
+
+function renderModelSelect(models, selectedModel) {
+  const sel = document.getElementById('settingsNvidiaModel');
+  if (!sel) return;
+
+  const popular = models.filter(id => NVIDIA_POPULAR_MODELS.includes(id));
+  const others = models.filter(id => !NVIDIA_POPULAR_MODELS.includes(id));
+  const customInList = selectedModel && !models.includes(selectedModel);
+
+  let html = '';
+  if (popular.length) {
+    html += `<optgroup label="Popular">`;
+    html += popular.map(id =>
+      `<option value="${esc(id)}"${id === selectedModel ? ' selected' : ''}>${esc(id)}</option>`
+    ).join('');
+    html += `</optgroup>`;
+  }
+  if (others.length) {
+    html += `<optgroup label="All">`;
+    html += others.map(id =>
+      `<option value="${esc(id)}"${id === selectedModel ? ' selected' : ''}>${esc(id)}</option>`
+    ).join('');
+    html += `</optgroup>`;
+  }
+  if (customInList) {
+    html += `<optgroup label="Custom">`;
+    html += `<option value="${esc(selectedModel)}" selected>${esc(selectedModel)}</option>`;
+    html += `</optgroup>`;
+  }
+  html += `<option value="__custom">${t('menu.settings_model_custom')}</option>`;
+  sel.innerHTML = html;
+}
 
 function populateNvidiaModels() {
   const sel = document.getElementById('settingsNvidiaModel');
   if (!sel) return;
-  sel.innerHTML = NVIDIA_CHAT_MODELS.map(id =>
-    `<option value="${esc(id)}"${id === state.nvidiaModel ? ' selected' : ''}>${esc(id)}</option>`
-  ).join('');
+  // Render hardcoded fallback first, then fetch live list
+  renderModelSelect(NVIDIA_POPULAR_MODELS, state.nvidiaModel);
+  fetchNvidiaModelsRpc();
+}
+
+async function fetchNvidiaModelsRpc() {
+  try {
+    const { data, error } = await state.db.rpc('nvidia_list_models');
+    if (error || !data?.data) return;
+    const chatModels = data.data
+      .map(m => m.id)
+      .filter(id => /instruct|chat|-it$/i.test(id) && !/guard|safety|embed|retriever/i.test(id))
+      .sort((a, b) => {
+        const ai = NVIDIA_POPULAR_MODELS.includes(a) ? 0 : 1;
+        const bi = NVIDIA_POPULAR_MODELS.includes(b) ? 0 : 1;
+        return ai - bi || a.localeCompare(b);
+      });
+    if (chatModels.length) renderModelSelect(chatModels, state.nvidiaModel);
+  } catch (e) { console.warn('Could not fetch NVIDIA models:', e.message); }
+}
+
+function handleModelChange() {
+  const sel = document.getElementById('settingsNvidiaModel');
+  const customRow = document.getElementById('settingsCustomModelRow');
+  if (!sel) return;
+  if (sel.value === '__custom') {
+    if (customRow) customRow.style.display = '';
+    document.getElementById('settingsCustomModel')?.focus();
+  } else {
+    if (customRow) customRow.style.display = 'none';
+    saveNvidiaModel();
+  }
+}
+
+function applyCustomModel() {
+  const input = document.getElementById('settingsCustomModel');
+  const val = input?.value?.trim();
+  if (!val) return;
+  state.nvidiaModel = val;
+  // Re-render with custom value selected, then save
+  const sel = document.getElementById('settingsNvidiaModel');
+  const opts = Array.from(sel?.options || []).map(o => o.value).filter(v => v !== '__custom');
+  if (!opts.includes(val)) {
+    renderModelSelect(opts, val);
+  }
+  saveNvidiaModel();
+  const customRow = document.getElementById('settingsCustomModelRow');
+  if (customRow) customRow.style.display = 'none';
 }
 
 async function testNvidiaApi() {
@@ -730,6 +800,8 @@ window.toggleTabConfigItem = toggleTabConfigItem;
 window.toggleNvidiaKeyVisibility = toggleNvidiaKeyVisibility;
 window.saveNvidiaKey = saveNvidiaKey;
 window.saveNvidiaModel = saveNvidiaModel;
+window.handleModelChange = handleModelChange;
+window.applyCustomModel = applyCustomModel;
 window.testNvidiaApi = testNvidiaApi;
 
 // ===================================================================
