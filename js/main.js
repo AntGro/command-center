@@ -384,13 +384,18 @@ function updateStaticLabels() {
   // Settings modal
   const settingsTitle = document.getElementById('settingsTitle');
   if (settingsTitle) settingsTitle.textContent = t('menu.settings_title');
+  const settingsNavGeneral = document.getElementById('settingsNavGeneral');
+  if (settingsNavGeneral) settingsNavGeneral.textContent = t('menu.settings_general');
+  const settingsNavAi = document.getElementById('settingsNavAi');
+  if (settingsNavAi) settingsNavAi.textContent = t('menu.settings_ai');
+  const settingsPaneGeneralTitle = document.getElementById('settingsPaneGeneralTitle');
+  if (settingsPaneGeneralTitle) settingsPaneGeneralTitle.textContent = t('menu.settings_general');
+  const settingsPaneAiTitle = document.getElementById('settingsPaneAiTitle');
+  if (settingsPaneAiTitle) settingsPaneAiTitle.textContent = t('menu.settings_ai');
   const settingsTabsLabel = document.getElementById('settingsTabsLabel');
   if (settingsTabsLabel) settingsTabsLabel.textContent = t('menu.settings_tabs');
   const settingsTabsHint = document.getElementById('settingsTabsHint');
   if (settingsTabsHint) settingsTabsHint.textContent = t('menu.settings_tabs_hint');
-  // AI settings
-  const settingsAiLabel = document.getElementById('settingsAiLabel');
-  if (settingsAiLabel) settingsAiLabel.textContent = t('menu.settings_ai');
   const settingsNvidiaKeyLabel = document.getElementById('settingsNvidiaKeyLabel');
   if (settingsNvidiaKeyLabel) settingsNvidiaKeyLabel.textContent = t('menu.settings_nvidia_key');
   const settingsNvidiaKeyHint = document.getElementById('settingsNvidiaKeyHint');
@@ -517,12 +522,23 @@ function openSettings() {
   // Reset visibility toggle icon
   const toggleBtn = document.getElementById('settingsToggleVis');
   if (toggleBtn) toggleBtn.innerHTML = `<span data-icon="eye" data-size="16"></span>`;
+  // Reset to first pane
+  switchSettingsPane('general');
   hydrateIcons();
   document.getElementById('settingsModal').classList.add('visible');
 }
 
 function closeSettings() {
   document.getElementById('settingsModal').classList.remove('visible');
+}
+
+function switchSettingsPane(paneKey) {
+  document.querySelectorAll('.settings-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.pane === paneKey);
+  });
+  document.querySelectorAll('.settings-pane').forEach(pane => {
+    pane.classList.toggle('active', pane.id === `settingsPane-${paneKey}`);
+  });
 }
 
 function renderTabConfigList() {
@@ -616,6 +632,7 @@ function toggleNvidiaKeyVisibility() {
 
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;
+window.switchSettingsPane = switchSettingsPane;
 window.toggleTabConfigItem = toggleTabConfigItem;
 window.toggleNvidiaKeyVisibility = toggleNvidiaKeyVisibility;
 window.saveNvidiaKey = saveNvidiaKey;
