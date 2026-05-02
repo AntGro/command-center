@@ -158,6 +158,17 @@ input,select,button{font-family:inherit;}
 .settings-key-btn:hover{background:var(--border);color:var(--text);}
 .settings-key-save{border-color:var(--accent);color:var(--accent);}
 .settings-key-save:hover{background:var(--accent);color:#fff;}
+.settings-select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:0.85rem;font-family:monospace;outline:none;cursor:pointer;}
+.settings-select:focus{border-color:var(--accent);}
+.settings-textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:0.85rem;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;}
+.settings-textarea:focus{border-color:var(--accent);}
+.settings-test-actions{margin-top:8px;}
+.settings-test-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--accent);border-radius:6px;background:transparent;color:var(--accent);font-size:0.82rem;font-weight:500;cursor:pointer;}
+.settings-test-btn:hover{background:var(--accent);color:#fff;}
+.settings-test-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.settings-test-result{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:0.82rem;line-height:1.5;max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.settings-test-result.success{background:color-mix(in srgb,#76b900 10%,var(--surface2));border:1px solid color-mix(in srgb,#76b900 30%,var(--border));}
+.settings-test-result.error{background:color-mix(in srgb,red 8%,var(--surface2));border:1px solid color-mix(in srgb,red 25%,var(--border));color:color-mix(in srgb,red 70%,var(--text));}
 @media(max-width:540px){.settings-container{flex-direction:column;height:auto;max-height:90vh;}.settings-sidebar{width:auto;border-right:none;border-bottom:1px solid var(--border);padding:16px 16px 0;}.settings-sidebar h2{padding:0;margin-bottom:12px;}.settings-sidebar nav{flex-direction:row;gap:0;overflow-x:auto;padding-bottom:0;}.settings-nav-btn{border-left:none;border-bottom:3px solid transparent;padding:8px 14px;white-space:nowrap;}.settings-nav-btn.active{border-left-color:transparent;border-bottom-color:var(--accent);}.settings-content{padding:18px 16px;}}
 .btn-active{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(100,108,255,0.3);}
 .btn-active:hover{opacity:0.85;background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 4px 16px rgba(100,108,255,0.35);}

@@ -4,7 +4,7 @@ import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_
 import db from './db.js';
 import { createSupabaseAdapter } from './adapters/supabase.js';
 import { VERSION, REPO_URL } from './version.js';
-import { showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
+import { esc, showToast, updateFooterStats, updateTaskListMaxHeight, isEditing } from './utils.js';
 import { loadProjects, buildProjectCards, initProjectDragDrop, updateArchiveToggleBtn,
          renderArchivedProjects, refreshAll, loadPrompts } from './projects.js';
 import { refreshTodos, renderTodos, getTodoCounts } from './todos.js';
@@ -400,6 +400,12 @@ function updateStaticLabels() {
   if (settingsNvidiaKeyLabel) settingsNvidiaKeyLabel.textContent = t('menu.settings_nvidia_key');
   const settingsNvidiaKeyHint = document.getElementById('settingsNvidiaKeyHint');
   if (settingsNvidiaKeyHint) settingsNvidiaKeyHint.textContent = t('menu.settings_nvidia_key_hint');
+  const settingsNvidiaModelLabel = document.getElementById('settingsNvidiaModelLabel');
+  if (settingsNvidiaModelLabel) settingsNvidiaModelLabel.textContent = t('menu.settings_model');
+  const settingsTestLabel = document.getElementById('settingsTestLabel');
+  if (settingsTestLabel) settingsTestLabel.textContent = t('menu.settings_test');
+  const settingsTestBtnLabel = document.getElementById('settingsTestBtnLabel');
+  if (settingsTestBtnLabel) settingsTestBtnLabel.textContent = t('menu.settings_test_btn');
 }
 
 // Init lang and header menu on page load
@@ -539,6 +545,7 @@ function switchSettingsPane(paneKey) {
   document.querySelectorAll('.settings-pane').forEach(pane => {
     pane.classList.toggle('active', pane.id === `settingsPane-${paneKey}`);
   });
+  if (paneKey === 'ai') fetchNvidiaModels();
 }
 
 function renderTabConfigList() {
@@ -585,6 +592,7 @@ async function loadSettings() {
     if (data) {
       for (const row of data) {
         if (row.key === 'nvidia_api_key') state.nvidiaApiKey = row.value || null;
+        if (row.key === 'nvidia_model') state.nvidiaModel = row.value || 'meta/llama-3.1-8b-instruct';
       }
     }
   } catch (e) { console.warn('Could not load settings:', e.message); }
@@ -630,12 +638,88 @@ function toggleNvidiaKeyVisibility() {
   hydrateIcons();
 }
 
+async function saveNvidiaModel() {
+  const sel = document.getElementById('settingsNvidiaModel');
+  if (!sel) return;
+  const val = sel.value;
+  try {
+    const { data } = await state.db.from('settings')
+      .update({ value: val, updated_at: new Date().toISOString() })
+      .eq('key', 'nvidia_model').select();
+    if (!data || data.length === 0) {
+      await state.db.from('settings')
+        .insert({ key: 'nvidia_model', value: val, updated_at: new Date().toISOString() });
+    }
+    state.nvidiaModel = val;
+  } catch (e) { console.error('Failed to save model:', e); }
+}
+
+const NVIDIA_API_BASE = 'https://integrate.api.nvidia.com/v1';
+
+async function fetchNvidiaModels() {
+  const sel = document.getElementById('settingsNvidiaModel');
+  if (!sel) return;
+  try {
+    const res = await fetch(`${NVIDIA_API_BASE}/models`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const chatModels = (json.data || [])
+      .map(m => m.id)
+      .filter(id => /instruct|chat/i.test(id) && !/guard|safety|embed|retriever/i.test(id))
+      .sort();
+    if (chatModels.length === 0) return;
+    sel.innerHTML = chatModels.map(id =>
+      `<option value="${esc(id)}"${id === state.nvidiaModel ? ' selected' : ''}>${esc(id)}</option>`
+    ).join('');
+  } catch (e) { console.warn('Could not fetch NVIDIA models:', e.message); }
+}
+
+async function testNvidiaApi() {
+  const apiKey = state.nvidiaApiKey || document.getElementById('settingsNvidiaKey')?.value?.trim();
+  const model = document.getElementById('settingsNvidiaModel')?.value;
+  const prompt = document.getElementById('settingsTestPrompt')?.value?.trim();
+  const resultEl = document.getElementById('settingsTestResult');
+  const btn = document.getElementById('settingsTestBtn');
+  if (!resultEl || !btn) return;
+  if (!apiKey) {
+    resultEl.style.display = 'block';
+    resultEl.className = 'settings-test-result error';
+    resultEl.textContent = t('menu.settings_test_no_key');
+    return;
+  }
+  if (!prompt) return;
+  btn.disabled = true;
+  resultEl.style.display = 'block';
+  resultEl.className = 'settings-test-result';
+  resultEl.textContent = '...';
+  try {
+    const res = await fetch(`${NVIDIA_API_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], max_tokens: 256 }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      resultEl.className = 'settings-test-result error';
+      resultEl.textContent = json.detail || json.error?.message || `HTTP ${res.status}`;
+    } else {
+      resultEl.className = 'settings-test-result success';
+      resultEl.textContent = json.choices?.[0]?.message?.content || JSON.stringify(json);
+    }
+  } catch (e) {
+    resultEl.className = 'settings-test-result error';
+    resultEl.textContent = e.message;
+  } finally { btn.disabled = false; }
+}
+
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;
 window.switchSettingsPane = switchSettingsPane;
 window.toggleTabConfigItem = toggleTabConfigItem;
 window.toggleNvidiaKeyVisibility = toggleNvidiaKeyVisibility;
 window.saveNvidiaKey = saveNvidiaKey;
+window.saveNvidiaModel = saveNvidiaModel;
+window.testNvidiaApi = testNvidiaApi;
 
 // ===================================================================
 // VIEW SWITCHER (Projects / TODOs / Chores)

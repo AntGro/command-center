@@ -504,6 +504,23 @@
               </div>
               <p class="setting-hint" id="settingsNvidiaKeyHint">Used for AI-powered features. Stored in your database.</p>
             </div>
+            <div class="setting-item">
+              <label for="settingsNvidiaModel" id="settingsNvidiaModelLabel">Model</label>
+              <select id="settingsNvidiaModel" class="settings-select" onchange="saveNvidiaModel()">
+                <option value="meta/llama-3.1-8b-instruct">meta/llama-3.1-8b-instruct</option>
+              </select>
+            </div>
+            <div class="setting-item nvidia-test-section">
+              <label id="settingsTestLabel">Test</label>
+              <textarea id="settingsTestPrompt" class="settings-textarea" rows="2">What is the capital of France?</textarea>
+              <div class="settings-test-actions">
+                <button type="button" class="settings-test-btn" onclick="testNvidiaApi()" id="settingsTestBtn">
+                  <span data-icon="play" data-size="14"></span>
+                  <span id="settingsTestBtnLabel">Query</span>
+                </button>
+              </div>
+              <div id="settingsTestResult" class="settings-test-result" style="display:none"></div>
+            </div>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ const state = {
   vestiaireFilter: 'all',
   currentView: 'projects',
   nvidiaApiKey: null,
+  nvidiaModel: 'meta/llama-3.1-8b-instruct',
 };
 
 export default state;
