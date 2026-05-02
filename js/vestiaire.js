@@ -8,7 +8,7 @@ import { t } from './i18n.js';
 // VESTIAIRE — WARDROBE TRACKER (bucket-card layout)
 // ===================================================================
 
-const DEFAULT_CATEGORIES = ['Tops', 'Bottoms', 'Shoes', 'Outerwear'];
+const DEFAULT_CATEGORIES = [];
 let vestSearchQuery = '';
 const VESTIAIRE_CATEGORIES_KEY = 'claw_cc_vestiaire_categories';
 const VEST_SHORTNAMES_KEY = 'claw_cc_vest_shortnames';
