@@ -22,7 +22,11 @@ BEGIN
     )::text
   )::extensions.http_request);
 
-  RETURN json_build_object('status', resp.status, 'body', resp.content::json);
+  BEGIN
+    RETURN json_build_object('status', resp.status, 'body', resp.content::json);
+  EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object('status', resp.status, 'body', json_build_object('error', resp.content));
+  END;
 END;
 $$;
 
@@ -43,6 +47,10 @@ BEGIN
     NULL
   )::extensions.http_request);
 
-  RETURN resp.content::json;
+  BEGIN
+    RETURN resp.content::json;
+  EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object('error', resp.content);
+  END;
 END;
 $$;
