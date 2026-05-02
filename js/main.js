@@ -156,6 +156,9 @@ async function connect(url, key) {
   renderArchivedProjects();
   await refreshAll();
 
+  // Load user settings from DB
+  await loadSettings();
+
   // Clean up any legacy localStorage ideas (one-time)
   localStorage.removeItem(IDEAS_KEY);
 
@@ -385,6 +388,13 @@ function updateStaticLabels() {
   if (settingsTabsLabel) settingsTabsLabel.textContent = t('menu.settings_tabs');
   const settingsTabsHint = document.getElementById('settingsTabsHint');
   if (settingsTabsHint) settingsTabsHint.textContent = t('menu.settings_tabs_hint');
+  // AI settings
+  const settingsAiLabel = document.getElementById('settingsAiLabel');
+  if (settingsAiLabel) settingsAiLabel.textContent = t('menu.settings_ai');
+  const settingsNvidiaKeyLabel = document.getElementById('settingsNvidiaKeyLabel');
+  if (settingsNvidiaKeyLabel) settingsNvidiaKeyLabel.textContent = t('menu.settings_nvidia_key');
+  const settingsNvidiaKeyHint = document.getElementById('settingsNvidiaKeyHint');
+  if (settingsNvidiaKeyHint) settingsNvidiaKeyHint.textContent = t('menu.settings_nvidia_key_hint');
 }
 
 // Init lang and header menu on page load
@@ -498,6 +508,16 @@ function openSettings() {
     _tabConfigState[tab.key] = vis[tab.key] !== false;
   });
   renderTabConfigList();
+  // Populate NVIDIA key field
+  const inp = document.getElementById('settingsNvidiaKey');
+  if (inp) {
+    inp.value = state.nvidiaApiKey || '';
+    inp.type = 'password';
+  }
+  // Reset visibility toggle icon
+  const toggleBtn = document.getElementById('settingsToggleVis');
+  if (toggleBtn) toggleBtn.innerHTML = `<span data-icon="eye" data-size="16"></span>`;
+  hydrateIcons();
   document.getElementById('settingsModal').classList.add('visible');
 }
 
@@ -540,9 +560,65 @@ function toggleTabConfigItem(key) {
   }
 }
 
+// ── AI Settings ──
+
+async function loadSettings() {
+  try {
+    const { data, error } = await state.db.from('settings').select('key,value');
+    if (error) { console.warn('Settings table not available:', error.message); return; }
+    if (data) {
+      for (const row of data) {
+        if (row.key === 'nvidia_api_key') state.nvidiaApiKey = row.value || null;
+      }
+    }
+  } catch (e) { console.warn('Could not load settings:', e.message); }
+}
+
+async function saveNvidiaKey() {
+  const inp = document.getElementById('settingsNvidiaKey');
+  if (!inp) return;
+  const val = inp.value.trim();
+  try {
+    if (val) {
+      // Upsert: try update first, then insert if no rows affected
+      const { data, error: upErr } = await state.db.from('settings')
+        .update({ value: val, updated_at: new Date().toISOString() })
+        .eq('key', 'nvidia_api_key')
+        .select();
+      if (upErr) throw upErr;
+      if (!data || data.length === 0) {
+        const { error: insErr } = await state.db.from('settings')
+          .insert({ key: 'nvidia_api_key', value: val, updated_at: new Date().toISOString() });
+        if (insErr) throw insErr;
+      }
+      state.nvidiaApiKey = val;
+    } else {
+      // Delete the key
+      await state.db.from('settings').delete().eq('key', 'nvidia_api_key');
+      state.nvidiaApiKey = null;
+    }
+    showToast(t('menu.settings_key_saved'));
+  } catch (e) {
+    console.error('Failed to save API key:', e);
+    showToast(t('menu.settings_key_error'));
+  }
+}
+
+function toggleNvidiaKeyVisibility() {
+  const inp = document.getElementById('settingsNvidiaKey');
+  const btn = document.getElementById('settingsToggleVis');
+  if (!inp || !btn) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = `<span data-icon="${show ? 'eye-off' : 'eye'}" data-size="16"></span>`;
+  hydrateIcons();
+}
+
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;
 window.toggleTabConfigItem = toggleTabConfigItem;
+window.toggleNvidiaKeyVisibility = toggleNvidiaKeyVisibility;
+window.saveNvidiaKey = saveNvidiaKey;
 
 // ===================================================================
 // VIEW SWITCHER (Projects / TODOs / Chores)

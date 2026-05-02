@@ -468,6 +468,22 @@
         <p class="modal-hint" id="settingsTabsHint">Choose which tabs to display. At least one tab must remain visible.</p>
         <div id="tabConfigList" class="tab-config-list"></div>
       </div>
+      <div class="settings-section">
+        <div class="settings-section-label" id="settingsAiLabel">AI</div>
+        <div class="settings-ai-field">
+          <label for="settingsNvidiaKey" id="settingsNvidiaKeyLabel">NVIDIA API Key</label>
+          <div class="settings-api-key-row">
+            <input type="password" id="settingsNvidiaKey" placeholder="nvapi-..." autocomplete="off" spellcheck="false">
+            <button type="button" class="settings-key-btn" id="settingsToggleVis" onclick="toggleNvidiaKeyVisibility()" title="Show/Hide">
+              <span data-icon="eye" data-size="16"></span>
+            </button>
+            <button type="button" class="settings-key-btn settings-key-save" id="settingsSaveKey" onclick="saveNvidiaKey()">
+              <span data-icon="check" data-size="16"></span>
+            </button>
+          </div>
+          <p class="modal-hint" id="settingsNvidiaKeyHint">Used for AI-powered features. Stored in your database.</p>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="modal-cancel" onclick="closeSettings()">Close</button>
       </div>

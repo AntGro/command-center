@@ -15,6 +15,7 @@ const state = {
   allVestiaire: [],
   vestiaireFilter: 'all',
   currentView: 'projects',
+  nvidiaApiKey: null,
 };
 
 export default state;

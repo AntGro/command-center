@@ -44,6 +44,9 @@ const T = {
       language: 'Language', toggle_theme: 'Toggle theme', settings: 'Settings',
       disconnect: 'Disconnect', settings_title: 'Settings', settings_tabs: 'Tabs',
       settings_tabs_hint: 'Choose which tabs to display. At least one tab must remain visible.',
+      settings_ai: 'AI', settings_nvidia_key: 'NVIDIA API Key',
+      settings_nvidia_key_hint: 'Used for AI-powered features. Stored in your database.',
+      settings_key_saved: 'API key saved', settings_key_error: 'Failed to save API key',
     },
     // ── Nav tabs ──
     nav: {
@@ -254,6 +257,9 @@ const T = {
       language: 'Langue', toggle_theme: 'Changer le thème', settings: 'Paramètres',
       disconnect: 'Déconnexion', settings_title: 'Paramètres', settings_tabs: 'Onglets',
       settings_tabs_hint: 'Choisissez les onglets à afficher. Au moins un onglet doit rester visible.',
+      settings_ai: 'IA', settings_nvidia_key: 'Clé API NVIDIA',
+      settings_nvidia_key_hint: 'Utilisée pour les fonctionnalités IA. Stockée dans votre base de données.',
+      settings_key_saved: 'Clé API enregistrée', settings_key_error: 'Échec de l\'enregistrement de la clé API',
     },
     nav: {
       today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
@@ -455,6 +461,9 @@ const T = {
       language: 'Idioma', toggle_theme: 'Cambiar tema', settings: 'Ajustes',
       disconnect: 'Desconectar', settings_title: 'Ajustes', settings_tabs: 'Pestañas',
       settings_tabs_hint: 'Elige qué pestañas mostrar. Al menos una pestaña debe estar visible.',
+      settings_ai: 'IA', settings_nvidia_key: 'Clave API NVIDIA',
+      settings_nvidia_key_hint: 'Utilizada para funciones de IA. Almacenada en tu base de datos.',
+      settings_key_saved: 'Clave API guardada', settings_key_error: 'Error al guardar la clave API',
     },
     nav: {
       today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',
