@@ -1,6 +1,6 @@
 import { lucideIcon } from './icons.js';
 import { t, getLang, setLang, nextLang } from './i18n.js';
-import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_VISIBILITY_KEY } from './supabase.js';
+import state, { IDEAS_KEY, THEME_KEY, CURRENT_VIEW_KEY, STAY_CONNECTED_KEY, TAB_VISIBILITY_KEY, TAB_ORDER_KEY } from './supabase.js';
 import db from './db.js';
 import { createSupabaseAdapter } from './adapters/supabase.js';
 import { VERSION, REPO_URL } from './version.js';
@@ -500,28 +500,59 @@ function isTabVisible(key) {
   return vis[key] !== false;
 }
 
+// ── Tab Order ──
+function getTabOrder() {
+  try {
+    const raw = localStorage.getItem(TAB_ORDER_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveTabOrder(order) {
+  localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order));
+}
+
+function getOrderedTabs() {
+  const order = getTabOrder();
+  if (!order) return ALL_TABS;
+  // Sort ALL_TABS by the stored order, falling back to original position
+  return [...ALL_TABS].sort((a, b) => {
+    const ai = order.indexOf(a.key);
+    const bi = order.indexOf(b.key);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+}
+
 function applyTabVisibility() {
   const vis = getTabVisibility();
-  ALL_TABS.forEach(tab => {
+  const ordered = getOrderedTabs();
+  const switcher = document.querySelector('.view-switcher');
+  // Apply visibility and reorder DOM
+  ordered.forEach(tab => {
     const el = document.getElementById(tab.tabId);
     if (el) {
       const visible = !vis || vis[tab.key] !== false;
       el.style.display = visible ? '' : 'none';
+      switcher.appendChild(el); // moves element to end → builds correct order
     }
   });
 }
 
 function getVisibleTabs() {
-  return ALL_TABS.filter(t => isTabVisible(t.key));
+  return getOrderedTabs().filter(t => isTabVisible(t.key));
 }
 
 // ── Settings Modal ──
 let _tabConfigState = {};
+let _tabConfigOrder = []; // current order of tab keys in the settings list
 
 function openSettings() {
   const vis = getTabVisibility() || {};
   _tabConfigState = {};
-  ALL_TABS.forEach(tab => {
+  const ordered = getOrderedTabs();
+  _tabConfigOrder = ordered.map(t => t.key);
+  ordered.forEach(tab => {
     _tabConfigState[tab.key] = vis[tab.key] !== false;
   });
   renderTabConfigList();
@@ -557,16 +588,93 @@ function switchSettingsPane(paneKey) {
 function renderTabConfigList() {
   const list = document.getElementById('tabConfigList');
   if (!list) return;
-  list.innerHTML = ALL_TABS.map(tab => {
+  list.innerHTML = _tabConfigOrder.map(key => {
+    const tab = ALL_TABS.find(t => t.key === key);
+    if (!tab) return '';
     const locked = tab.key === 'welcome';
     const checked = locked || _tabConfigState[tab.key] ? 'checked' : '';
     const lockedClass = locked ? ' locked' : '';
-    return `<div class="tab-config-item ${checked}${lockedClass}" data-tab-key="${tab.key}"${locked ? '' : ` onclick="toggleTabConfigItem('${tab.key}')"`}>
+    return `<div class="tab-config-item ${checked}${lockedClass}" data-tab-key="${tab.key}">
+      <span class="tab-config-drag">${lucideIcon('grip-vertical', 14, 'var(--muted)')}</span>
       <span class="tab-config-icon">${lucideIcon(tab.icon, 18, tab.color)}</span>
       <span class="tab-config-label">${t(tab.labelKey)}</span>
       <span class="tab-config-toggle"></span>
     </div>`;
   }).join('');
+  initTabConfigDrag(list);
+  initTabConfigToggle(list);
+}
+
+function initTabConfigToggle(list) {
+  list.querySelectorAll('.tab-config-item').forEach(item => {
+    const toggle = item.querySelector('.tab-config-toggle');
+    if (!toggle) return;
+    const key = item.dataset.tabKey;
+    if (key === 'welcome') return; // locked
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleTabConfigItem(key);
+    });
+    // Also allow clicking anywhere on the item (except drag handle) to toggle
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.tab-config-drag')) return;
+      toggleTabConfigItem(key);
+    });
+  });
+}
+
+function initTabConfigDrag(list) {
+  let dragState = null;
+  list.querySelectorAll('.tab-config-item').forEach(item => {
+    item.style.touchAction = 'none';
+    item.addEventListener('pointerdown', e => {
+      // Only initiate drag from the drag handle
+      if (!e.target.closest('.tab-config-drag')) return;
+      e.preventDefault();
+      const rect = item.getBoundingClientRect();
+      dragState = { el: item, key: item.dataset.tabKey, offsetY: e.clientY - rect.top, clone: null };
+      const clone = item.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;z-index:1000;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);background:var(--surface);border-radius:8px;border:2px solid var(--accent);`;
+      document.body.appendChild(clone);
+      dragState.clone = clone;
+      item.classList.add('dragging');
+      try { item.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    item.addEventListener('pointermove', e => {
+      if (!dragState || dragState.el !== item) return;
+      e.preventDefault();
+      dragState.clone.style.top = (e.clientY - dragState.offsetY) + 'px';
+      list.querySelectorAll('.tab-config-item:not(.dragging)').forEach(el => {
+        el.classList.remove('drag-over');
+        const r = el.getBoundingClientRect();
+        if (e.clientY >= r.top && e.clientY <= r.bottom) el.classList.add('drag-over');
+      });
+    });
+    const finishDrag = () => {
+      if (!dragState || dragState.el !== item) return;
+      if (dragState.clone) dragState.clone.remove();
+      item.classList.remove('dragging');
+      let targetKey = null;
+      list.querySelectorAll('.tab-config-item').forEach(el => {
+        if (el.classList.contains('drag-over')) { targetKey = el.dataset.tabKey; el.classList.remove('drag-over'); }
+      });
+      const draggedKey = dragState.key;
+      dragState = null;
+      if (targetKey && targetKey !== draggedKey) {
+        const fromIdx = _tabConfigOrder.indexOf(draggedKey);
+        const toIdx = _tabConfigOrder.indexOf(targetKey);
+        if (fromIdx !== -1 && toIdx !== -1) {
+          _tabConfigOrder.splice(fromIdx, 1);
+          _tabConfigOrder.splice(toIdx, 0, draggedKey);
+          saveTabOrder(_tabConfigOrder);
+          renderTabConfigList();
+          applyTabVisibility();
+        }
+      }
+    };
+    item.addEventListener('pointerup', finishDrag);
+    item.addEventListener('pointercancel', finishDrag);
+  });
 }
 
 function toggleTabConfigItem(key) {
@@ -584,7 +692,7 @@ function toggleTabConfigItem(key) {
   saveTabVisibility(_tabConfigState);
   applyTabVisibility();
   if (!_tabConfigState[state.currentView]) {
-    const firstVisible = ALL_TABS.find(t => _tabConfigState[t.key]);
+    const firstVisible = getOrderedTabs().find(t => _tabConfigState[t.key]);
     if (firstVisible) switchView(firstVisible.key);
   }
 }

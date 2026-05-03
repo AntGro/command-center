@@ -51,24 +51,24 @@ export function initItemHoverDelay(container, {
       actions.classList.remove('visible');
     });
 
-    if (text) {
-      text.addEventListener('click', () => {
-        if (text.dataset.editing) return;
-        if (item.querySelector(editingSelector)) return;
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          actions.classList.add('visible');
-          if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-        }, 250);
-      });
-      text.addEventListener('dblclick', (e) => {
-        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-        if (onDblClick) {
-          e.preventDefault();
-          onDblClick(item);
-        }
-      });
-    }
+    // Click anywhere on the row (except action buttons) to show actions
+    row.addEventListener('click', (e) => {
+      if (e.target.closest(actionsSelector)) return;
+      if (item.querySelector(editingSelector)) return;
+      if (clickTimer) clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => {
+        actions.classList.add('visible');
+        if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+      }, 250);
+    });
+    row.addEventListener('dblclick', (e) => {
+      if (e.target.closest(actionsSelector)) return;
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      if (onDblClick) {
+        e.preventDefault();
+        onDblClick(item);
+      }
+    });
   });
 }
 
