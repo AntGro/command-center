@@ -751,6 +751,8 @@ function applyCustomModel() {
   if (customRow) customRow.style.display = 'none';
 }
 
+let _nvidiaAbort = null;
+
 async function testNvidiaApi() {
   const apiKey = state.nvidiaApiKey || document.getElementById('settingsNvidiaKey')?.value?.trim();
   const model = document.getElementById('settingsNvidiaModel')?.value;
@@ -765,7 +767,21 @@ async function testNvidiaApi() {
     return;
   }
   if (!prompt) return;
-  btn.disabled = true;
+
+  // If already running, abort
+  if (_nvidiaAbort) {
+    _nvidiaAbort.abort();
+    _nvidiaAbort = null;
+    btn.textContent = t('menu.settings_test_btn');
+    btn.disabled = false;
+    resultEl.className = 'settings-test-result error';
+    resultEl.textContent = t('menu.settings_test_cancelled');
+    return;
+  }
+
+  _nvidiaAbort = new AbortController();
+  btn.textContent = t('menu.settings_test_stop');
+  btn.disabled = false;
   resultEl.style.display = 'block';
   resultEl.className = 'settings-test-result';
   resultEl.textContent = '...';
@@ -778,6 +794,7 @@ async function testNvidiaApi() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt }),
+      signal: _nvidiaAbort.signal,
     });
     const data = await res.json();
     const status = data?.status;
@@ -790,9 +807,18 @@ async function testNvidiaApi() {
       resultEl.textContent = body?.choices?.[0]?.message?.content || JSON.stringify(body);
     }
   } catch (e) {
-    resultEl.className = 'settings-test-result error';
-    resultEl.textContent = e.message;
-  } finally { btn.disabled = false; }
+    if (e.name === 'AbortError') {
+      resultEl.className = 'settings-test-result error';
+      resultEl.textContent = t('menu.settings_test_cancelled');
+    } else {
+      resultEl.className = 'settings-test-result error';
+      resultEl.textContent = e.message;
+    }
+  } finally {
+    _nvidiaAbort = null;
+    btn.textContent = t('menu.settings_test_btn');
+    btn.disabled = false;
+  }
 }
 
 window.openSettings = openSettings;

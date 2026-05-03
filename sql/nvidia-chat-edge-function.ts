@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: p_model,
         messages: [{ role: "user", content: p_prompt }],
-        max_tokens: 256,
+        max_tokens: 4096,
       }),
     });
 
