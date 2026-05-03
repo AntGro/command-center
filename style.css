@@ -121,7 +121,7 @@ input,select,button{font-family:inherit;}
 .header-menu-disconnect:hover{opacity:1;background:rgba(239,68,68,0.08);}
 .header-menu-disconnect .header-menu-icon{color:var(--red);}
 /* ── Tab config modal ── */
-.settings-container{background:var(--surface);width:680px;max-width:92vw;height:440px;max-height:80vh;border-radius:14px;display:flex;position:relative;overflow:hidden;border:1px solid var(--border);}
+.settings-container{background:var(--surface);width:820px;max-width:92vw;height:600px;max-height:80vh;border-radius:14px;display:flex;position:relative;overflow:hidden;border:1px solid var(--border);}
 .settings-close{position:absolute;top:12px;right:14px;background:none;border:none;cursor:pointer;color:var(--muted);z-index:10;padding:4px;}
 .settings-close:hover{color:var(--text);}
 .settings-sidebar{width:180px;border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;flex-shrink:0;}
