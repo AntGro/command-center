@@ -6,7 +6,6 @@
 // Auto-purges records older than 72 hours on each call.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -44,26 +43,36 @@ Deno.serve(async (req) => {
 
     const body = await response.json();
 
-    // Log usage to DB (fire-and-forget — don't block the response)
+    // Log usage via PostgREST (raw fetch — avoids supabase-js SDK issues)
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (supabaseUrl && serviceKey) {
-      const sb = createClient(supabaseUrl, serviceKey);
       const usage = body?.usage;
+      const headers = {
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+        "Content-Type": "application/json",
+      };
 
       // Insert usage row
-      await sb.from("nvidia_usage").insert({
-        model: p_model,
-        prompt_tokens: usage?.prompt_tokens ?? 0,
-        completion_tokens: usage?.completion_tokens ?? 0,
-        total_tokens: usage?.total_tokens ?? 0,
-        status: response.status,
+      await fetch(`${supabaseUrl}/rest/v1/nvidia_usage`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: p_model,
+          prompt_tokens: usage?.prompt_tokens ?? 0,
+          completion_tokens: usage?.completion_tokens ?? 0,
+          total_tokens: usage?.total_tokens ?? 0,
+          status: response.status,
+        }),
       });
 
       // Purge records older than 72h
-      await sb.from("nvidia_usage")
-        .delete()
-        .lt("created_at", new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString());
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+      await fetch(`${supabaseUrl}/rest/v1/nvidia_usage?created_at=lt.${cutoff}`, {
+        method: "DELETE",
+        headers,
+      });
     }
 
     return new Response(
