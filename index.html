@@ -527,6 +527,15 @@
               </div>
               <div id="settingsTestResult" class="settings-test-result" style="display:none"></div>
             </div>
+            <div class="setting-item nvidia-usage-section">
+              <label id="settingsUsageLabel">Usage (24h)</label>
+              <div id="nvidiaUsageStats" class="nvidia-usage-stats"></div>
+              <button type="button" class="settings-usage-toggle" id="nvidiaUsageToggle" onclick="toggleNvidiaUsageDetail()" style="display:none">
+                <span data-icon="chevron-down" data-size="14"></span>
+                <span id="nvidiaUsageToggleLabel">By model</span>
+              </button>
+              <div id="nvidiaUsageDetail" class="nvidia-usage-detail" style="display:none"></div>
+            </div>
           </div>
         </div>
       </div>

@@ -49,6 +49,7 @@ const T = {
       settings_key_saved: 'API key saved', settings_key_error: 'Failed to save API key',
       settings_model: 'Model', settings_model_custom: 'Custom model...', settings_test: 'Test', settings_test_btn: 'Query',
       settings_test_no_key: 'Save an API key first.', settings_test_stop: 'Stop', settings_test_cancelled: 'Cancelled.',
+      settings_usage_label: 'Usage (24h)', settings_usage_requests: 'Requests', settings_usage_prompt: 'Prompt', settings_usage_completion: 'Completion', settings_usage_total: 'Total', settings_usage_empty: 'No usage data.', settings_usage_by_model: 'By model',
     },
     // ── Nav tabs ──
     nav: {
@@ -264,6 +265,7 @@ const T = {
       settings_key_saved: 'Clé API enregistrée', settings_key_error: 'Échec de l\'enregistrement de la clé API',
       settings_model: 'Modèle', settings_model_custom: 'Modèle personnalisé...', settings_test: 'Test', settings_test_btn: 'Requête',
       settings_test_no_key: 'Enregistrez d\'abord une clé API.', settings_test_stop: 'Stop', settings_test_cancelled: 'Annulé.',
+      settings_usage_label: 'Utilisation (24h)', settings_usage_requests: 'Requêtes', settings_usage_prompt: 'Prompt', settings_usage_completion: 'Complétion', settings_usage_total: 'Total', settings_usage_empty: 'Aucune donnée.', settings_usage_by_model: 'Par modèle',
     },
     nav: {
       today: "Aujourd'hui", projects: 'Projets', todos: 'Tâches', chores: 'Corvées',
@@ -470,6 +472,7 @@ const T = {
       settings_key_saved: 'Clave API guardada', settings_key_error: 'Error al guardar la clave API',
       settings_model: 'Modelo', settings_model_custom: 'Modelo personalizado...', settings_test: 'Test', settings_test_btn: 'Consultar',
       settings_test_no_key: 'Guarda primero una clave API.', settings_test_stop: 'Detener', settings_test_cancelled: 'Cancelado.',
+      settings_usage_label: 'Uso (24h)', settings_usage_requests: 'Solicitudes', settings_usage_prompt: 'Prompt', settings_usage_completion: 'Completado', settings_usage_total: 'Total', settings_usage_empty: 'Sin datos.', settings_usage_by_model: 'Por modelo',
     },
     nav: {
       today: 'Hoy', projects: 'Proyectos', todos: 'Tareas', chores: 'Quehaceres',

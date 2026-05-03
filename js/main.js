@@ -408,6 +408,10 @@ function updateStaticLabels() {
   if (settingsTestLabel) settingsTestLabel.textContent = t('menu.settings_test');
   const settingsTestBtnLabel = document.getElementById('settingsTestBtnLabel');
   if (settingsTestBtnLabel) settingsTestBtnLabel.textContent = t('menu.settings_test_btn');
+  const settingsUsageLabel = document.getElementById('settingsUsageLabel');
+  if (settingsUsageLabel) settingsUsageLabel.textContent = t('menu.settings_usage_label');
+  const nvidiaUsageToggleLabel = document.getElementById('nvidiaUsageToggleLabel');
+  if (nvidiaUsageToggleLabel) nvidiaUsageToggleLabel.textContent = t('menu.settings_usage_by_model');
 }
 
 // Init lang and header menu on page load
@@ -547,7 +551,7 @@ function switchSettingsPane(paneKey) {
   document.querySelectorAll('.settings-pane').forEach(pane => {
     pane.classList.toggle('active', pane.id === `settingsPane-${paneKey}`);
   });
-  if (paneKey === 'ai') populateNvidiaModels();
+  if (paneKey === 'ai') { populateNvidiaModels(); loadNvidiaUsage(); }
 }
 
 function renderTabConfigList() {
@@ -831,6 +835,80 @@ window.saveNvidiaModel = saveNvidiaModel;
 window.handleModelChange = handleModelChange;
 window.applyCustomModel = applyCustomModel;
 window.testNvidiaApi = testNvidiaApi;
+window.toggleNvidiaUsageDetail = toggleNvidiaUsageDetail;
+
+// ── AI Usage Stats ──
+
+async function loadNvidiaUsage() {
+  const container = document.getElementById('nvidiaUsageStats');
+  const toggleBtn = document.getElementById('nvidiaUsageToggle');
+  const detailEl = document.getElementById('nvidiaUsageDetail');
+  if (!container) return;
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await state.db.from('nvidia_usage')
+    .select('model,prompt_tokens,completion_tokens,total_tokens,status,created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    container.innerHTML = `<span class="nvidia-usage-empty">${t('menu.settings_usage_empty')}</span>`;
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    if (detailEl) detailEl.style.display = 'none';
+    return;
+  }
+
+  const totals = { requests: data.length, prompt: 0, completion: 0, total: 0 };
+  const byModel = {};
+  for (const row of data) {
+    totals.prompt += row.prompt_tokens || 0;
+    totals.completion += row.completion_tokens || 0;
+    totals.total += row.total_tokens || 0;
+    const m = row.model || 'unknown';
+    if (!byModel[m]) byModel[m] = { requests: 0, prompt: 0, completion: 0, total: 0 };
+    byModel[m].requests++;
+    byModel[m].prompt += row.prompt_tokens || 0;
+    byModel[m].completion += row.completion_tokens || 0;
+    byModel[m].total += row.total_tokens || 0;
+  }
+
+  container.innerHTML = renderUsageRow(totals);
+
+  const models = Object.keys(byModel).sort((a, b) => byModel[b].total - byModel[a].total);
+  if (models.length > 1) {
+    if (toggleBtn) toggleBtn.style.display = '';
+    if (detailEl) {
+      detailEl.innerHTML = models.map(m =>
+        `<div class="nvidia-usage-model"><span class="nvidia-usage-model-name">${esc(m)}</span>${renderUsageRow(byModel[m])}</div>`
+      ).join('');
+    }
+  } else if (models.length === 1) {
+    if (toggleBtn) toggleBtn.style.display = '';
+    if (detailEl) {
+      detailEl.innerHTML = `<div class="nvidia-usage-model"><span class="nvidia-usage-model-name">${esc(models[0])}</span></div>`;
+    }
+  } else {
+    if (toggleBtn) toggleBtn.style.display = 'none';
+  }
+}
+
+function renderUsageRow(s) {
+  return `<div class="nvidia-usage-grid">
+    <div class="nvidia-usage-cell"><span class="nvidia-usage-val">${s.requests}</span><span class="nvidia-usage-lbl">${t('menu.settings_usage_requests')}</span></div>
+    <div class="nvidia-usage-cell"><span class="nvidia-usage-val">${s.prompt.toLocaleString()}</span><span class="nvidia-usage-lbl">${t('menu.settings_usage_prompt')}</span></div>
+    <div class="nvidia-usage-cell"><span class="nvidia-usage-val">${s.completion.toLocaleString()}</span><span class="nvidia-usage-lbl">${t('menu.settings_usage_completion')}</span></div>
+    <div class="nvidia-usage-cell"><span class="nvidia-usage-val">${s.total.toLocaleString()}</span><span class="nvidia-usage-lbl">${t('menu.settings_usage_total')}</span></div>
+  </div>`;
+}
+
+function toggleNvidiaUsageDetail() {
+  const detailEl = document.getElementById('nvidiaUsageDetail');
+  const toggleBtn = document.getElementById('nvidiaUsageToggle');
+  if (!detailEl) return;
+  const open = detailEl.style.display !== 'none';
+  detailEl.style.display = open ? 'none' : '';
+  if (toggleBtn) toggleBtn.classList.toggle('open', !open);
+}
 
 // ===================================================================
 // VIEW SWITCHER (Projects / TODOs / Chores)
