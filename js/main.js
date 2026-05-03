@@ -809,6 +809,7 @@ async function testNvidiaApi() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let text = '';
+      let streamError = null;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -817,13 +818,23 @@ async function testNvidiaApi() {
           if (line.startsWith('data: ') && line !== 'data: [DONE]') {
             try {
               const parsed = JSON.parse(line.slice(6));
+              if (parsed.error) {
+                streamError = parsed.error.message || parsed.error.detail || JSON.stringify(parsed.error);
+                break;
+              }
               const delta = parsed.choices?.[0]?.delta?.content;
               if (delta) { text += delta; resultEl.textContent = text; }
             } catch (_) {}
           }
         }
+        if (streamError) break;
       }
-      if (!text) resultEl.textContent = '(empty response)';
+      if (streamError) {
+        resultEl.className = 'settings-test-result error';
+        resultEl.textContent = streamError;
+      } else if (!text) {
+        resultEl.textContent = '(empty response)';
+      }
       loadNvidiaUsage();
       return;
     }
