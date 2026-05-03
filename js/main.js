@@ -790,16 +790,18 @@ async function testNvidiaApi() {
   resultEl.className = 'settings-test-result';
   resultEl.textContent = '';
   try {
-    const res = await fetch(`${state.supabaseUrl}/functions/v1/nvidia-chat`, {
+    const fetchOpts = (stream) => ({
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${state.supabaseKey}`,
         'apikey': state.supabaseKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt, p_stream: true }),
+      body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt, p_stream: stream }),
       signal: _nvidiaAbort.signal,
     });
+
+    let res = await fetch(`${state.supabaseUrl}/functions/v1/nvidia-chat`, fetchOpts(true));
 
     // SSE streaming
     if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
@@ -826,7 +828,12 @@ async function testNvidiaApi() {
       return;
     }
 
-    // Fallback: non-streaming JSON response
+    // Stream failed (model doesn't support it) — retry without streaming
+    if (!res.ok) {
+      res = await fetch(`${state.supabaseUrl}/functions/v1/nvidia-chat`, fetchOpts(false));
+    }
+
+    // Non-streaming JSON response
     const data = await res.json();
     const status = data?.status;
     const body = data?.body;
