@@ -774,6 +774,7 @@ async function testNvidiaApi() {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${state.supabaseKey}`,
+        'apikey': state.supabaseKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt }),
