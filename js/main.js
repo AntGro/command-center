@@ -131,6 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // UNLOCK & INIT APP
 // ===================================================================
 async function connect(url, key) {
+  state.supabaseUrl = url;
+  state.supabaseKey = key;
   const adapter = createSupabaseAdapter(url, key);
   db.setAdapter(adapter);
 
@@ -768,16 +770,15 @@ async function testNvidiaApi() {
   resultEl.className = 'settings-test-result';
   resultEl.textContent = '...';
   try {
-    const { data, error } = await state.db.rpc('nvidia_chat', {
-      p_api_key: apiKey,
-      p_model: model,
-      p_prompt: prompt,
+    const res = await fetch(`${state.supabaseUrl}/functions/v1/nvidia-chat`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt }),
     });
-    if (error) {
-      resultEl.className = 'settings-test-result error';
-      resultEl.textContent = error.message || 'RPC error';
-      return;
-    }
+    const data = await res.json();
     const status = data?.status;
     const body = data?.body;
     if (status && status >= 400) {
