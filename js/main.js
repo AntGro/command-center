@@ -788,7 +788,7 @@ async function testNvidiaApi() {
   btn.disabled = false;
   resultEl.style.display = 'block';
   resultEl.className = 'settings-test-result';
-  resultEl.textContent = '...';
+  resultEl.textContent = '';
   try {
     const res = await fetch(`${state.supabaseUrl}/functions/v1/nvidia-chat`, {
       method: 'POST',
@@ -797,9 +797,36 @@ async function testNvidiaApi() {
         'apikey': state.supabaseKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt }),
+      body: JSON.stringify({ p_api_key: apiKey, p_model: model, p_prompt: prompt, p_stream: true }),
       signal: _nvidiaAbort.signal,
     });
+
+    // SSE streaming
+    if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
+      resultEl.className = 'settings-test-result success';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let text = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) { text += delta; resultEl.textContent = text; }
+            } catch (_) {}
+          }
+        }
+      }
+      if (!text) resultEl.textContent = '(empty response)';
+      loadNvidiaUsage();
+      return;
+    }
+
+    // Fallback: non-streaming JSON response
     const data = await res.json();
     const status = data?.status;
     const body = data?.body;
@@ -810,6 +837,7 @@ async function testNvidiaApi() {
       resultEl.className = 'settings-test-result success';
       resultEl.textContent = body?.choices?.[0]?.message?.content || JSON.stringify(body);
     }
+    loadNvidiaUsage();
   } catch (e) {
     if (e.name === 'AbortError') {
       resultEl.className = 'settings-test-result error';
