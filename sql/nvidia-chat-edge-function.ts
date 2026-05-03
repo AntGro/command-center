@@ -52,19 +52,18 @@ Deno.serve(async (req) => {
       const usage = body?.usage;
 
       // Insert usage row
-      sb.from("nvidia_usage").insert({
+      await sb.from("nvidia_usage").insert({
         model: p_model,
         prompt_tokens: usage?.prompt_tokens ?? 0,
         completion_tokens: usage?.completion_tokens ?? 0,
         total_tokens: usage?.total_tokens ?? 0,
         status: response.status,
-      }).then(() => {});
+      });
 
       // Purge records older than 72h
-      sb.from("nvidia_usage")
+      await sb.from("nvidia_usage")
         .delete()
-        .lt("created_at", new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString())
-        .then(() => {});
+        .lt("created_at", new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString());
     }
 
     return new Response(
