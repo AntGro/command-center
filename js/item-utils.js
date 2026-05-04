@@ -38,21 +38,21 @@ export function initItemHoverDelay(container, {
     const text = item.querySelector(textSelector);
     if (!actions || !row) return;
 
-    row.addEventListener('mouseenter', () => {
+    item.addEventListener('mouseenter', () => {
       hoverTimer = setTimeout(() => {
         if (item.querySelector(editingSelector)) return;
         actions.classList.add('visible');
       }, 2000);
     });
 
-    row.addEventListener('mouseleave', () => {
+    item.addEventListener('mouseleave', () => {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
       if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       actions.classList.remove('visible');
     });
 
-    // Click anywhere on the row (except action buttons) to show actions
-    row.addEventListener('click', (e) => {
+    // Click anywhere on the card (except action buttons) to show actions
+    item.addEventListener('click', (e) => {
       if (e.target.closest(actionsSelector)) return;
       if (item.querySelector(editingSelector)) return;
       if (clickTimer) clearTimeout(clickTimer);
@@ -61,7 +61,7 @@ export function initItemHoverDelay(container, {
         if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
       }, 250);
     });
-    row.addEventListener('dblclick', (e) => {
+    item.addEventListener('dblclick', (e) => {
       if (e.target.closest(actionsSelector)) return;
       if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       if (onDblClick) {
