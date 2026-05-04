@@ -7,6 +7,7 @@ import state from './supabase.js';
 import { esc, renderMd, showToast, showDeleteConfirm, formatRelativeDate, truncateWithShowMore } from './utils.js';
 import { initItemHoverDelay, inlineEditText } from './item-utils.js';
 import { formatFrequency, formatChoreDue, choreDueStatus, getChoreLastDone, formatChoreRelative, getChoreCompletionCount, updateChoreNextDue } from './chores.js';
+import { getCategoryColor } from './todos.js';
 
 // ── Local data cache ──
 let wTodos = [];
@@ -220,7 +221,6 @@ function renderFocusTodoItem(td) {
     <div class="todo-row">
       ${flagBtn}
       <span class="todo-text">${td.text.length > 150 ? truncateWithShowMore(td.text, 150, td.id, 'todo') : renderMd(td.text)}</span>
-      ${td.category ? `<span class="welcome-badge">${esc(td.category)}</span>` : ''}
       <div class="todo-actions">
         <button onclick="welcomeToggleTodo('${td.id}', true)" title="${t('common.done')}">${lucideIcon("circle-check", 16)}</button>
         <button onclick="welcomeSnooze('${td.id}')" title="${t('todos.snooze')}">${lucideIcon("moon", 16)}</button>
@@ -439,9 +439,24 @@ function renderWelcome() {
   if (focusTodos.length === 0) {
     html += `<div class="welcome-empty">${esc(t('welcome.all_clear'))}</div>`;
   } else {
-    html += `<div class="welcome-items welcome-focus-todos">`;
+    // Group todos by category
+    const todosByCategory = {};
     for (const td of focusTodos) {
-      html += renderFocusTodoItem(td);
+      const cat = td.category || '';
+      if (!todosByCategory[cat]) todosByCategory[cat] = [];
+      todosByCategory[cat].push(td);
+    }
+    html += `<div class="welcome-items welcome-focus-todos">`;
+    const catKeys = Object.keys(todosByCategory);
+    for (const cat of catKeys) {
+      const catColor = getCategoryColor(cat);
+      const catName = cat || 'General';
+      if (catKeys.length > 1 || cat) {
+        html += `<div class="welcome-todo-cat-label" style="--cat-color:${catColor}"><span class="welcome-todo-cat-dot"></span>${esc(catName)}</div>`;
+      }
+      for (const td of todosByCategory[cat]) {
+        html += renderFocusTodoItem(td);
+      }
     }
     html += `</div>`;
   }

@@ -59,7 +59,7 @@ const T = {
     // ── Welcome ──
     welcome: {
       good_morning: 'Good morning', good_afternoon: 'Good afternoon', good_evening: 'Good evening',
-      focus_todos: "Today's Focus", chores_due: 'Chores Due', flashcards: 'Flashcard Review',
+      focus_todos: "TODOs", chores_due: 'Chores Due', flashcards: 'Flashcard Review',
       upcoming_birthdays: 'Upcoming Birthdays', no_birthdays: 'No upcoming birthdays this week', stats: 'Overview',
       all_clear: 'All clear — nothing urgent', no_chores_due: 'No chores due today',
       cards_due: '{0} cards due for review', new_cards: '{0} new cards',
@@ -273,7 +273,7 @@ const T = {
     },
     welcome: {
       good_morning: 'Bonjour', good_afternoon: 'Bon après-midi', good_evening: 'Bonsoir',
-      focus_todos: 'Priorités du jour', chores_due: 'Corvées à faire', flashcards: 'Révision',
+      focus_todos: 'TODOs', chores_due: 'Corvées à faire', flashcards: 'Révision',
       upcoming_birthdays: 'Anniversaires à venir', no_birthdays: 'Aucun anniversaire cette semaine', stats: 'Vue d\'ensemble',
       all_clear: 'Tout est en ordre — rien d\'urgent', no_chores_due: 'Aucune corvée à faire aujourd\'hui',
       cards_due: '{0} cartes à réviser', new_cards: '{0} nouvelles cartes',
@@ -480,7 +480,7 @@ const T = {
     },
     welcome: {
       good_morning: 'Buenos días', good_afternoon: 'Buenas tardes', good_evening: 'Buenas noches',
-      focus_todos: 'Prioridades de hoy', chores_due: 'Quehaceres pendientes', flashcards: 'Revisión',
+      focus_todos: 'TODOs', chores_due: 'Quehaceres pendientes', flashcards: 'Revisión',
       upcoming_birthdays: 'Próximos cumpleaños', no_birthdays: 'Sin cumpleaños esta semana', stats: 'Resumen',
       all_clear: 'Todo en orden — nada urgente', no_chores_due: 'Sin quehaceres para hoy',
       cards_due: '{0} tarjetas por revisar', new_cards: '{0} tarjetas nuevas',
