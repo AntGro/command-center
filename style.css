@@ -1023,12 +1023,16 @@ h2 .lucide-icon{vertical-align:middle;margin-right:6px;position:relative;top:-1p
 
 /* Flashcard summary */
 .welcome-flash-summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.welcome-flash-counts{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 .welcome-flash-due{font-size:0.9rem;font-weight:500;color:var(--yellow);}
 .welcome-flash-new{font-size:0.9rem;color:var(--muted);}
-.welcome-flash-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text);font-size:0.82rem;font-weight:500;cursor:pointer;transition:background 0.15s;}
-.welcome-flash-btn:hover{background:var(--accent-dim);}
-.welcome-flash-stats{font-size:0.8rem;color:var(--muted);margin-top:8px;}
-.welcome-flash-done{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:500;color:#22c55e;margin-bottom:6px;}
+.welcome-flash-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 16px;border-radius:6px;font-size:0.82rem;font-weight:500;cursor:pointer;transition:background 0.15s,opacity 0.15s;margin-top:8px;}
+.welcome-flash-btn--primary{border:none;background:#06b6d4;color:#fff;}
+.welcome-flash-btn--primary:hover{opacity:0.85;}
+.welcome-flash-btn--secondary{border:1px solid var(--border);background:transparent;color:var(--text);}
+.welcome-flash-btn--secondary:hover{background:var(--accent-dim);}
+.welcome-flash-detail{font-size:0.8rem;color:var(--muted);margin-top:4px;}
+.welcome-flash-done{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:500;color:#22c55e;margin-bottom:2px;}
 
 /* Stats grid */
 .welcome-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}

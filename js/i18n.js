@@ -72,7 +72,7 @@ const T = {
       due_for_review: 'Due for review', wardrobe_items: 'Wardrobe items',
       projects: 'Projects', avg_retrievability: 'Avg. retrievability',
       overdue_1: '1 day overdue', overdue_n: '{0} days overdue',
-      due_today: 'Due today', go_to_flashcards: 'Practice now',
+      due_today: 'Due today', go_to_flashcards: 'Practice now', continue_practicing: 'Continue practicing',
     },
     // ── Projects ──
     projects: {
@@ -286,7 +286,7 @@ const T = {
       due_for_review: 'À réviser', wardrobe_items: 'Articles vestimentaires',
       projects: 'Projets', avg_retrievability: 'Rétention moy.',
       overdue_1: '1 jour de retard', overdue_n: '{0} jours de retard',
-      due_today: 'À faire aujourd\'hui', go_to_flashcards: 'Réviser',
+      due_today: 'À faire aujourd\'hui', go_to_flashcards: 'Réviser', continue_practicing: 'Continuer la révision',
     },
     projects: {
       add_project: 'Ajouter un projet', edit_project: 'Modifier le projet',
@@ -493,7 +493,7 @@ const T = {
       due_for_review: 'Por revisar', wardrobe_items: 'Artículos de armario',
       projects: 'Proyectos', avg_retrievability: 'Retención prom.',
       overdue_1: '1 día de retraso', overdue_n: '{0} días de retraso',
-      due_today: 'Para hoy', go_to_flashcards: 'Practicar',
+      due_today: 'Para hoy', go_to_flashcards: 'Practicar', continue_practicing: 'Seguir practicando',
     },
     projects: {
       add_project: 'Añadir proyecto', edit_project: 'Editar proyecto',

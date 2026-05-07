@@ -488,27 +488,33 @@ function renderWelcome() {
     const todayCount = todayReviewedCards.length;
     html += `<div class="welcome-flash-done">${lucideIcon('circle-check', 16, '#22c55e')} ${esc(t('welcome.practiced_today', todayCount))}</div>`;
     if (dueCards.length > 0) {
-      html += `<div class="welcome-flash-summary">`;
-      html += `<span class="welcome-flash-due">${esc(t('welcome.cards_still_due', dueCards.length))}</span>`;
-      html += `<button class="welcome-flash-btn" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
-      html += `</div>`;
+      html += `<div class="welcome-flash-detail">${esc(t('welcome.cards_still_due', dueCards.length))}</div>`;
+    }
+    if (reviewedCards.length > 0) {
+      html += `<div class="welcome-flash-detail">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
+    }
+    if (dueCards.length > 0) {
+      html += `<button class="welcome-flash-btn welcome-flash-btn--secondary" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.continue_practicing'))}</button>`;
     }
   } else if (dueCards.length > 0 || newCards.length > 0) {
-    // Not practiced today and there are cards to review
-    html += `<div class="welcome-flash-summary">`;
+    // Not practiced today — prompt to review
+    html += `<div class="welcome-flash-counts">`;
     if (dueCards.length > 0) {
       html += `<span class="welcome-flash-due">${esc(t('welcome.cards_due', dueCards.length))}</span>`;
     }
     if (newCards.length > 0) {
       html += `<span class="welcome-flash-new">${esc(t('welcome.new_cards', newCards.length))}</span>`;
     }
-    html += `<button class="welcome-flash-btn" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
     html += `</div>`;
+    if (reviewedCards.length > 0) {
+      html += `<div class="welcome-flash-detail">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
+    }
+    html += `<button class="welcome-flash-btn welcome-flash-btn--primary" onclick="goToPractice()">${lucideIcon('play', 14)} ${esc(t('welcome.go_to_flashcards'))}</button>`;
   } else {
     html += `<div class="welcome-empty">${esc(t('welcome.up_to_date'))}</div>`;
-  }
-  if (reviewedCards.length > 0) {
-    html += `<div class="welcome-flash-stats">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
+    if (reviewedCards.length > 0) {
+      html += `<div class="welcome-flash-detail">${esc(t('welcome.avg_retrievability'))}: ${Math.round(avgR * 100)}%</div>`;
+    }
   }
   html += `</div>`;
 
